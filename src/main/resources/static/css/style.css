@@ -1,14 +1,27 @@
+:root {
+    --bg-main: #121212;
+    --bg-surface: #1e1e1e;
+    --bg-surface-alt: #262626;
+    --border-color: #333333;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0a0a0;
+    --accent: #3ba55d;
+    --accent-hover: #2f8c4c;
+    --danger: #e35d5d;
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    background-color: #f4f6f8;
-    color: #222;
+    background-color: var(--bg-main);
+    color: var(--text-primary);
 }
 
 header {
-    background-color: #2c7a4b;
-    color: white;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
     padding: 20px 40px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 main {
@@ -18,36 +31,58 @@ main {
 table {
     width: 100%;
     border-collapse: collapse;
-    background: white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: var(--bg-surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
 }
 
 th, td {
     padding: 12px 16px;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 th {
-    background-color: #eef3ee;
+    background-color: var(--bg-surface-alt);
+    color: var(--text-secondary);
 }
 
 tr:hover {
-    background-color: #f9f9f9;
+    background-color: var(--bg-surface-alt);
 }
 
 form label {
     font-weight: bold;
+    color: var(--text-primary);
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+}
+
+input::placeholder {
+    color: var(--text-secondary);
 }
 
 button {
-    background-color: #2c7a4b;
+    background-color: var(--accent);
     color: white;
     border: none;
     border-radius: 4px;
+    padding: 10px 20px;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #24603c;
+    background-color: var(--accent-hover);
+}
+
+a {
+    color: var(--accent);
 }

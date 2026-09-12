@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Stock</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <h1>Add Stock</h1>
+</header>
+
+<main style="max-width: 500px;">
+    <!-- Shown only when the URL has ?success on it (after redirect) -->
+    <p th:if="${param.success}" style="color: #3ba55d;">
+        Stock updated successfully.
+    </p>
+    <form th:action="@{/admin/add-stock}" method="post">
+
+        <div style="margin-bottom: 14px;">
+            <label>Medicine Name</label><br>
+            <!-- If this name already exists, we ADD to its stock.
+                 If it's new, we create a fresh medicine entry. -->
+            <input type="text" name="name" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Category</label><br>
+            <input type="text" name="category" placeholder="e.g. Painkiller, Antibiotic" style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Quantity Received</label><br>
+            <input type="number" name="quantity" min="1" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Buying Price (per unit)</label><br>
+            <input type="number" step="0.01" name="buyingPrice" min="0" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Selling Price (per unit)</label><br>
+            <input type="number" step="0.01" name="sellingPrice" min="0" required style="width:100%; padding:8px;">
+        </div>
+
+        <button type="submit">Add Stock</button>
+    </form>
+
+    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
+</main>
+</body>
+</html>

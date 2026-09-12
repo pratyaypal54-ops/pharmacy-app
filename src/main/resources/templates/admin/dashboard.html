@@ -6,16 +6,20 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <header>
-        <h1>Admin Dashboard</h1>
-    </header>
-    <main>
-        <p>If you can see this page, login is working correctly.</p>
-        <p>Next we'll replace this with the real 3 options: Add Stock, Sell, Edit.</p>
+<header>
+    <h1>Admin Dashboard</h1>
+</header>
+<main>
+    <div style="display:flex; gap:16px; margin-bottom:30px;">
+        <a th:href="@{/admin/add-stock}"><button type="button">Add Stock</button></a>
+        <!-- These two aren't built yet - we'll wire them up in the next steps -->
+        <button type="button" disabled title="Coming next">Sell</button>
+        <button type="button" disabled title="Coming next">Edit</button>
+    </div>
 
-        <form th:action="@{/logout}" method="post">
-            <button type="submit">Logout</button>
-        </form>
-    </main>
+    <form th:action="@{/logout}" method="post">
+        <button type="submit">Logout</button>
+    </form>
+</main>
 </body>
 </html>
