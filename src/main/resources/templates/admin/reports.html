@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Report</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <h1>Daily Sales Report</h1>
+</header>
+
+<main>
+    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
+
+    <form th:action="@{/admin/reports}" method="get" style="margin-bottom: 24px;">
+        <label>Pick a date: </label>
+        <input type="date" name="date" th:value="${selectedDate}">
+        <button type="submit">View</button>
+    </form>
+
+    <h2 th:text="'Summary for ' + ${selectedDate}">Summary</h2>
+
+    <div style="display:flex; gap:24px; margin-bottom:24px;">
+        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
+            <div style="color:var(--text-secondary);">Items Sold</div>
+            <div style="font-size:1.5em;" th:text="${summary.totalItemsSold}">0</div>
+        </div>
+        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
+            <div style="color:var(--text-secondary);">Revenue</div>
+            <div style="font-size:1.5em;" th:text="'₹' + ${summary.totalRevenue}">₹0</div>
+        </div>
+        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
+            <div style="color:var(--text-secondary);">Profit</div>
+            <div style="font-size:1.5em;" th:text="'₹' + ${summary.totalProfit}">₹0</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Medicine</th>
+            <th>Quantity Sold</th>
+            <th>Buying Price</th>
+            <th>Selling Price</th>
+            <th>Total</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="t : ${summary.transactions}">
+            <td th:text="${t.medicineName}">Name</td>
+            <td th:text="${t.quantitySold}">Qty</td>
+            <td th:text="'₹' + ${t.buyingPriceAtSale}">Buy</td>
+            <td th:text="'₹' + ${t.sellingPriceAtSale}">Sell</td>
+            <td th:text="'₹' + ${t.totalAmount}">Total</td>
+            <td>
+                <!-- Builds a URL like /admin/reports/edit-sale/7 using
+                     this specific row's id -->
+                <a th:href="@{/admin/reports/edit-sale/{id}(id=${t.id})}">Edit</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${summary.transactions.isEmpty()}">No sales recorded for this date.</p>
+
+    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
+</main>
+</body>
+</html>

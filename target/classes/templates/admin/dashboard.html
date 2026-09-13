@@ -10,14 +10,15 @@
     <h1>Admin Dashboard</h1>
 </header>
 <main>
-    <div style="display:flex; gap:16px; margin-bottom:30px;">
+    <div style="display:flex; gap:16px; margin-bottom:20px;">
         <a th:href="@{/admin/add-stock}"><button type="button">Add Stock</button></a>
-        <!-- These two aren't built yet - we'll wire them up in the next steps -->
-        <button type="button" disabled title="Coming next">Sell</button>
-        <button type="button" disabled title="Coming next">Edit</button>
+        <a th:href="@{/admin/sell}"><button type="button">Sell</button></a>
+        <a th:href="@{/admin/edit}"><button type="button">Edit</button></a>
     </div>
 
-    <form th:action="@{/logout}" method="post">
+    <p><a th:href="@{/admin/reports}">📊 View Sales Reports</a></p>
+
+    <form th:action="@{/logout}" method="post" style="margin-top:20px;">
         <button type="submit">Logout</button>
     </form>
 </main>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sell Medicine</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <h1>Sell Medicine</h1>
+</header>
+<main style="max-width: 500px;">
+    <!-- These read the "flash" messages sent by SellController after
+         a redirect. They only show up ONCE, right after a submit. -->
+    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
+    <p th:if="${error}" th:text="${error}" style="color: #e35d5d;"></p>
+
+    <form th:action="@{/admin/sell}" method="post">
+
+        <div style="margin-bottom: 14px;">
+            <label>Medicine Name</label><br>
+            <input type="text" name="name" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Quantity Sold</label><br>
+            <input type="number" name="quantity" min="1" required style="width:100%; padding:8px;">
+        </div>
+
+        <button type="submit">Sell</button>
+    </form>
+    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
+</main>
+</body>
+</html>

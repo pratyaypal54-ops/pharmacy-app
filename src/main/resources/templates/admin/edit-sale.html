@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Correct Sale Record</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <h1>Correct a Past Sale</h1>
+</header>
+
+<main style="max-width: 500px;">
+
+    <p>
+        <strong th:text="${transaction.medicineName}">Medicine</strong> -
+        <span th:text="${transaction.quantitySold}">Qty</span> unit(s) sold on
+        <span th:text="${transaction.saleDate}">Date</span>
+    </p>
+
+    <!-- th:action builds the URL using this transaction's id, same
+         pattern as the Edit link on the reports page -->
+    <form th:action="@{/admin/reports/edit-sale/{id}(id=${transaction.id})}" method="post">
+
+        <div style="margin-bottom: 14px;">
+            <label>Correct Buying Price (per unit)</label><br>
+            <!-- th:value pre-fills the box with the CURRENT (possibly
+                 wrong) value, so admin only needs to fix what's wrong -->
+            <input type="number" step="0.01" name="buyingPrice"
+                   th:value="${transaction.buyingPriceAtSale}" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Correct Selling Price (per unit)</label><br>
+            <input type="number" step="0.01" name="sellingPrice"
+                   th:value="${transaction.sellingPriceAtSale}" required style="width:100%; padding:8px;">
+        </div>
+
+        <button type="submit">Save Correction</button>
+    </form>
+
+    <p style="margin-top:20px;"><a th:href="@{/admin/reports}">&larr; Back to Reports</a></p>
+</main>
+</body>
+</html>

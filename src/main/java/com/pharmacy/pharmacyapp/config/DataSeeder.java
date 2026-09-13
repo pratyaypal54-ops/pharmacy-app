@@ -1,5 +1,4 @@
 package com.pharmacy.pharmacyapp.config;
-
 import com.pharmacy.pharmacyapp.model.AdminUser;
 import com.pharmacy.pharmacyapp.repository.AdminUserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 // the app starts up - useful for one-time setup tasks like this.
 @Component
 public class DataSeeder implements CommandLineRunner {
-
     private final AdminUserRepository adminUserRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -18,7 +16,6 @@ public class DataSeeder implements CommandLineRunner {
         this.adminUserRepository = adminUserRepository;
         this.passwordEncoder = passwordEncoder;
     }
-
     @Override
     public void run(String... args) {
         // Only create the default admin if the table is completely empty -

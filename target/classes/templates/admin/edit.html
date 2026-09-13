@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Stock</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header>
+    <h1>Edit Stock (Fix a Mistake)</h1>
+</header>
+
+<main style="max-width: 500px;">
+
+    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
+    <p th:if="${error}" th:text="${error}" style="color: #e35d5d;"></p>
+
+    <form th:action="@{/admin/edit}" method="post">
+
+        <div style="margin-bottom: 14px;">
+            <label>Medicine Name</label><br>
+            <input type="text" name="name" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Correct Quantity (what it should actually be)</label><br>
+            <input type="number" name="correctQuantity" min="0" required style="width:100%; padding:8px;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+            <label>Reason (optional)</label><br>
+            <input type="text" name="reason" placeholder="e.g. Entered wrong quantity by mistake" style="width:100%; padding:8px;">
+        </div>
+
+        <button type="submit">Save Correction</button>
+    </form>
+
+    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
+</main>
+</body>
+</html>

@@ -10,7 +10,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
-
     // This bean is used in TWO places:
     // 1. When we create the admin user, to hash the password before saving
     // 2. When someone logs in, to check "does this typed password's hash
