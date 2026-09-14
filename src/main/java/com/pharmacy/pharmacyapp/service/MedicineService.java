@@ -23,6 +23,9 @@ public class MedicineService {
         this.medicineRepository = medicineRepository;
         this.stockAdjustmentRepository = stockAdjustmentRepository;
     }
+    public List<Medicine> searchMedicines(String keyword) {
+        return medicineRepository.findByNameContainingIgnoreCase(keyword);
+    }
 
     public List<Medicine> getAllMedicines() {
         return medicineRepository.findAll();

@@ -7,35 +7,44 @@
 </head>
 <body>
 
-    <header>
-        <h1>Available Medicines</h1>
-    </header>
+<header>
+    <h1>Available Medicines</h1>
+</header>
 
-    <main>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>In Stock</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="med : ${medicines}">
-                    <td th:text="${med.name}">Medicine Name</td>
-                    <td th:text="${med.category}">Category</td>
-                    <td th:text="'₹' + ${med.sellingPrice}">Price</td>
-                    <!-- Show "Only X left" if below threshold, otherwise plain quantity -->
-                    <td th:text="${med.quantity} lt ${med.lowStockThreshold} ? 'Only ' + ${med.quantity} + ' left' : ${med.quantity}">
-                        Stock
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+<main>
+    <!-- GET form - typing a search just changes the URL to
+         /medicines?search=para, which is bookmarkable/shareable -->
+    <form th:action="@{/medicines}" method="get" style="margin-bottom: 20px;">
+        <input type="text" name="search" th:value="${search}"
+               placeholder="Search medicine name..." style="padding:8px; width:250px;">
+        <button type="submit">Search</button>
+        <!-- Only show "Clear" if a search is currently active -->
+        <a th:if="${search}" th:href="@{/medicines}" style="margin-left:10px;">Clear</a>
+    </form>
 
-        <p th:if="${medicines.isEmpty()}">No medicines available yet.</p>
-    </main>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>In Stock</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="med : ${medicines}">
+            <td th:text="${med.name}">Medicine Name</td>
+            <td th:text="${med.category}">Category</td>
+            <td th:text="'₹' + ${med.sellingPrice}">Price</td>
+            <td th:text="${med.quantity} lt ${med.lowStockThreshold} ? 'Only ' + ${med.quantity} + ' left' : ${med.quantity}">
+                Stock
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${medicines.isEmpty()}">No medicines found matching your search.</p>
+</main>
 
 </body>
 </html>
