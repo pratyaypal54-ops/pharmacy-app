@@ -20,8 +20,8 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link active">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link active">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
         <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
@@ -344,7 +344,7 @@
                                      style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 6px; border-left: 3px solid var(--neon-cyan);">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <strong style="color: var(--text-bright); font-size: 0.88rem;" th:text="${item.medicineName}">Paracetamol 650mg</strong>
-                                        <span class="badge badge-category" style="font-size: 0.68rem; padding: 1px 6px;" th:text="${item.category != null ? item.category : 'General'}\">Category</span>
+                                        <span class="badge badge-category" style="font-size: 0.68rem; padding: 1px 6px;" th:text="${item.category != null ? item.category : 'General'}">Category</span>
                                         <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'+' + ${item.quantityAdded} + ' units'">+50 units</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 12px;">
