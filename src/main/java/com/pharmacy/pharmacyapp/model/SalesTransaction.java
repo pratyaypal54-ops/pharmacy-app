@@ -39,7 +39,23 @@ public class SalesTransaction {
     private Double buyingPriceAtSale;
     private Double sellingPriceAtSale;
 
+    // Subtotal before discount
     private Double totalAmount;
 
+    // Discount applied on this item or proportional order discount
+    private Double discountAmount = 0.0;
+
+    // Final net billed amount after discount (totalAmount - discountAmount)
+    private Double netAmount;
+
     private LocalDateTime saleDate;
+
+    public Double getEffectiveNetAmount() {
+        if (netAmount != null) {
+            return netAmount;
+        }
+        double gross = (totalAmount != null) ? totalAmount : 0.0;
+        double disc = (discountAmount != null) ? discountAmount : 0.0;
+        return Math.max(0.0, gross - disc);
+    }
 }

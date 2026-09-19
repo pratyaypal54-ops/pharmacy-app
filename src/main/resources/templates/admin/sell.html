@@ -20,10 +20,10 @@
         <a th:href="@{/admin/sell}" class="nav-link active">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
@@ -40,10 +40,10 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">&#128179; Patient Dispense &amp; Bulk Sales Terminal</h1>
-            <p class="page-subtitle">Record customer details, stage multiple prescribed medicines into the live review bill, and dispense in bulk</p>
+            <p class="page-subtitle">Record customer details, stage medicines into bill cart, apply store discounts, and dispense in bulk</p>
         </div>
         <div style="display: flex; gap: 10px;">
-            <a th:if="${isOwner}" th:href="@{/admin/reports}" class="btn btn-cyber-cyan btn-sm">&#128220; View Sales History</a>
+            <a th:href="@{/admin/reports}" class="btn btn-cyber-cyan btn-sm">&#128220; View Sales History</a>
             <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
         </div>
     </div>
@@ -218,9 +218,9 @@
                             <th style="width: 40px;">#</th>
                             <th>Medicine</th>
                             <th>Category</th>
-                            <th style="text-align: right;">Unit Price (₹)</th>
+                            <th style="text-align: right;">Unit Price (&#8377;)</th>
                             <th style="text-align: right;">Qty</th>
-                            <th style="text-align: right;">Subtotal (₹)</th>
+                            <th style="text-align: right;">Subtotal (&#8377;)</th>
                             <th style="text-align: center; width: 60px;">Action</th>
                         </tr>
                     </thead>
@@ -236,9 +236,9 @@
                 </div>
             </div>
 
-            <!-- BILL FINANCIAL SUMMARY -->
+            <!-- BILL FINANCIAL SUMMARY & DISCOUNT SECTION -->
             <div class="batch-summary-card sell-theme" id="billSummaryCard" style="display: none;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px;">
                     <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Distinct Items:</span>
                         <span class="preview-val" id="summaryBillItems">0</span>
@@ -247,10 +247,54 @@
                         <span class="preview-label">Total Units Sold:</span>
                         <span class="preview-val" id="summaryBillUnits">0 units</span>
                     </div>
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start; grid-column: span 2;">
-                        <span class="preview-label" style="font-size: 0.82rem; font-weight: 700; color: var(--text-bright);">GRAND TOTAL PAYABLE:</span>
-                        <span class="preview-val highlight" id="summaryGrandTotal" style="font-size: 1.6rem; color: var(--neon-green);">&#8377;0.00</span>
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="preview-label">Gross Subtotal:</span>
+                        <span class="preview-val mono-cell" id="summaryGrossSubtotal" style="color: var(--text-bright); font-size: 1.15rem;">&#8377;0.00</span>
                     </div>
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="preview-label" style="color: var(--neon-amber);">Discount Saved:</span>
+                        <span class="preview-val mono-cell" id="summaryDiscountDisplay" style="color: var(--neon-amber); font-size: 1.15rem;">-&#8377;0.00</span>
+                    </div>
+                </div>
+
+                <!-- DISCOUNT CONFIGURATION INPUTS & PRESET BUTTONS -->
+                <div style="background: rgba(15, 21, 35, 0.85); border: 1px solid var(--border-dim); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label class="form-label" style="margin: 0; font-size: 0.8rem; color: var(--neon-amber); font-weight: 700;">
+                            <span>&#127991; Apply Purchase Discount</span>
+                            <span class="helper-tag" style="color: var(--text-muted);">% percentage or flat &#8377; off</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <div style="display: flex; gap: 6px; align-items: center; flex: 1 1 200px;">
+                            <input type="number"
+                                   id="discountInput"
+                                   min="0"
+                                   step="0.5"
+                                   class="cyber-input"
+                                   placeholder="0"
+                                   value="0"
+                                   style="padding: 6px 10px; font-size: 0.9rem;"
+                                   oninput="updateDiscount()">
+                            <select id="discountType" class="cyber-select" style="width: 100px; padding: 6px 8px; font-size: 0.85rem;" onchange="updateDiscount()">
+                                <option value="percent">% Off</option>
+                                <option value="flat">&#8377; Flat Off</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(0, 'percent')">0%</button>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(5, 'percent')">5%</button>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(10, 'percent')">10%</button>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(15, 'percent')">15%</button>
+                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(20, 'percent')">20%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preview-row" style="padding-top: 10px; border-top: 1px solid var(--border-bright);">
+                    <span class="preview-label" style="font-size: 0.92rem; font-weight: 700; color: var(--text-bright);">NET GRAND TOTAL PAYABLE:</span>
+                    <span class="preview-val highlight" id="summaryGrandTotal" style="font-size: 1.75rem; color: var(--neon-green);">&#8377;0.00</span>
                 </div>
             </div>
 
@@ -288,6 +332,8 @@
 
     // Cart items array: [ { name, category, unitPrice, quantity } ]
     let billItems = [];
+    let currentDiscountValue = 0.0;
+    let currentDiscountType = 'percent';
 
     // Elements
     const customerNameInput = document.getElementById('customerNameInput');
@@ -316,7 +362,12 @@
 
     const summaryBillItems = document.getElementById('summaryBillItems');
     const summaryBillUnits = document.getElementById('summaryBillUnits');
+    const summaryGrossSubtotal = document.getElementById('summaryGrossSubtotal');
+    const summaryDiscountDisplay = document.getElementById('summaryDiscountDisplay');
     const summaryGrandTotal = document.getElementById('summaryGrandTotal');
+
+    const discountInput = document.getElementById('discountInput');
+    const discountType = document.getElementById('discountType');
 
     let currentSelectedMedicine = null;
 
@@ -331,6 +382,18 @@
     customerNameInput.addEventListener('input', updateCustomerDisplay);
     customerPhoneInput.addEventListener('input', updateCustomerDisplay);
 
+    function updateDiscount() {
+        currentDiscountValue = Math.max(0, parseFloat(discountInput.value) || 0);
+        currentDiscountType = discountType.value;
+        renderBillTable();
+    }
+
+    function setDiscountPreset(val, type) {
+        discountInput.value = val;
+        discountType.value = type;
+        updateDiscount();
+    }
+
     function getEffectiveAvailableStock(medName) {
         if (!medName) return 0;
         const med = medMap[medName.trim().toLowerCase()];
@@ -338,7 +401,6 @@
 
         let totalInCatalog = med.quantity != null ? med.quantity : 0;
 
-        // Deduct quantities of this medicine already in cart!
         let alreadyInCart = 0;
         billItems.forEach(item => {
             if (item.name.toLowerCase() === medName.trim().toLowerCase()) {
@@ -503,7 +565,7 @@
         if (index >= 0 && index < billItems.length) {
             const removed = billItems.splice(index, 1)[0];
             renderBillTable();
-            onMedicineChange(); // recalculates available stock if that medicine is currently open in input
+            onMedicineChange();
             showAlert('Removed "' + removed.name + '" from the bill.', 'info');
         }
     }
@@ -537,12 +599,12 @@
         btnClearBill.disabled = false;
 
         let totalUnits = 0;
-        let grandTotal = 0.0;
+        let grossSubtotal = 0.0;
 
         billItems.forEach((item, index) => {
             const subtotal = item.quantity * item.unitPrice;
             totalUnits += item.quantity;
-            grandTotal += subtotal;
+            grossSubtotal += subtotal;
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -559,12 +621,25 @@
             billTableBody.appendChild(tr);
         });
 
+        // Compute discount
+        let discountAmount = 0.0;
+        if (currentDiscountType === 'percent') {
+            const pct = Math.min(100.0, currentDiscountValue);
+            discountAmount = Math.round(grossSubtotal * (pct / 100.0) * 100.0) / 100.0;
+        } else {
+            discountAmount = Math.min(grossSubtotal, currentDiscountValue);
+        }
+
+        const netPayable = Math.max(0.0, grossSubtotal - discountAmount);
+
         summaryBillItems.textContent = billItems.length;
         summaryBillUnits.textContent = totalUnits + ' units';
-        summaryGrandTotal.textContent = '\u20b9' + grandTotal.toFixed(2);
+        summaryGrossSubtotal.textContent = '\u20b9' + grossSubtotal.toFixed(2);
+        summaryDiscountDisplay.textContent = '-\u20b9' + discountAmount.toFixed(2) + (currentDiscountType === 'percent' && currentDiscountValue > 0 ? ' (' + currentDiscountValue + '%)' : '');
+        summaryGrandTotal.textContent = '\u20b9' + netPayable.toFixed(2);
     }
 
-    // Submit batch sale
+    // Submit batch sale with discount
     async function commitBatchSale() {
         const customerName = customerNameInput.value.trim();
         const customerPhone = customerPhoneInput.value.trim();
@@ -583,9 +658,24 @@
         btnConfirmSale.disabled = true;
         btnConfirmSale.innerHTML = '&#9203; Dispensing &amp; Generating Invoice...';
 
+        let grossSubtotal = 0.0;
+        billItems.forEach(i => { grossSubtotal += (i.quantity * i.unitPrice); });
+
+        let discountAmount = 0.0;
+        let discountPercent = 0.0;
+        if (currentDiscountType === 'percent') {
+            discountPercent = Math.min(100.0, currentDiscountValue);
+            discountAmount = Math.round(grossSubtotal * (discountPercent / 100.0) * 100.0) / 100.0;
+        } else {
+            discountAmount = Math.min(grossSubtotal, currentDiscountValue);
+            discountPercent = grossSubtotal > 0 ? Math.round((discountAmount / grossSubtotal) * 1000.0) / 10.0 : 0.0;
+        }
+
         const payload = {
             customerName: customerName,
             customerPhone: customerPhone || 'N/A',
+            discountPercent: discountPercent,
+            discountAmount: discountAmount,
             items: billItems.map(i => ({ name: i.name, quantity: i.quantity }))
         };
 
@@ -601,16 +691,16 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-                showAlert(result.message || 'Sale recorded successfully!', 'success');
+                showAlert((result.message || 'Sale recorded successfully!') + (discountAmount > 0 ? ' [Discount applied: \u20b9' + discountAmount.toFixed(2) + ']' : ''), 'success');
                 billItems = [];
                 renderBillTable();
                 customerNameInput.value = '';
                 customerPhoneInput.value = '';
+                setDiscountPreset(0, 'percent');
                 updateCustomerDisplay();
 
-                const isOwner = /*[[${isOwner}]]*/ true;
                 setTimeout(() => {
-                    window.location.href = isOwner ? '/admin/reports' : '/admin/sell';
+                    window.location.href = '/admin/reports';
                 }, 1400);
             } else {
                 showAlert(result.message || 'Error occurred while dispensing medicine.', 'danger');

@@ -47,6 +47,7 @@ public class SalesService {
 
         List<Medicine> medicinesToUpdate = new ArrayList<>();
         List<SalesTransaction> transactionsToSave = new ArrayList<>();
+        double grossSubtotal = 0.0;
 
         // 1. Single pass validation and staging: check stock and prepare updates in-memory
         for (SaleItemDto item : batchDto.getItems()) {
@@ -70,6 +71,10 @@ public class SalesService {
             medicine.setQuantity(currentStock - item.getQuantity());
             medicinesToUpdate.add(medicine);
 
+            double sellPrice = (medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0;
+            double itemGross = sellPrice * item.getQuantity();
+            grossSubtotal += itemGross;
+
             SalesTransaction transaction = new SalesTransaction();
             transaction.setCustomerName(customerName);
             transaction.setCustomerPhone(customerPhone);
@@ -77,14 +82,47 @@ public class SalesService {
             transaction.setMedicineName(medicine.getName());
             transaction.setQuantitySold(item.getQuantity());
             transaction.setBuyingPriceAtSale(medicine.getBuyingPrice() != null ? medicine.getBuyingPrice() : 0.0);
-            transaction.setSellingPriceAtSale(medicine.getSellingPrice() != null ? medicine.getSellingPrice() : 0.0);
-            transaction.setTotalAmount((medicine.getSellingPrice() != null ? medicine.getSellingPrice() : 0.0) * item.getQuantity());
+            transaction.setSellingPriceAtSale(sellPrice);
+            transaction.setTotalAmount(itemGross);
             transaction.setSaleDate(now);
 
             transactionsToSave.add(transaction);
         }
 
-        // 2. High-performance batch persistence
+        if (transactionsToSave.isEmpty()) {
+            throw new IllegalArgumentException("No valid medicines selected for billing.");
+        }
+
+        // 2. Compute discount distribution
+        double totalDiscount = 0.0;
+        if (batchDto.getDiscountAmount() != null && batchDto.getDiscountAmount() > 0) {
+            totalDiscount = Math.min(batchDto.getDiscountAmount(), grossSubtotal);
+        } else if (batchDto.getDiscountPercent() != null && batchDto.getDiscountPercent() > 0) {
+            double pct = Math.min(batchDto.getDiscountPercent(), 100.0);
+            totalDiscount = Math.round(grossSubtotal * (pct / 100.0) * 100.0) / 100.0;
+        }
+
+        double distributedDiscount = 0.0;
+        for (int i = 0; i < transactionsToSave.size(); i++) {
+            SalesTransaction t = transactionsToSave.get(i);
+            double itemGross = t.getTotalAmount();
+            double itemDiscount = 0.0;
+
+            if (grossSubtotal > 0 && totalDiscount > 0) {
+                if (i == transactionsToSave.size() - 1) {
+                    // Last item absorbs any rounding remainder
+                    itemDiscount = Math.max(0.0, Math.round((totalDiscount - distributedDiscount) * 100.0) / 100.0);
+                } else {
+                    itemDiscount = Math.round((itemGross / grossSubtotal) * totalDiscount * 100.0) / 100.0;
+                    distributedDiscount += itemDiscount;
+                }
+            }
+
+            t.setDiscountAmount(itemDiscount);
+            t.setNetAmount(Math.max(0.0, itemGross - itemDiscount));
+        }
+
+        // 3. High-performance batch persistence
         if (!medicinesToUpdate.isEmpty()) {
             medicineRepository.saveAll(medicinesToUpdate);
         }
@@ -97,11 +135,16 @@ public class SalesService {
 
     @Transactional
     public void sellMedicine(String name, Integer quantitySold) {
-        sellMedicine(name, quantitySold, "Walk-in Customer", "N/A");
+        sellMedicine(name, quantitySold, 0.0, "Walk-in Customer", "N/A");
     }
 
     @Transactional
     public void sellMedicine(String name, Integer quantitySold, String customerName, String customerPhone) {
+        sellMedicine(name, quantitySold, 0.0, customerName, customerPhone);
+    }
+
+    @Transactional
+    public void sellMedicine(String name, Integer quantitySold, Double discountAmount, String customerName, String customerPhone) {
 
         Medicine medicine = medicineRepository.findByNameIgnoreCase(name)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -120,6 +163,11 @@ public class SalesService {
         String cPhone = (customerPhone != null && !customerPhone.isBlank()) ? customerPhone.trim() : "N/A";
         String invoice = "INV-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
 
+        double sellPrice = (medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0;
+        double gross = sellPrice * quantitySold;
+        double disc = (discountAmount != null && discountAmount > 0) ? Math.min(discountAmount, gross) : 0.0;
+        double net = Math.max(0.0, gross - disc);
+
         SalesTransaction transaction = new SalesTransaction();
         transaction.setCustomerName(cName);
         transaction.setCustomerPhone(cPhone);
@@ -127,8 +175,10 @@ public class SalesService {
         transaction.setMedicineName(medicine.getName());
         transaction.setQuantitySold(quantitySold);
         transaction.setBuyingPriceAtSale(medicine.getBuyingPrice() != null ? medicine.getBuyingPrice() : 0.0);
-        transaction.setSellingPriceAtSale(medicine.getSellingPrice() != null ? medicine.getSellingPrice() : 0.0);
-        transaction.setTotalAmount((medicine.getSellingPrice() != null ? medicine.getSellingPrice() : 0.0) * quantitySold);
+        transaction.setSellingPriceAtSale(sellPrice);
+        transaction.setTotalAmount(gross);
+        transaction.setDiscountAmount(disc);
+        transaction.setNetAmount(net);
         transaction.setSaleDate(LocalDateTime.now());
 
         salesTransactionRepository.save(transaction);
@@ -149,7 +199,10 @@ public class SalesService {
 
         transaction.setBuyingPriceAtSale(correctedBuyingPrice);
         transaction.setSellingPriceAtSale(correctedSellingPrice);
-        transaction.setTotalAmount(correctedSellingPrice * transaction.getQuantitySold());
+        double gross = correctedSellingPrice * transaction.getQuantitySold();
+        transaction.setTotalAmount(gross);
+        double disc = (transaction.getDiscountAmount() != null) ? transaction.getDiscountAmount() : 0.0;
+        transaction.setNetAmount(Math.max(0.0, gross - disc));
 
         salesTransactionRepository.save(transaction);
     }

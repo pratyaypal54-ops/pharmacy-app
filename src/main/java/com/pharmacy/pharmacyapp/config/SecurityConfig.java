@@ -23,25 +23,22 @@ public class SecurityConfig {
                 // Public pages - open to everyone
                 .requestMatchers("/", "/medicines", "/css/**", "/login", "/error").permitAll()
 
-                // OWNER-ONLY (ADMIN) confidential areas:
-                // - Financial profit reports, wholesale buying prices, user accounts & disaster cloud backups
+                // OWNER-ONLY (ADMIN) confidential area:
+                // Managing staff accounts, creating logins and resetting passwords
                 .requestMatchers(
-                    "/admin/reports", "/admin/reports/**",
-                    "/admin/history/**",
-                    "/admin/users", "/admin/users/**",
-                    "/admin/backup", "/admin/backup/**"
+                    "/admin/users", "/admin/users/**"
                 ).hasRole("ADMIN")
 
-                // OPERATIONAL areas accessible by BOTH Owner and Staff:
-                // - Patient dispensing & billing (/admin/sell)
-                // - Delivery inward stock logging (/admin/add-stock)
-                // - Mistake correction & inventory reconciliation (/admin/edit)
+                // ALL OTHER OPERATIONAL AREAS accessible by BOTH Owner and Staff:
                 // - Dashboard overview (/admin/dashboard)
+                // - Dispensing & customer sales (/admin/sell)
+                // - Delivery inward stock intake (/admin/add-stock)
+                // - Entry mistake corrections & reconciliation (/admin/edit)
+                // - Sales invoice reports (/admin/reports) [revenue/profit figures hidden for staff in UI]
+                // - Stock batch history (/admin/history/**) [buying costs hidden for staff in UI]
+                // - Database backups (/admin/backup)
                 .requestMatchers(
-                    "/admin/dashboard",
-                    "/admin/sell", "/admin/sell/**",
-                    "/admin/add-stock", "/admin/add-stock/**",
-                    "/admin/edit", "/admin/edit/**"
+                    "/admin/**"
                 ).hasAnyRole("ADMIN", "STAFF")
 
                 .anyRequest().authenticated()

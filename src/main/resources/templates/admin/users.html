@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .access-card {
-            background: var(--bg-card);
+            background: var(--bg-card, #0f1523);
             border: 1px solid var(--border-dim);
             border-radius: 8px;
             padding: 16px;
@@ -62,10 +62,10 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link active">Staff Access</a>
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
@@ -82,7 +82,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">&#128101; Staff Accounts &amp; Access Control</h1>
-            <p class="page-subtitle">Owner master center: view every person with system access, their role permissions, and create new staff logins</p>
+            <p class="page-subtitle">Owner master center: view every person with system access side-by-side, their active permissions, and create new employee logins</p>
         </div>
         <div>
             <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
@@ -97,8 +97,9 @@
         <span>&#9888;</span> <span th:text="${error}">Error message</span>
     </div>
 
-    <div class="pos-layout">
-        <!-- LEFT: CREATE ACCOUNT FORM -->
+    <!-- SIDE-BY-SIDE SPLIT WORKBENCH: 1 IN LEFT, 1 IN RIGHT -->
+    <div class="split-layout">
+        <!-- LEFT PANEL: CREATE ACCOUNT FORM -->
         <div class="cyber-card" style="padding: 24px; height: fit-content;">
             <h2 style="font-size: 1.15rem; color: var(--neon-cyan); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
                 <span>+</span> Create New Account
@@ -145,8 +146,8 @@
                 <div class="form-group">
                     <label class="form-label" for="role">Account Role *</label>
                     <select id="role" name="role" class="cyber-select" required>
-                        <option value="ROLE_STAFF" selected>Staff / Cashier (Cannot see profits/buying rates)</option>
-                        <option value="ROLE_ADMIN">Co-Owner / Admin (Full Access to all data)</option>
+                        <option value="ROLE_STAFF" selected>Staff / Cashier (Cannot see revenue/profits/staff management)</option>
+                        <option value="ROLE_ADMIN">Co-Owner / Admin (Full Access to all confidential data)</option>
                     </select>
                 </div>
 
@@ -157,15 +158,15 @@
 
             <div style="margin-top: 24px; padding: 14px; background: rgba(0, 229, 255, 0.04); border: 1px dashed var(--border-dim); border-radius: 8px;">
                 <div style="font-size: 0.8rem; font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px;">
-                    &#128274; Role Boundary Summary:
+                    &#128274; Security Policy Summary:
                 </div>
                 <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
-                    Staff members can dispense medicines, enter inward deliveries, and fix clerical entry mistakes. Sensitive financial revenue, net profits, wholesale buying costs, and user archives are strictly hidden.
+                    Staff members have operational power identical to admin (dispense, inward restocking, clerical mistake fixes, transaction histories, cloud backups). Only business revenue/profit telemetry and this Staff Access center are restricted.
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT: WHO HAS ACCESS (DEDICATED ROSTER PANEL) -->
+        <!-- RIGHT PANEL: WHO HAS ACCESS (DEDICATED ROSTER) -->
         <div class="cyber-card" style="padding: 24px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dim); padding-bottom: 14px; margin-bottom: 16px;">
                 <div>
@@ -211,7 +212,7 @@
                                     &#128081; OWNER / ADMIN (Full System Master)
                                 </span>
                                 <span th:if="${!u.admin}" class="badge badge-low-stock" style="color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.4);">
-                                    &#128100; STAFF / CASHIER (Counter Billing &amp; Mistake Edits)
+                                    &#128100; STAFF / CASHIER (Operational Operator)
                                 </span>
                             </div>
                         </div>
@@ -243,22 +244,22 @@
                     <!-- PERMISSION CHIPS EXPLAINING EXACT PRIVILEGES -->
                     <div class="privilege-tags">
                         <span class="priv-tag priv-allow">&#10003; Bill Customers &amp; Dispense</span>
-                        <span class="priv-tag priv-allow">&#10003; View Public Catalog</span>
-                        <span class="priv-tag priv-allow">&#10003; Check Shelf Stock</span>
-                        <span class="priv-tag priv-allow">&#10003; Inward Delivery Intake</span>
+                        <span class="priv-tag priv-allow">&#10003; Apply Discounts</span>
+                        <span class="priv-tag priv-allow">&#10003; Inward Delivery Restock</span>
                         <span class="priv-tag priv-allow">&#10003; Correct Entry Mistakes</span>
+                        <span class="priv-tag priv-allow">&#10003; View Inward History</span>
+                        <span class="priv-tag priv-allow">&#10003; View Invoices &amp; Billing History</span>
+                        <span class="priv-tag priv-allow">&#10003; Trigger Cloud Backups</span>
 
                         <!-- OWNER SPECIFIC TAGS -->
-                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; View Net Profits &amp; Financials</span>
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Net Profit &amp; Revenue Telemetry</span>
                         <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Wholesale Buying Rates</span>
-                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Manage User Accounts</span>
-                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; 1-Click Database Cloud Backup</span>
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Manage Staff Logins</span>
 
                         <!-- STAFF RESTRICTIONS TAGS -->
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Net Profit &amp; Revenue Hidden</span>
                         <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Wholesale Costs Hidden</span>
-                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Profit Reports Blocked</span>
-                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; User Management Blocked</span>
-                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Cloud Backups Blocked</span>
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Staff Access Center Blocked</span>
                     </div>
                 </div>
             </div>

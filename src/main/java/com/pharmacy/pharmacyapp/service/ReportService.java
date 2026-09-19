@@ -47,13 +47,15 @@ public class ReportService {
 
         for (SalesTransaction t : transactions) {
             int qty = (t.getQuantitySold() != null) ? t.getQuantitySold() : 0;
-            double amount = (t.getTotalAmount() != null) ? t.getTotalAmount() : 0.0;
+            double grossAmount = (t.getTotalAmount() != null) ? t.getTotalAmount() : 0.0;
+            double discount = (t.getDiscountAmount() != null) ? t.getDiscountAmount() : 0.0;
+            double netAmount = (t.getNetAmount() != null) ? t.getNetAmount() : Math.max(0.0, grossAmount - discount);
             double buyPrice = (t.getBuyingPriceAtSale() != null) ? t.getBuyingPriceAtSale() : 0.0;
-            double sellPrice = (t.getSellingPriceAtSale() != null) ? t.getSellingPriceAtSale() : 0.0;
-            double itemProfit = (sellPrice - buyPrice) * qty;
+            double cost = buyPrice * qty;
+            double itemProfit = netAmount - cost;
 
             totalItems += qty;
-            totalRevenue += amount;
+            totalRevenue += netAmount;
             totalProfit += itemProfit;
 
             // Group by invoice number (or fallback to single ID if no invoice ref)
@@ -72,7 +74,9 @@ public class ReportService {
 
             group.getItems().add(t);
             group.setTotalItems(group.getTotalItems() + qty);
-            group.setTotalAmount(group.getTotalAmount() + amount);
+            group.setTotalAmount(group.getTotalAmount() + grossAmount);
+            group.setTotalDiscount(group.getTotalDiscount() + discount);
+            group.setNetAmount(group.getNetAmount() + netAmount);
             group.setTotalProfit(group.getTotalProfit() + itemProfit);
         }
 

@@ -13,5 +13,7 @@ import java.util.List;
 public class SaleBatchDto {
     private String customerName;
     private String customerPhone;
+    private Double discountPercent = 0.0;
+    private Double discountAmount = 0.0;
     private List<SaleItemDto> items = new ArrayList<>();
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Stock & Entry Corrections - PHARMA//CORE</title>
+    <title>Edit Stock &amp; Entry Corrections - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -20,10 +20,10 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link active">Edit Stock / Corrections</a>
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
@@ -39,11 +39,11 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#9881; Stock Audit & Entry Mistake Corrections</h1>
+            <h1 class="page-title">&#9881; Stock Audit &amp; Entry Mistake Corrections</h1>
             <p class="page-subtitle">Reconcile inventory counts, correct clerical typos, or adjust selling prices for any registered medicine</p>
         </div>
         <div style="display: flex; gap: 10px;">
-            <a th:if="${isOwner}" th:href="@{/admin/reports?tab=adjustments}" class="btn btn-cyber-cyan btn-sm">&#128220; Full Audit History</a>
+            <a th:href="@{/admin/reports?tab=adjustments}" class="btn btn-cyber-cyan btn-sm">&#128220; Full Audit History</a>
             <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
         </div>
     </div>
@@ -119,7 +119,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label class="form-label" for="sellingPriceInput">
-                            <span>Correct Selling Price (₹)</span>
+                            <span>Correct Selling Price (&#8377;)</span>
                             <span class="helper-tag">MRP / Unit</span>
                         </label>
                         <input type="number"

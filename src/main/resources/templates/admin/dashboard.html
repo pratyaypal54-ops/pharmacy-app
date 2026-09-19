@@ -20,10 +20,10 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
@@ -40,7 +40,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">&#128421; Mission Control Dashboard</h1>
-            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial telemetry, and security archives' : 'Cashier operational terminal: patient dispensing and shelf stock inventory'}">Dashboard overview</p>
+            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial telemetry, and security archives' : 'Operational terminal: patient dispensing, batch restocking, and mistake corrections'}">Dashboard overview</p>
         </div>
         <div style="display: flex; gap: 8px;">
             <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Dispense Sale</a>
@@ -90,7 +90,7 @@
         <a th:href="@{/admin/sell}" class="action-tile">
             <span class="action-icon">&#128179;</span>
             <span class="action-title">Patient Dispense</span>
-            <span class="action-desc">Record customer info, multi-item live review cart, and bulk sales.</span>
+            <span class="action-desc">Record customer info, apply discounts, multi-item live review cart, and dispense.</span>
         </a>
 
         <a th:href="@{/admin/add-stock}" class="action-tile">
@@ -99,32 +99,32 @@
             <span class="action-desc">Record provider manifest, stage incoming medicines, and update inventory.</span>
         </a>
 
-        <!-- OWNER ONLY ACTION TILES -->
         <a th:href="@{/admin/edit}" class="action-tile">
             <span class="action-icon">&#9881;</span>
             <span class="action-title">Audit / Correction</span>
-            <span class="action-desc">Reconcile physical counts with live adjustment tracking table.</span>
+            <span class="action-desc">Fix stock discrepancies, MRP price errors, and category typos with audit logs.</span>
         </a>
 
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="action-tile">
+        <a th:href="@{/admin/history/stock}" class="action-tile">
             <span class="action-icon">&#128220;</span>
             <span class="action-title">Stock Inward History</span>
             <span class="action-desc">Historical supplier intake logs with provider contact details and timestamps.</span>
         </a>
 
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="action-tile">
+        <a th:href="@{/admin/reports}" class="action-tile">
             <span class="action-icon">&#128202;</span>
-            <span class="action-title">Sales History &amp; Reports</span>
-            <span class="action-desc">Patient billing history with customer details, profit margins, and timestamps.</span>
+            <span class="action-title">Sales History &amp; Invoices</span>
+            <span class="action-desc">Customer billing history with invoice details, items sold, and discount records.</span>
         </a>
 
+        <!-- OWNER ONLY ACCESS CENTER -->
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="action-tile">
             <span class="action-icon">&#128101;</span>
             <span class="action-title">Staff Accounts &amp; Access</span>
             <span class="action-desc">Create employee accounts, reset staff passwords, and manage permissions.</span>
         </a>
 
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="action-tile">
+        <a th:href="@{/admin/backup}" class="action-tile">
             <span class="action-icon">&#128190;</span>
             <span class="action-title">Database Cloud Backup</span>
             <span class="action-desc">One-click SQL database snapshot download and Google Drive automated protection.</span>

@@ -20,10 +20,10 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link active">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
@@ -39,7 +39,7 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128230; Inward Stock & Bulk Supplier Intake</h1>
+            <h1 class="page-title">&#128230; Inward Stock &amp; Bulk Supplier Intake</h1>
             <p class="page-subtitle">Log incoming deliveries from distributors, stage medicines in the live review table, and commit bulk inventory</p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -181,10 +181,10 @@
                 </div>
 
                 <div class="grid-2col-responsive">
-                    <div class="form-group">
+                    <div class="form-group" th:style="${isOwner ? '' : 'display: none;'}">
                         <label class="form-label" for="buyingPriceInput">
-                            <span>Buying Price (₹)</span>
-                            <span class="helper-tag">Cost/unit</span>
+                            <span>Buying Price (&#8377;)</span>
+                            <span class="helper-tag">Wholesale Cost</span>
                         </label>
                         <input type="number"
                                step="0.01"
@@ -196,7 +196,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="sellingPriceInput">
-                            <span>Selling Price (₹)</span>
+                            <span>Selling MRP (&#8377;)</span>
                             <span class="helper-tag">Retail/unit</span>
                         </label>
                         <input type="number"
@@ -209,7 +209,7 @@
                 </div>
 
                 <!-- LIVE ITEM PREVIEW -->
-                <div class="interactive-panel" style="background: rgba(0, 229, 255, 0.03); border-color: rgba(0, 229, 255, 0.2);">
+                <div th:if="${isOwner}" class="interactive-panel" style="background: rgba(0, 229, 255, 0.03); border-color: rgba(0, 229, 255, 0.2);">
                     <div class="preview-row">
                         <span class="preview-label">Item Line Cost:</span>
                         <span class="preview-val mono-cell" id="itemLineCost">&#8377;0.00</span>
@@ -232,7 +232,7 @@
         <!-- RIGHT COLUMN: LIVE REVIEW SIDE TABLE -->
         <div class="live-review-container">
             <div class="card-title-bar">
-                <h3>&#128221; Live Delivery Review & Staging Batch</h3>
+                <h3>&#128221; Live Delivery Review &amp; Staging Batch</h3>
                 <span class="badge badge-in-stock" id="stagedCountBadge">0 ITEMS STAGED</span>
             </div>
 
@@ -261,9 +261,9 @@
                             <th>Medicine</th>
                             <th>Category</th>
                             <th style="text-align: right;">Qty</th>
-                            <th style="text-align: right;">Cost (₹)</th>
-                            <th style="text-align: right;">Retail (₹)</th>
-                            <th style="text-align: right;">Subtotal (₹)</th>
+                            <th th:if="${isOwner}" style="text-align: right;">Cost (&#8377;)</th>
+                            <th style="text-align: right;">Retail (&#8377;)</th>
+                            <th th:if="${isOwner}" style="text-align: right;">Subtotal (&#8377;)</th>
                             <th style="text-align: center; width: 60px;">Action</th>
                         </tr>
                     </thead>
@@ -290,7 +290,7 @@
                         <span class="preview-label">Total Units:</span>
                         <span class="preview-val highlight" id="summaryTotalUnits">0 units</span>
                     </div>
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Batch Purchase Cost:</span>
                         <span class="preview-val" id="summaryTotalCost" style="color: var(--neon-cyan); font-size: 1.15rem;">&#8377;0.00</span>
                     </div>
@@ -298,7 +298,7 @@
                         <span class="preview-label">Projected Sales Value:</span>
                         <span class="preview-val" id="summaryTotalRetail">&#8377;0.00</span>
                     </div>
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Projected Profit:</span>
                         <span class="preview-val" id="summaryTotalProfit" style="color: var(--neon-green); font-size: 1.15rem;">&#8377;0.00</span>
                     </div>
@@ -330,6 +330,7 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
     const catalogMedicines = /*[[${medicines}]]*/ [];
+    const isOwnerUser = /*[[${isOwner}]]*/ true;
     const catalogMap = {};
     catalogMedicines.forEach(m => {
         if (m && m.name) {
@@ -404,7 +405,7 @@
                 categoryInput.value = found.category || '';
                 categoryInput.dataset.autofilled = "true";
             }
-            if (!buyingPriceInput.value || buyingPriceInput.dataset.autofilled === "true") {
+            if (buyingPriceInput && (!buyingPriceInput.value || buyingPriceInput.dataset.autofilled === "true")) {
                 buyingPriceInput.value = found.buyingPrice != null ? found.buyingPrice : '';
                 buyingPriceInput.dataset.autofilled = "true";
             }
@@ -421,7 +422,7 @@
 
     function recalculateItemPreview() {
         const qty = parseInt(qtyReceivedInput.value) || 0;
-        const buyPrice = parseFloat(buyingPriceInput.value) || 0;
+        const buyPrice = (buyingPriceInput ? parseFloat(buyingPriceInput.value) : 0) || 0;
         const sellPrice = parseFloat(sellingPriceInput.value) || 0;
 
         if (currentSelectedMed) {
@@ -429,16 +430,20 @@
             projectedStockDisplay.textContent = currentStock + ' + ' + qty + ' = ' + (currentStock + qty) + ' units';
         }
 
-        const cost = qty * buyPrice;
-        itemLineCost.textContent = '\u20b9' + cost.toFixed(2);
+        if (itemLineCost) {
+            const cost = qty * buyPrice;
+            itemLineCost.textContent = '\u20b9' + cost.toFixed(2);
+        }
 
-        const unitProfit = sellPrice - buyPrice;
-        const marginPercent = buyPrice > 0 ? ((unitProfit / buyPrice) * 100).toFixed(1) : '0';
+        if (unitMarginDisplay) {
+            const unitProfit = sellPrice - buyPrice;
+            const marginPercent = buyPrice > 0 ? ((unitProfit / buyPrice) * 100).toFixed(1) : '0';
 
-        if (unitProfit >= 0) {
-            unitMarginDisplay.innerHTML = '<span style="color: var(--neon-green);">+\u20b9' + unitProfit.toFixed(2) + ' (' + marginPercent + '%)</span>';
-        } else {
-            unitMarginDisplay.innerHTML = '<span style="color: var(--neon-crimson);">-\u20b9' + Math.abs(unitProfit).toFixed(2) + ' (' + marginPercent + '%)</span>';
+            if (unitProfit >= 0) {
+                unitMarginDisplay.innerHTML = '<span style=\"color: var(--neon-green);\">+\\u20b9' + unitProfit.toFixed(2) + ' (' + marginPercent + '%)</span>';
+            } else {
+                unitMarginDisplay.innerHTML = '<span style=\"color: var(--neon-crimson);\">-\\u20b9' + Math.abs(unitProfit).toFixed(2) + ' (' + marginPercent + '%)</span>';
+            }
         }
     }
 
@@ -450,10 +455,12 @@
 
     medNameInput.addEventListener('input', handleMedicineSelect);
     qtyReceivedInput.addEventListener('input', recalculateItemPreview);
-    buyingPriceInput.addEventListener('input', () => {
-        delete buyingPriceInput.dataset.autofilled;
-        recalculateItemPreview();
-    });
+    if (buyingPriceInput) {
+        buyingPriceInput.addEventListener('input', () => {
+            delete buyingPriceInput.dataset.autofilled;
+            recalculateItemPreview();
+        });
+    }
     sellingPriceInput.addEventListener('input', () => {
         delete sellingPriceInput.dataset.autofilled;
         recalculateItemPreview();
@@ -464,7 +471,10 @@
         const name = medNameInput.value.trim();
         const category = categoryInput.value.trim() || 'General';
         const qty = parseInt(qtyReceivedInput.value) || 0;
-        const buyPrice = parseFloat(buyingPriceInput.value) || 0;
+        let buyPrice = buyingPriceInput ? (parseFloat(buyingPriceInput.value) || 0) : 0;
+        if (!isOwnerUser && currentSelectedMed && currentSelectedMed.buyingPrice != null) {
+            buyPrice = currentSelectedMed.buyingPrice;
+        }
         const sellPrice = parseFloat(sellingPriceInput.value) || 0;
 
         if (!name) {
@@ -508,15 +518,17 @@
         categoryInput.value = '';
         delete categoryInput.dataset.autofilled;
         qtyReceivedInput.value = '';
-        buyingPriceInput.value = '';
-        delete buyingPriceInput.dataset.autofilled;
+        if (buyingPriceInput) {
+            buyingPriceInput.value = '';
+            delete buyingPriceInput.dataset.autofilled;
+        }
         sellingPriceInput.value = '';
         delete sellingPriceInput.dataset.autofilled;
         existingPanel.style.display = 'none';
         currentSelectedMed = null;
         recalculateItemPreview();
 
-        showAlert('Added "' + name + '" (' + qty + ' units) to staging table.', 'success', false);
+        showAlert('Added \"' + name + '\" (' + qty + ' units) to staging table.', 'success', false);
         const qNotice = document.getElementById('quickStockAddedNotice');
         if (qNotice) {
             qNotice.style.display = 'block';
@@ -529,7 +541,7 @@
         if (index >= 0 && index < stagedItems.length) {
             const removed = stagedItems.splice(index, 1)[0];
             renderStagingTable();
-            showAlert('Removed "' + removed.name + '" from batch.', 'info');
+            showAlert('Removed \"' + removed.name + '\" from batch.', 'info');
         }
     }
 
@@ -573,18 +585,28 @@
             totalRetail += subtotalRetail;
 
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            let innerHtml = `
                 <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
                 <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
                 <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
-                <td style="text-align: right;" class="mono-cell highlight">${item.quantity}</td>
-                <td style="text-align: right;" class="mono-cell">&#8377;${item.buyingPrice.toFixed(2)}</td>
-                <td style="text-align: right;" class="mono-cell">&#8377;${item.sellingPrice.toFixed(2)}</td>
-                <td style="text-align: right;" class="mono-cell" style="color: var(--neon-cyan);">&#8377;${subtotalCost.toFixed(2)}</td>
+                <td style="text-align: right;" class="mono-cell highlight">${item.quantity}</td>`;
+
+            if (isOwnerUser) {
+                innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.buyingPrice.toFixed(2)}</td>`;
+            }
+
+            innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.sellingPrice.toFixed(2)}</td>`;
+
+            if (isOwnerUser) {
+                innerHtml += `<td style="text-align: right;" class="mono-cell" style="color: var(--neon-cyan);">&#8377;${subtotalCost.toFixed(2)}</td>`;
+            }
+
+            innerHtml += `
                 <td style="text-align: center;">
                     <button type="button" class="btn-remove-item" onclick="removeItemFromStaging(${index})" title="Remove item">&#10005;</button>
                 </td>
             `;
+            tr.innerHTML = innerHtml;
             stagingTableBody.appendChild(tr);
         });
 
@@ -592,9 +614,9 @@
 
         summaryDistinctMeds.textContent = stagedItems.length;
         summaryTotalUnits.textContent = totalUnits + ' units';
-        summaryTotalCost.textContent = '\u20b9' + totalCost.toFixed(2);
+        if (summaryTotalCost) summaryTotalCost.textContent = '\u20b9' + totalCost.toFixed(2);
         summaryTotalRetail.textContent = '\u20b9' + totalRetail.toFixed(2);
-        summaryTotalProfit.textContent = '\u20b9' + totalProfit.toFixed(2);
+        if (summaryTotalProfit) summaryTotalProfit.textContent = '\u20b9' + totalProfit.toFixed(2);
     }
 
     // Submit the whole batch to the backend
@@ -644,7 +666,6 @@
                 batchInvoiceInput.value = '';
                 updateProviderDisplay();
 
-                // Refresh datalist in background or redirect after a brief delay
                 setTimeout(() => {
                     window.location.href = '/admin/history/stock';
                 }, 1400);
@@ -689,7 +710,7 @@
 
     function escapeHtml(text) {
         if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        return text.replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\").replace(/\"/g, \"&quot;\").replace(/'/g, \"&#039;\");
     }
     /*]]>*/
 </script>
