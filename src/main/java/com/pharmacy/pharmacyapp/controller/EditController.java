@@ -3,6 +3,7 @@ package com.pharmacy.pharmacyapp.controller;
 import com.pharmacy.pharmacyapp.service.MedicineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,19 +20,23 @@ public class EditController {
     }
 
     @GetMapping("/admin/edit")
-    public String showEditForm() {
-        return "admin/edit"; // renders templates/admin/edit.html
+    public String showEditForm(Model model) {
+        model.addAttribute("medicines", medicineService.getAllMedicines());
+        model.addAttribute("recentAdjustments", medicineService.getAllStockAdjustments());
+        return "admin/edit";
     }
 
     @PostMapping("/admin/edit")
     public String submitEdit(@RequestParam String name,
                              @RequestParam Integer correctQuantity,
+                             @RequestParam(required = false) Double sellingPrice,
+                             @RequestParam(required = false) String category,
                              @RequestParam(required = false) String reason,
                              RedirectAttributes redirectAttributes) {
         try {
-            medicineService.editStock(name, correctQuantity, reason);
+            medicineService.editStockAndDetails(name, correctQuantity, sellingPrice, category, reason);
             redirectAttributes.addFlashAttribute("success",
-                    name + " corrected to " + correctQuantity + " units.");
+                    "Entry for '" + name + "' corrected successfully (Stock: " + correctQuantity + " units).");
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }

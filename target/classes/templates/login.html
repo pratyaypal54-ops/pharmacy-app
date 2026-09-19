@@ -2,33 +2,66 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
-<body>
-    <main style="max-width: 400px; margin: 80px auto;">
-        <h1>Admin Login</h1>
+<body style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;">
 
-        <!--
-          th:action="@{/login}" - Spring Security automatically listens for
-          a POST to /login and checks the username/password for us. We never
-          write a @PostMapping("/login") ourselves - Security handles it.
-        -->
+<div style="width: 100%; max-width: 420px; padding: 20px;">
+
+    <!-- BRAND EMBLEM -->
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div class="brand-logo" style="width: 48px; height: 48px; font-size: 1.5rem; margin: 0 auto 12px auto;">&#9889;</div>
+        <div class="brand-title" style="font-size: 1.4rem;">PHARMA<span>//</span>CORE</div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">Secure Pharmacy Management Terminal</p>
+    </div>
+
+    <!-- ALERTS -->
+    <div th:if="${param.error}" class="alert alert-danger" style="margin-bottom: 16px;">
+        <span>&#9888;</span> <span>Authentication failed: Invalid credentials.</span>
+    </div>
+    <div th:if="${param.logout}" class="alert alert-success" style="margin-bottom: 16px;">
+        <span>&#10003;</span> <span>Session terminated. You have been logged out.</span>
+    </div>
+
+    <!-- LOGIN CARD -->
+    <div class="cyber-card" style="position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));"></div>
+        
         <form th:action="@{/login}" method="post">
-            <div style="margin-bottom: 12px;">
-                <label>Username</label><br>
-                <input type="text" name="username" required style="width:100%; padding:8px;">
+            <div class="form-group">
+                <label class="form-label" for="usernameInput">Username</label>
+                <input type="text" 
+                       id="usernameInput" 
+                       name="username" 
+                       class="cyber-input" 
+                       placeholder="Enter username" 
+                       required 
+                       autofocus>
             </div>
-            <div style="margin-bottom: 12px;">
-                <label>Password</label><br>
-                <input type="password" name="password" required style="width:100%; padding:8px;">
+
+            <div class="form-group">
+                <label class="form-label" for="passwordInput">Password</label>
+                <input type="password" 
+                       id="passwordInput" 
+                       name="password" 
+                       class="cyber-input" 
+                       placeholder="••••••••" 
+                       required>
             </div>
-            <button type="submit" style="padding:10px 20px;">Login</button>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 12px;">
+                Authenticate &rarr;
+            </button>
         </form>
 
-        <!-- Shown if the URL has ?error on it, e.g. after a wrong password -->
-        <p th:if="${param.error}" style="color:red;">Invalid username or password.</p>
-        <p th:if="${param.logout}" style="color:green;">You have been logged out.</p>
-    </main>
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
+            <a th:href="@{/medicines}" class="btn btn-outline btn-sm">&larr; Public Catalog</a>
+            <span class="badge badge-category" style="font-size: 0.7rem;">Default: admin / admin123</span>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

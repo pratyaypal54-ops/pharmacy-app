@@ -4,16 +4,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-// This table is a PERMANENT LOG - one row per sale, forever. Even if you
-// later change a medicine's price or delete it, these old records keep
-// their own snapshot of what the prices were AT THE TIME of that sale.
-// This is what lets you answer "what did we sell on this day 2 years ago?"
 @Entity
+@Table(name = "sales_transaction", indexes = {
+    @Index(name = "idx_sales_sale_date", columnList = "saleDate"),
+    @Index(name = "idx_sales_invoice", columnList = "invoiceNumber")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,8 +24,14 @@ public class SalesTransaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // Stored as plain text, not a link to the Medicine table - this way,
-    // even if that medicine is deleted later, the sales history survives.
+
+    // Customer details
+    private String customerName;
+    private String customerPhone;
+
+    // Invoice / Receipt reference grouping multiple items in a sale
+    private String invoiceNumber;
+
     private String medicineName;
     private Integer quantitySold;
 

@@ -1,39 +1,73 @@
 package com.pharmacy.pharmacyapp.controller;
 
+import com.pharmacy.pharmacyapp.dto.SaleBatchDto;
+import com.pharmacy.pharmacyapp.service.MedicineService;
 import com.pharmacy.pharmacyapp.service.SalesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 @Controller
 public class SellController {
+
     private final SalesService salesService;
+    private final MedicineService medicineService;
+
     @Autowired
-    public SellController(SalesService salesService) {
+    public SellController(SalesService salesService, MedicineService medicineService) {
         this.salesService = salesService;
-    }
-    @GetMapping("/admin/sell")
-    public String showSellForm() {
-        return "admin/sell"; // renders templates/admin/sell.html
+        this.medicineService = medicineService;
     }
 
-    // RedirectAttributes lets us attach a ONE-TIME message that survives
-    // exactly one redirect - perfect for "show a success/error message,
-    // then forget it" without it reappearing if the page is refreshed.
+    @GetMapping("/admin/sell")
+    public String showSellForm(Model model) {
+        model.addAttribute("medicines", medicineService.getAllMedicines());
+        return "admin/sell";
+    }
+
+    @PostMapping(value = "/admin/sell/batch", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> submitSellBatch(@RequestBody SaleBatchDto batchDto) {
+        try {
+            String invoiceNumber = salesService.processBatchSale(batchDto);
+            String customer = (batchDto.getCustomerName() != null && !batchDto.getCustomerName().isBlank())
+                    ? batchDto.getCustomerName()
+                    : "Customer";
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "invoiceNumber", invoiceNumber,
+                    "message", "Dispensed " + batchDto.getItems().size() + " item(s) to " + customer + " successfully! Invoice: " + invoiceNumber
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "Failed to process sale: " + e.getMessage()
+            ));
+        }
+    }
+
     @PostMapping("/admin/sell")
     public String submitSell(@RequestParam String name,
                              @RequestParam Integer quantity,
+                             @RequestParam(required = false) String customerName,
+                             @RequestParam(required = false) String customerPhone,
                              RedirectAttributes redirectAttributes) {
         try {
-            salesService.sellMedicine(name, quantity);
+            salesService.sellMedicine(name, quantity, customerName, customerPhone);
             redirectAttributes.addFlashAttribute("success",
-                    "Sold " + quantity + " unit(s) of " + name + ".");
+                    "Sold " + quantity + " unit(s) of " + name + " successfully.");
         } catch (IllegalArgumentException e) {
-            // This catches the exact error messages we wrote in SalesService
-            // (e.g. "Not enough stock. Only 3 left.") and shows them as-is.
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/sell";

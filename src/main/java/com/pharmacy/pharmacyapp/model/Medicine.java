@@ -4,11 +4,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "medicine", indexes = {
+    @Index(name = "idx_medicine_name", columnList = "name"),
+    @Index(name = "idx_medicine_category", columnList = "category")
+})
 @Getter
 @Setter
 @NoArgsConstructor

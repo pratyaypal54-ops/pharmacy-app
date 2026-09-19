@@ -1,50 +1,185 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Medicines - Pharmacy App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Catalog - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<header>
-    <h1>Available Medicines</h1>
-</header>
+<!-- TOP NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/medicines}" class="nav-link active">Catalog</a>
+        <a th:href="@{/admin/dashboard}" class="nav-link">Admin Dashboard</a>
+    </div>
+    <div class="nav-actions">
+        <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+    </div>
+</nav>
 
-<main>
-    <!-- GET form - typing a search just changes the URL to
-         /medicines?search=para, which is bookmarkable/shareable -->
-    <form th:action="@{/medicines}" method="get" style="margin-bottom: 20px;">
-        <input type="text" name="search" th:value="${search}"
-               placeholder="Search medicine name..." style="padding:8px; width:250px;">
-        <button type="submit">Search</button>
-        <!-- Only show "Clear" if a search is currently active -->
-        <a th:if="${search}" th:href="@{/medicines}" style="margin-left:10px;">Clear</a>
-    </form>
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128138; Available Medicines Catalog</h1>
+            <p class="page-subtitle">Real-time inventory lookup and public stock availability monitor</p>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);" id="catalogCounter">
+            Showing <span th:text="${medicines.size()}" style="color: var(--neon-green); font-weight: 700;">0</span> items
+        </div>
+    </div>
 
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>In Stock</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="med : ${medicines}">
-            <td th:text="${med.name}">Medicine Name</td>
-            <td th:text="${med.category}">Category</td>
-            <td th:text="'₹' + ${med.sellingPrice}">Price</td>
-            <td th:text="${med.quantity} lt ${med.lowStockThreshold} ? 'Only ' + ${med.quantity} + ' left' : ${med.quantity}">
-                Stock
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <!-- TABLE CONTAINER & REAL-TIME SEARCH TOOLBAR -->
+    <div class="table-container">
+        <div class="table-toolbar">
+            <form th:action="@{/medicines}" method="get" style="display: flex; gap: 10px; align-items: center; flex: 1; max-width: 460px;">
+                <input type="text" 
+                       name="search" 
+                       id="liveSearchInput"
+                       th:value="${search}" 
+                       class="cyber-input" 
+                       placeholder="Instant search by medicine name or category..." 
+                       style="padding: 8px 14px; font-size: 0.88rem;">
+                <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                <a th:if="${search}" th:href="@{/medicines}" class="btn btn-outline btn-sm">Clear</a>
+            </form>
 
-    <p th:if="${medicines.isEmpty()}">No medicines found matching your search.</p>
-</main>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 0.78rem; color: var(--text-muted);">FILTER:</span>
+                <select id="categoryFilter" class="cyber-select" style="padding: 6px 12px; font-size: 0.82rem; width: auto;">
+                    <option value="ALL">All Categories</option>
+                </select>
+            </div>
+        </div>
+
+        <table class="cyber-table" id="medicineTable">
+            <thead>
+                <tr>
+                    <th>Medicine Name</th>
+                    <th>Category</th>
+                    <th>Retail Price</th>
+                    <th>Availability Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="med : ${medicines}">
+                    <td>
+                        <strong style="color: var(--text-bright); font-size: 0.95rem;" th:text="${med.name}">Medicine Name</strong>
+                    </td>
+                    <td>
+                        <span class="badge badge-category" th:text="${med.category != null and !med.category.isEmpty() ? med.category : 'General'}">Category</span>
+                    </td>
+                    <td class="mono-cell" style="font-size: 1rem; color: var(--neon-green);" 
+                        th:text="'&#8377;' + ${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">&#8377;0.00</td>
+                    <td>
+                        <!-- Dynamic Stock Availability Status: Hidden exact numbers for privacy -->
+                        <!-- 0 Units: Vivid Red Out of Stock -->
+                        <span th:if="${med.quantity <= 0}" class="badge badge-out-of-stock" style="color: var(--neon-crimson); font-weight: 700; border-color: rgba(255, 42, 109, 0.6); box-shadow: 0 0 8px var(--neon-crimson-glow);">
+                            &#9888; Out of Stock
+                        </span>
+                        <!-- 1 to 5 Units: Amber Urgency Badge -->
+                        <span th:if="${med.quantity > 0 and med.quantity <= 5}" class="badge badge-low-stock"
+                              th:text="'&#9888; Only ' + ${med.quantity} + ' left'">
+                            &#9888; Only 5 left
+                        </span>
+                        <!-- More than 5 Units: Clean Green Available Badge (exact count hidden) -->
+                        <span th:if="${med.quantity > 5}" class="badge badge-in-stock">
+                            &#10003; Available
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${medicines.isEmpty()}" style="padding: 48px; text-align: center; color: var(--text-dim);" id="noMatchesBox">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">&#128269;</div>
+            <p>No medicines found matching your query.</p>
+        </div>
+        <div id="noLiveMatches" style="display: none; padding: 48px; text-align: center; color: var(--text-dim);">
+            <div style="font-size: 2.2rem; margin-bottom: 8px;">&#128269;</div>
+            <p>No medicines match the instant filter.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Populate distinct categories into dropdown
+    const categoryFilter = document.getElementById('categoryFilter');
+    const tableRows = document.querySelectorAll('#medicineTable tbody tr');
+    const categories = new Set();
+
+    tableRows.forEach(row => {
+        const catBadge = row.querySelector('.badge-category');
+        if (catBadge) {
+            const cat = catBadge.textContent.trim();
+            if (cat) categories.add(cat);
+        }
+    });
+
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.toLowerCase();
+        opt.textContent = cat;
+        categoryFilter.appendChild(opt);
+    });
+
+    // High-performance search cache & debounced filtering
+    const searchInput = document.getElementById('liveSearchInput');
+    const noLiveMatches = document.getElementById('noLiveMatches');
+    const catalogCounter = document.getElementById('catalogCounter');
+
+    const rowCache = Array.from(tableRows).map(row => {
+        const catBadge = row.querySelector('.badge-category');
+        return {
+            element: row,
+            text: row.textContent.toLowerCase(),
+            catText: catBadge ? catBadge.textContent.toLowerCase().trim() : ''
+        };
+    });
+
+    function filterTable() {
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedCat = categoryFilter.value.toLowerCase();
+        let visibleCount = 0;
+
+        for (let i = 0; i < rowCache.length; i++) {
+            const item = rowCache[i];
+            const matchesQuery = !query || item.text.includes(query);
+            const matchesCat = (selectedCat === 'all') || (item.catText === selectedCat);
+
+            if (matchesQuery && matchesCat) {
+                item.element.style.display = '';
+                visibleCount++;
+            } else {
+                item.element.style.display = 'none';
+            }
+        }
+
+        if (noLiveMatches) {
+            noLiveMatches.style.display = (visibleCount === 0 && rowCache.length > 0) ? 'block' : 'none';
+        }
+
+        if (catalogCounter) {
+            catalogCounter.innerHTML = 'Showing <span style="color: var(--neon-green); font-weight: 700;">' + visibleCount + '</span> items';
+        }
+    }
+
+    let debounceTimer = null;
+    function debouncedFilter() {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            requestAnimationFrame(filterTable);
+        }, 50);
+    }
+
+    searchInput.addEventListener('input', debouncedFilter);
+    categoryFilter.addEventListener('change', filterTable);
+</script>
 
 </body>
 </html>

@@ -2,70 +2,461 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Sales Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports &amp; Historical Audit - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <h1>Daily Sales Report</h1>
-</header>
 
-<main>
-    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
-
-    <form th:action="@{/admin/reports}" method="get" style="margin-bottom: 24px;">
-        <label>Pick a date: </label>
-        <input type="date" name="date" th:value="${selectedDate}">
-        <button type="submit">View</button>
-    </form>
-
-    <h2 th:text="'Summary for ' + ${selectedDate}">Summary</h2>
-
-    <div style="display:flex; gap:24px; margin-bottom:24px;">
-        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
-            <div style="color:var(--text-secondary);">Items Sold</div>
-            <div style="font-size:1.5em;" th:text="${summary.totalItemsSold}">0</div>
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link active">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
         </div>
-        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
-            <div style="color:var(--text-secondary);">Revenue</div>
-            <div style="font-size:1.5em;" th:text="'₹' + ${summary.totalRevenue}">₹0</div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128202; Transaction Archives &amp; Operational History</h1>
+            <p class="page-subtitle" th:text="${allTime ? 'Displaying complete all-time historical records' : 'Analyzing records for ' + selectedDate}">Archive records</p>
         </div>
-        <div style="background:var(--bg-surface); padding:16px 24px; border-radius:6px;">
-            <div style="color:var(--text-secondary);">Profit</div>
-            <div style="font-size:1.5em;" th:text="'₹' + ${summary.totalProfit}">₹0</div>
+        <div style="display: flex; gap: 10px;">
+            <a th:href="@{/admin/add-stock}" class="btn btn-cyber-cyan btn-sm">+ Inward Stock</a>
+            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">+ Dispense Sale</a>
         </div>
     </div>
 
-    <table>
-        <thead>
-        <tr>
-            <th>Medicine</th>
-            <th>Quantity Sold</th>
-            <th>Buying Price</th>
-            <th>Selling Price</th>
-            <th>Total</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="t : ${summary.transactions}">
-            <td th:text="${t.medicineName}">Name</td>
-            <td th:text="${t.quantitySold}">Qty</td>
-            <td th:text="'₹' + ${t.buyingPriceAtSale}">Buy</td>
-            <td th:text="'₹' + ${t.sellingPriceAtSale}">Sell</td>
-            <td th:text="'₹' + ${t.totalAmount}">Total</td>
-            <td>
-                <!-- Builds a URL like /admin/reports/edit-sale/7 using
-                     this specific row's id -->
-                <a th:href="@{/admin/reports/edit-sale/{id}(id=${t.id})}">Edit</a>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+    <!-- NOTIFICATION MESSAGES -->
+    <div th:if="${success}" class="alert alert-success">
+        <span>&#10003;</span> <span th:text="${success}">Correction saved.</span>
+    </div>
 
-    <p th:if="${summary.transactions.isEmpty()}">No sales recorded for this date.</p>
+    <!-- DEDICATED HISTORY NAVIGATION TABS -->
+    <div class="tab-navigation">
+        <a th:href="@{/admin/reports(tab='sales', date=${selectedDate}, allTime=${allTime})}"
+           class="tab-link"
+           th:classappend="${currentTab == 'sales' or currentTab == null ? 'active' : ''}">
+            &#128179; Sales History &amp; Customer Billing
+            <span class="badge-tag" th:text="${summary != null and summary.invoiceGroups != null ? summary.invoiceGroups.size() : (summary != null and summary.transactions != null ? summary.transactions.size() : 0)}">0</span>
+        </a>
 
-    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
-</main>
+        <a th:href="@{/admin/reports(tab='stock', date=${selectedDate}, allTime=${allTime})}"
+           class="tab-link cyan-tab"
+           th:classappend="${currentTab == 'stock' ? 'active' : ''}">
+            &#128230; Stock Add History &amp; Provider Inward
+            <span class="badge-tag" th:text="${stockSummary != null and stockSummary.batchGroups != null ? stockSummary.batchGroups.size() : (stockSummary != null and stockSummary.additions != null ? stockSummary.additions.size() : 0)}">0</span>
+        </a>
+
+        <a th:href="@{/admin/reports(tab='adjustments', date=${selectedDate}, allTime=${allTime})}"
+           class="tab-link amber-tab"
+           th:classappend="${currentTab == 'adjustments' ? 'active' : ''}">
+            &#9881; Stock Audit Discrepancies
+            <span class="badge-tag" th:text="${adjustments != null ? adjustments.size() : 0}">0</span>
+        </a>
+    </div>
+
+    <!-- DATE & TIMEFRAME FILTER TOOLBAR -->
+    <div class="cyber-card" style="padding: 14px 20px; margin-bottom: 24px;">
+        <form th:action="@{/admin/reports}" method="get" id="dateFilterForm" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <input type="hidden" name="tab" th:value="${currentTab}">
+
+            <label style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                &#128197; Select Date:
+            </label>
+            <input type="date"
+                   name="date"
+                   id="reportDatePicker"
+                   th:value="${selectedDate}"
+                   class="cyber-input"
+                   style="width: auto; padding: 6px 12px; font-size: 0.88rem;">
+
+            <button type="submit" class="btn btn-primary btn-sm">Load Date</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="setToday()">Today</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="setYesterday()">Yesterday</button>
+
+            <a th:href="@{/admin/reports(tab=${currentTab}, allTime='true')}"
+               class="btn btn-sm"
+               th:classappend="${allTime ? 'btn-cyber-cyan' : 'btn-outline'}"
+               style="margin-left: auto;">
+                &#128340; All-Time Full History
+            </a>
+        </form>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: SALES HISTORY & CUSTOMER BILLING -->
+    <!-- ========================================================================= -->
+    <div th:if="${currentTab == 'sales' or currentTab == null}">
+        <!-- FINANCIAL SUMMARY CARDS -->
+        <div class="stats-grid">
+            <div class="stat-card neon-green">
+                <div class="stat-label">Units Sold</div>
+                <div class="stat-value" th:text="${summary.totalItemsSold}">0</div>
+                <div class="stat-sub">Total units dispensed to patients</div>
+            </div>
+
+            <div class="stat-card neon-green">
+                <div class="stat-label">Gross Sales Revenue</div>
+                <div class="stat-value" th:text="'&#8377;' + ${#numbers.formatDecimal(summary.totalRevenue, 1, 2)}">&#8377;0.00</div>
+                <div class="stat-sub">Total customer billing volume</div>
+            </div>
+
+            <div class="stat-card neon-green">
+                <div class="stat-label">Net Sales Profit</div>
+                <div class="stat-value" style="color: var(--neon-green);" th:text="'&#8377;' + ${#numbers.formatDecimal(summary.totalProfit, 1, 2)}">&#8377;0.00</div>
+                <div class="stat-sub">Revenue minus stock purchase cost</div>
+            </div>
+
+            <div class="stat-card neon-cyan">
+                <div class="stat-label">Profit Margin</div>
+                <div class="stat-value" id="marginDisplay" style="color: var(--neon-cyan);">0%</div>
+                <div class="stat-sub">Margin on sales volume</div>
+            </div>
+        </div>
+
+        <!-- TRANSACTIONS LOG -->
+        <div class="table-container">
+            <div class="table-toolbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-in-stock">SALES &amp; BILLING ARCHIVE</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);"
+                          th:text="${summary.invoiceGroups != null ? summary.invoiceGroups.size() : 0} + ' invoice bill(s) on file'">0 bills</span>
+                </div>
+                <div>
+                    <input type="text"
+                           id="salesFilterInput"
+                           class="cyber-input"
+                           placeholder="Filter by customer, phone, medicine..."
+                           style="padding: 6px 12px; font-size: 0.82rem; width: 280px;"
+                           onkeyup="filterTable('transactionTable', this.value)">
+                </div>
+            </div>
+
+            <table class="cyber-table" id="transactionTable">
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">Date &amp; Time</th>
+                        <th style="width: 190px;">Customer / Patient</th>
+                        <th style="width: 130px;">Customer Phone</th>
+                        <th>Prescribed Medicines (List View)</th>
+                        <th style="text-align: right; width: 90px;">Total Qty</th>
+                        <th style="text-align: right; width: 110px;">Net Profit</th>
+                        <th style="text-align: right; width: 120px;">Total Billed</th>
+                        <th style="text-align: center; width: 80px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="g : ${summary.invoiceGroups}">
+                        <td class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted); vertical-align: top; padding-top: 14px;">
+                            <div th:text="${g.saleDate != null ? #temporals.format(g.saleDate, 'yyyy-MM-dd') : 'N/A'}">2026-09-18</div>
+                            <div style="font-size: 0.74rem; color: var(--neon-cyan); font-family: var(--font-mono); margin-top: 2px;"
+                                 th:text="${g.saleDate != null ? #temporals.format(g.saleDate, 'HH:mm:ss') : ''}">12:00:00</div>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 14px;">
+                            <strong style="color: var(--text-bright); font-size: 0.95rem; display: block;"
+                                    th:text="${g.customerName != null && !g.customerName.isBlank() ? g.customerName : 'Walk-in Customer'}">
+                                Customer Name
+                            </strong>
+                            <div th:if="${g.invoiceNumber != null}" style="font-size: 0.72rem; color: var(--neon-cyan); font-family: var(--font-mono); margin-top: 3px;" th:text="${g.invoiceNumber}">
+                                INV-20260918-001
+                            </div>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 14px;">
+                            <span class="badge-tag"
+                                  th:text="${g.customerPhone != null && !g.customerPhone.isBlank() ? g.customerPhone : 'N/A'}">
+                                9876543210
+                            </span>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 10px; padding-bottom: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div th:each="item : ${g.items}"
+                                     style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 6px; border-left: 3px solid var(--neon-green);">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong style="color: var(--text-bright); font-size: 0.88rem;" th:text="${item.medicineName}">Paracetamol 650mg</strong>
+                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'&times; ' + ${item.quantitySold} + ' units'">&times; 2 units</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);" th:text="'@ &#8377;' + ${#numbers.formatDecimal(item.sellingPriceAtSale, 1, 2)}">@ ₹20.00</span>
+                                        <span class="mono-cell" style="font-size: 0.85rem; color: var(--neon-green); font-weight: 700;" th:text="'&#8377;' + ${#numbers.formatDecimal(item.totalAmount, 1, 2)}">&#8377;40.00</span>
+                                        <a th:href="@{/admin/reports/edit-sale/{id}(id=${item.id})}" title="Correct pricing for this medicine" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 0.72rem; line-height: 1;">&#9998;</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="mono-cell highlight" style="text-align: right; vertical-align: top; padding-top: 14px;" th:text="${g.totalItems}">Qty</td>
+                        <td class="mono-cell" style="text-align: right; color: var(--neon-green); vertical-align: top; padding-top: 14px;"
+                            th:text="'&#8377;' + ${#numbers.formatDecimal(g.totalProfit, 1, 2)}">
+                            &#8377;0.00
+                        </td>
+                        <td class="mono-cell" style="text-align: right; color: var(--neon-cyan); font-weight: 700; font-size: 1.05rem; vertical-align: top; padding-top: 14px;"
+                            th:text="'&#8377;' + ${#numbers.formatDecimal(g.totalAmount, 1, 2)}">
+                            &#8377;0.00
+                        </td>
+                        <td style="text-align: center; vertical-align: top; padding-top: 14px;">
+                            <span class="badge badge-in-stock" style="font-size: 0.72rem;">PAID</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${summary.invoiceGroups == null or summary.invoiceGroups.isEmpty()}" style="padding: 40px; text-align: center; color: var(--text-dim);">
+                <div style="font-size: 2rem; margin-bottom: 8px;">&#128196;</div>
+                <p>No customer sales transactions logged for the selected period (<span th:text="${allTime ? 'All Time' : selectedDate}"></span>).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: STOCK ADD HISTORY & PROVIDER INWARD -->
+    <!-- ========================================================================= -->
+    <div th:if="${currentTab == 'stock'}">
+        <!-- RESTOCK TELEMETRY SUMMARY CARDS -->
+        <div class="stats-grid">
+            <div class="stat-card neon-cyan">
+                <div class="stat-label">Units Received</div>
+                <div class="stat-value" th:text="${stockSummary.totalItemsAdded}">0</div>
+                <div class="stat-sub">Total units added to inventory</div>
+            </div>
+
+            <div class="stat-card neon-cyan">
+                <div class="stat-label">Total Purchase Expenditure</div>
+                <div class="stat-value" style="color: var(--neon-cyan);" th:text="'&#8377;' + ${#numbers.formatDecimal(stockSummary.totalCost, 1, 2)}">&#8377;0.00</div>
+                <div class="stat-sub">Amount paid / owed to suppliers</div>
+            </div>
+
+            <div class="stat-card neon-cyan">
+                <div class="stat-label">Distinct Medicines Restocked</div>
+                <div class="stat-value" th:text="${stockSummary.totalDistinctMedicines}">0</div>
+                <div class="stat-sub">Product variations delivered</div>
+            </div>
+
+            <div class="stat-card neon-green">
+                <div class="stat-label">Delivery Batches Logged</div>
+                <div class="stat-value" th:text="${stockSummary.batchGroups != null ? stockSummary.batchGroups.size() : 0}">0</div>
+                <div class="stat-sub">Inward batches on file</div>
+            </div>
+        </div>
+
+        <!-- STOCK ADD INWARD LOG TABLE -->
+        <div class="table-container">
+            <div class="table-toolbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-category">STOCK ADD INWARD LOG</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);"
+                          th:text="${stockSummary.batchGroups != null ? stockSummary.batchGroups.size() : 0} + ' delivery batch(es) on file'">0 batches</span>
+                </div>
+                <div>
+                    <input type="text"
+                           id="stockFilterInput"
+                           class="cyber-input"
+                           placeholder="Filter by provider, phone, medicine..."
+                           style="padding: 6px 12px; font-size: 0.82rem; width: 280px;"
+                           onkeyup="filterTable('stockAddTable', this.value)">
+                </div>
+            </div>
+
+            <table class="cyber-table" id="stockAddTable">
+                <thead>
+                    <tr>
+                        <th style="width: 140px;">Date &amp; Time</th>
+                        <th style="width: 200px;">Provider / Supplier</th>
+                        <th style="width: 130px;">Provider Phone</th>
+                        <th>Delivered Medicines (List View)</th>
+                        <th style="text-align: right; width: 100px;">Total Qty</th>
+                        <th style="text-align: right; width: 130px;">Total Batch Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="bg : ${stockSummary.batchGroups}">
+                        <td class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted); vertical-align: top; padding-top: 14px;">
+                            <div th:text="${bg.addedAt != null ? #temporals.format(bg.addedAt, 'yyyy-MM-dd') : 'N/A'}">2026-09-18</div>
+                            <div style="font-size: 0.74rem; color: var(--neon-cyan); font-family: var(--font-mono); margin-top: 2px;"
+                                 th:text="${bg.addedAt != null ? #temporals.format(bg.addedAt, 'HH:mm:ss') : ''}">10:30:00</div>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 14px;">
+                            <strong style="color: var(--text-bright); font-size: 0.95rem; display: block;"
+                                    th:text="${bg.providerName != null && !bg.providerName.isBlank() ? bg.providerName : 'General Provider'}">
+                                Supplier Name
+                            </strong>
+                            <div th:if="${bg.batchInvoiceNumber != null}" style="font-size: 0.72rem; color: var(--neon-cyan); font-family: var(--font-mono); margin-top: 3px;" th:text="${bg.batchInvoiceNumber}">
+                                BAT-20260918-001
+                            </div>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 14px;">
+                            <span class="badge-tag"
+                                  th:text="${bg.providerPhone != null && !bg.providerPhone.isBlank() ? bg.providerPhone : 'N/A'}">
+                                9876543210
+                            </span>
+                        </td>
+                        <td style="vertical-align: top; padding-top: 10px; padding-bottom: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div th:each="item : ${bg.items}"
+                                     style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 6px; border-left: 3px solid var(--neon-cyan);">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <strong style="color: var(--text-bright); font-size: 0.88rem;" th:text="${item.medicineName}">Paracetamol 650mg</strong>
+                                        <span class="badge badge-category" style="font-size: 0.68rem; padding: 1px 6px;" th:text="${item.category != null ? item.category : 'General'}">Category</span>
+                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'+' + ${item.quantityAdded} + ' units'">+50 units</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);"
+                                              th:text="'Cost: &#8377;' + ${#numbers.formatDecimal(item.buyingPrice, 1, 2)} + ' | Retail: &#8377;' + ${#numbers.formatDecimal(item.sellingPrice, 1, 2)}">
+                                            Cost: ₹12.00 | Retail: ₹20.00
+                                        </span>
+                                        <span class="mono-cell" style="font-size: 0.85rem; color: var(--neon-cyan); font-weight: 700;"
+                                              th:text="'&#8377;' + ${#numbers.formatDecimal(item.totalCost, 1, 2)}">
+                                            &#8377;600.00
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="mono-cell highlight" style="text-align: right; vertical-align: top; padding-top: 14px;" th:text="${bg.totalItems}">50</td>
+                        <td class="mono-cell" style="text-align: right; color: var(--neon-cyan); font-weight: 700; font-size: 1.05rem; vertical-align: top; padding-top: 14px;"
+                            th:text="'&#8377;' + ${#numbers.formatDecimal(bg.totalCost, 1, 2)}">
+                            &#8377;0.00
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${stockSummary.batchGroups == null or stockSummary.batchGroups.isEmpty()}" style="padding: 40px; text-align: center; color: var(--text-dim);">
+                <div style="font-size: 2rem; margin-bottom: 8px;">&#128230;</div>
+                <p>No stock additions logged for the selected period (<span th:text="${allTime ? 'All Time' : selectedDate}"></span>).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: STOCK AUDIT DISCREPANCIES -->
+    <!-- ========================================================================= -->
+    <div th:if="${currentTab == 'adjustments'}">
+        <div class="table-container">
+            <div class="table-toolbar">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-low-stock">STOCK AUDIT CORRECTIONS</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);"
+                          th:text="${adjustments.size()} + ' correction logs on file'">0 logs</span>
+                </div>
+                <div>
+                    <input type="text"
+                           id="adjFilterInput"
+                           class="cyber-input"
+                           placeholder="Filter corrections by medicine or reason..."
+                           style="padding: 6px 12px; font-size: 0.82rem; width: 280px;"
+                           onkeyup="filterTable('adjustmentsTable', this.value)">
+                </div>
+            </div>
+
+            <table class="cyber-table" id="adjustmentsTable">
+                <thead>
+                    <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Medicine</th>
+                        <th style="text-align: right;">System Count Before</th>
+                        <th style="text-align: right;">Verified Count After</th>
+                        <th style="text-align: right;">Net Delta</th>
+                        <th>Accountability Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="adj : ${adjustments}">
+                        <td class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);"
+                            th:text="${adj.adjustedAt != null ? #temporals.format(adj.adjustedAt, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}">
+                            2026-09-18 10:30:00
+                        </td>
+                        <td>
+                            <strong style="color: var(--text-bright);" th:text="${adj.medicineName}">Medicine Name</strong>
+                        </td>
+                        <td class="mono-cell" style="text-align: right; color: var(--text-muted);" th:text="${adj.quantityBefore}">100</td>
+                        <td class="mono-cell highlight" style="text-align: right;" th:text="${adj.quantityAfter}">85</td>
+                        <td class="mono-cell" style="text-align: right;">
+                            <span th:if="${adj.quantityAfter > adj.quantityBefore}"
+                                  style="color: var(--neon-green); font-weight: 700;"
+                                  th:text="'+' + (${adj.quantityAfter} - ${adj.quantityBefore})">+15</span>
+                            <span th:if="${adj.quantityAfter < adj.quantityBefore}"
+                                  style="color: var(--neon-crimson); font-weight: 700;"
+                                  th:text="'' + (${adj.quantityAfter} - ${adj.quantityBefore})">-15</span>
+                            <span th:if="${adj.quantityAfter == adj.quantityBefore}"
+                                  style="color: var(--text-muted);">0</span>
+                        </td>
+                        <td style="font-size: 0.85rem; color: var(--text-main);"
+                            th:text="${adj.reason != null ? adj.reason : 'General discrepancy'}">
+                            Physical count
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${adjustments == null or adjustments.isEmpty()}" style="padding: 40px; text-align: center; color: var(--text-dim);">
+                <div style="font-size: 2rem; margin-bottom: 8px;">&#9881;</div>
+                <p>No audit discrepancy adjustments on file.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Profit margin calculation for sales tab
+    const revenue = /*[[${summary != null ? summary.totalRevenue : 0.0}]]*/ 0.0;
+    const profit = /*[[${summary != null ? summary.totalProfit : 0.0}]]*/ 0.0;
+
+    const marginDisplay = document.getElementById('marginDisplay');
+    if (marginDisplay) {
+        if (revenue > 0) {
+            const margin = ((profit / revenue) * 100).toFixed(1);
+            marginDisplay.textContent = margin + '%';
+        } else {
+            marginDisplay.textContent = '0%';
+        }
+    }
+
+    function setToday() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDatePicker').value = today;
+        document.getElementById('dateFilterForm').submit();
+    }
+
+    function setYesterday() {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        const yesterday = d.toISOString().split('T')[0];
+        document.getElementById('reportDatePicker').value = yesterday;
+        document.getElementById('dateFilterForm').submit();
+    }
+
+    function filterTable(tableId, query) {
+        const val = query.toLowerCase();
+        const rows = document.querySelectorAll('#' + tableId + ' tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(val) ? '' : 'none';
+        });
+    }
+    /*]]>*/
+</script>
+
 </body>
 </html>

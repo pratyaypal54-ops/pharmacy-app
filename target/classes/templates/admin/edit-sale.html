@@ -2,44 +2,151 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Correct Sale Record</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correct Sale Record - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <h1>Correct a Past Sale</h1>
-</header>
 
-<main style="max-width: 500px;">
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link active">Sales Reports</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span> ADMIN TERMINAL
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
 
-    <p>
-        <strong th:text="${transaction.medicineName}">Medicine</strong> -
-        <span th:text="${transaction.quantitySold}">Qty</span> unit(s) sold on
-        <span th:text="${transaction.saleDate}">Date</span>
-    </p>
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#9998; Correct Past Transaction</h1>
+            <p class="page-subtitle">Reconcile erroneous price entry on an already-committed transaction</p>
+        </div>
+        <a th:href="@{/admin/reports}" class="btn btn-outline btn-sm">&larr; Back to Reports</a>
+    </div>
 
-    <!-- th:action builds the URL using this transaction's id, same
-         pattern as the Edit link on the reports page -->
-    <form th:action="@{/admin/reports/edit-sale/{id}(id=${transaction.id})}" method="post">
-
-        <div style="margin-bottom: 14px;">
-            <label>Correct Buying Price (per unit)</label><br>
-            <!-- th:value pre-fills the box with the CURRENT (possibly
-                 wrong) value, so admin only needs to fix what's wrong -->
-            <input type="number" step="0.01" name="buyingPrice"
-                   th:value="${transaction.buyingPriceAtSale}" required style="width:100%; padding:8px;">
+    <div class="cyber-card form-card">
+        <!-- TRANSACTION HEADER DETAILS -->
+        <div class="interactive-panel" style="margin-top: 0; border-color: var(--neon-cyan);">
+            <div class="preview-row" th:if="${transaction.customerName != null}">
+                <span class="preview-label">Customer / Patient:</span>
+                <strong style="color: var(--text-bright);" th:text="${transaction.customerName}">Customer Name</strong>
+            </div>
+            <div class="preview-row" th:if="${transaction.customerPhone != null}">
+                <span class="preview-label">Customer Phone:</span>
+                <span class="badge-tag" th:text="${transaction.customerPhone}">Phone</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-label">Medicine Sold:</span>
+                <strong style="color: var(--neon-cyan);" th:text="${transaction.medicineName}">Medicine</strong>
+            </div>
+            <div class="preview-row">
+                <span class="preview-label">Quantity Dispensed:</span>
+                <span class="preview-val mono-cell" id="fixedQty" th:text="${transaction.quantitySold}">0</span>
+            </div>
+            <div class="preview-row">
+                <span class="preview-label">Transaction Timestamp:</span>
+                <span class="preview-val mono-cell" style="font-size: 0.82rem; color: var(--text-muted);" 
+                      th:text="${transaction.saleDate != null ? #temporals.format(transaction.saleDate, 'yyyy-MM-dd HH:mm:ss') : 'N/A'}">
+                      2026-09-18
+                </span>
+            </div>
         </div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Correct Selling Price (per unit)</label><br>
-            <input type="number" step="0.01" name="sellingPrice"
-                   th:value="${transaction.sellingPriceAtSale}" required style="width:100%; padding:8px;">
-        </div>
+        <form th:action="@{/admin/reports/edit-sale/{id}(id=${transaction.id})}" method="post">
 
-        <button type="submit">Save Correction</button>
-    </form>
+            <div class="form-group">
+                <label class="form-label" for="editBuyPrice">
+                    <span>Corrected Buying Price (per unit)</span>
+                    <span class="helper-tag">Unit cost for profit adjustment</span>
+                </label>
+                <input type="number" 
+                       step="0.01" 
+                       id="editBuyPrice" 
+                       name="buyingPrice" 
+                       th:value="${transaction.buyingPriceAtSale}" 
+                       class="cyber-input" 
+                       required>
+            </div>
 
-    <p style="margin-top:20px;"><a th:href="@{/admin/reports}">&larr; Back to Reports</a></p>
-</main>
+            <div class="form-group">
+                <label class="form-label" for="editSellPrice">
+                    <span>Corrected Selling Price (per unit)</span>
+                    <span class="helper-tag">Actual rate charged to customer</span>
+                </label>
+                <input type="number" 
+                       step="0.01" 
+                       id="editSellPrice" 
+                       name="sellingPrice" 
+                       th:value="${transaction.sellingPriceAtSale}" 
+                       class="cyber-input" 
+                       required>
+            </div>
+
+            <!-- LIVE RECALCULATED TOTAL -->
+            <div class="interactive-panel" style="background: rgba(0, 255, 136, 0.04); border-color: var(--neon-green-border);">
+                <div class="preview-row">
+                    <span class="preview-label">Revised Unit Profit:</span>
+                    <span class="preview-val" id="revisedProfit">&#8377;0.00</span>
+                </div>
+                <div class="preview-row" style="margin-top: 4px;">
+                    <span class="preview-label" style="font-weight: 700; color: var(--text-bright);">REVISED TRANSACTION TOTAL:</span>
+                    <span class="preview-val highlight" id="revisedTotal" style="font-size: 1.3rem;">&#8377;0.00</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 8px;">
+                Save Transaction Correction
+            </button>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const qty = parseInt(document.getElementById('fixedQty').textContent) || 1;
+    const buyInput = document.getElementById('editBuyPrice');
+    const sellInput = document.getElementById('editSellPrice');
+    const revisedProfit = document.getElementById('revisedProfit');
+    const revisedTotal = document.getElementById('revisedTotal');
+
+    function updateCorrectionPreview() {
+        const buy = parseFloat(buyInput.value) || 0;
+        const sell = parseFloat(sellInput.value) || 0;
+
+        const total = qty * sell;
+        const profit = (sell - buy) * qty;
+
+        revisedTotal.textContent = '\u20b9' + total.toFixed(2);
+        if (profit >= 0) {
+            revisedProfit.innerHTML = '<span style="color: var(--neon-green);">+\u20b9' + profit.toFixed(2) + '</span>';
+        } else {
+            revisedProfit.innerHTML = '<span style="color: var(--neon-crimson);">-\u20b9' + Math.abs(profit).toFixed(2) + '</span>';
+        }
+    }
+
+    buyInput.addEventListener('input', updateCorrectionPreview);
+    sellInput.addEventListener('input', updateCorrectionPreview);
+    updateCorrectionPreview();
+    /*]]>*/
+</script>
+
 </body>
 </html>

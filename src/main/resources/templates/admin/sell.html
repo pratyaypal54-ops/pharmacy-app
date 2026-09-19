@@ -2,34 +2,661 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Sell Medicine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispense & Multi-Item Billing - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <h1>Sell Medicine</h1>
-</header>
-<main style="max-width: 500px;">
-    <!-- These read the "flash" messages sent by SellController after
-         a redirect. They only show up ONCE, right after a submit. -->
-    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
-    <p th:if="${error}" th:text="${error}" style="color: #e35d5d;"></p>
 
-    <form th:action="@{/admin/sell}" method="post">
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link active">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
 
-        <div style="margin-bottom: 14px;">
-            <label>Medicine Name</label><br>
-            <input type="text" name="name" required style="width:100%; padding:8px;">
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128179; Patient Dispense &amp; Bulk Sales Terminal</h1>
+            <p class="page-subtitle">Record customer details, stage multiple prescribed medicines into the live review bill, and dispense in bulk</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a th:if="${isOwner}" th:href="@{/admin/reports}" class="btn btn-cyber-cyan btn-sm">&#128220; View Sales History</a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION MESSAGES -->
+    <div th:if="${success}" class="alert alert-success">
+        <span>&#10003;</span> <span th:text="${success}">Sale completed successfully.</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger">
+        <span>&#9888;</span> <span th:text="${error}">Error processing sale.</span>
+    </div>
+
+    <div id="dynamicAlert" style="display: none;" class="alert">
+        <span id="dynamicAlertIcon">&#10003;</span>
+        <span id="dynamicAlertMsg"></span>
+    </div>
+
+    <!-- SPLIT WORKBENCH LAYOUT -->
+    <div class="split-layout">
+        <!-- LEFT COLUMN: CUSTOMER & MEDICINE DISPENSE CONTROLS -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+
+            <!-- CARD 1: CUSTOMER CREDENTIALS -->
+            <div class="cyber-card">
+                <div class="card-title-bar">
+                    <h3>&#128100; Customer / Patient Credentials</h3>
+                    <span class="badge badge-in-stock">BILLING RECIPIENT</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="customerNameInput">
+                        <span>Customer Full Name</span>
+                        <span class="helper-tag">Name</span>
+                    </label>
+                    <input type="text"
+                           id="customerNameInput"
+                           class="cyber-input"
+                           placeholder="e.g. Ramesh Kumar"
+                           required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="customerPhoneInput">
+                        <span>Customer Phone Number</span>
+                        <span class="helper-tag">Contact</span>
+                    </label>
+                    <input type="tel"
+                           id="customerPhoneInput"
+                           class="cyber-input"
+                           placeholder="e.g. +91 9845012345"
+                           required>
+                </div>
+            </div>
+
+            <!-- CARD 2: MEDICINE SELECTOR -->
+            <div class="cyber-card">
+                <div class="card-title-bar">
+                    <h3>&#128138; Select Medicine to Dispense</h3>
+                    <span class="helper-tag">Live inventory lookup</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="medicineInput">
+                        <span>Medicine Name</span>
+                        <span class="helper-tag">Select or start typing</span>
+                    </label>
+                    <input type="text"
+                           id="medicineInput"
+                           list="medicineDatalist"
+                           class="cyber-input"
+                           placeholder="e.g. Paracetamol 650mg"
+                           autocomplete="off">
+
+                    <datalist id="medicineDatalist">
+                        <option th:each="med : ${medicines}"
+                                th:value="${med.name}"
+                                th:data-price="${med.sellingPrice}"
+                                th:data-stock="${med.quantity}"
+                                th:data-category="${med.category}"
+                                th:data-threshold="${med.lowStockThreshold}">
+                        </option>
+                    </datalist>
+                </div>
+
+                <!-- DYNAMIC MEDICINE STATUS PANEL -->
+                <div id="medicineInfoPanel" class="interactive-panel" style="display: none;">
+                    <div class="preview-row">
+                        <span class="preview-label">Category:</span>
+                        <span class="preview-val badge badge-category" id="displayCategory">-</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Available Shelf Stock:</span>
+                        <span class="preview-val" id="displayStock">-</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Unit Retail Price:</span>
+                        <span class="preview-val highlight" id="displayUnitPrice">&#8377;0.00</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="quantityInput">
+                        <span>Quantity to Dispense</span>
+                        <span class="helper-tag" id="stockLimitHint">Units</span>
+                    </label>
+                    <div class="qty-picker-group">
+                        <input type="number"
+                               id="quantityInput"
+                               min="1"
+                               class="cyber-input"
+                               placeholder="e.g. 2">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setQty(1)">1</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setQty(2)">2</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setQty(5)">5</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setQty(10)">10</button>
+                        <button type="button" class="btn btn-outline btn-sm" id="maxBtn" onclick="setMaxQty()">Max</button>
+                    </div>
+                    <div id="stockWarning" style="display:none; color: var(--neon-crimson); font-size: 0.8rem; margin-top: 6px; font-weight: 500;">
+                        &#9888; Requested quantity exceeds available shelf stock!
+                    </div>
+                </div>
+
+                <!-- LIVE ITEM SUBTOTAL PREVIEW -->
+                <div class="interactive-panel" style="background: rgba(0, 255, 136, 0.04); border-color: rgba(0, 255, 136, 0.25);">
+                    <div class="preview-row">
+                        <span class="preview-label">Line Calculation:</span>
+                        <span class="preview-val" id="calcFormula">0 units &times; &#8377;0.00</span>
+                    </div>
+                    <div class="preview-row" style="margin-top: 4px;">
+                        <span class="preview-label" style="font-weight: 700; color: var(--text-bright);">Item Subtotal:</span>
+                        <span class="preview-val highlight" id="calcTotal" style="font-size: 1.15rem;">&#8377;0.00</span>
+                    </div>
+                </div>
+
+                <button type="button" id="btnAddToBill" class="btn btn-primary btn-block" onclick="addItemToBill()">
+                    + Add Medicine to Bill Cart &rarr;
+                </button>
+                <div id="quickItemAddedNotice" style="display: none; color: var(--neon-green); font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 6px;">
+                    &#10003; Item added to bill below!
+                </div>
+            </div>
         </div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Quantity Sold</label><br>
-            <input type="number" name="quantity" min="1" required style="width:100%; padding:8px;">
-        </div>
+        <!-- RIGHT COLUMN: LIVE REVIEW SIDE TABLE / BILL CART -->
+        <div class="live-review-container">
+            <div class="card-title-bar">
+                <h3>&#128221; Live Bill Review &amp; Dispense Cart</h3>
+                <span class="badge badge-in-stock" id="billItemCountBadge">0 ITEMS IN BILL</span>
+            </div>
 
-        <button type="submit">Sell</button>
-    </form>
-    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
-</main>
+            <!-- CUSTOMER MANIFEST BANNER -->
+            <div class="batch-meta-banner customer-theme" id="customerMetaBanner">
+                <div class="meta-item">
+                    <span class="meta-label">Customer Name</span>
+                    <span class="meta-value" id="dispCustomerName">Pending input...</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Phone Contact</span>
+                    <span class="meta-value" id="dispCustomerPhone">Pending input...</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Sale Invoice Ref</span>
+                    <span class="meta-value" id="dispInvoiceRef">AUTO-GEN ON CONFIRM</span>
+                </div>
+            </div>
+
+            <!-- LIVE REVIEW BILL TABLE -->
+            <div class="table-container">
+                <table class="cyber-table" id="billTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th>Medicine</th>
+                            <th>Category</th>
+                            <th style="text-align: right;">Unit Price (₹)</th>
+                            <th style="text-align: right;">Qty</th>
+                            <th style="text-align: right;">Subtotal (₹)</th>
+                            <th style="text-align: center; width: 60px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+
+                <div id="emptyBillState" class="empty-staging-placeholder">
+                    <div class="placeholder-icon">&#128722;</div>
+                    <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Bill Cart is Empty</div>
+                    <div style="font-size: 0.82rem;">Enter customer name &amp; phone, then select medicines on the left. You can review all items together before dispensing.</div>
+                </div>
+            </div>
+
+            <!-- BILL FINANCIAL SUMMARY -->
+            <div class="batch-summary-card sell-theme" id="billSummaryCard" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="preview-label">Distinct Items:</span>
+                        <span class="preview-val" id="summaryBillItems">0</span>
+                    </div>
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                        <span class="preview-label">Total Units Sold:</span>
+                        <span class="preview-val" id="summaryBillUnits">0 units</span>
+                    </div>
+                    <div class="preview-row" style="flex-direction: column; align-items: flex-start; grid-column: span 2;">
+                        <span class="preview-label" style="font-size: 0.82rem; font-weight: 700; color: var(--text-bright);">GRAND TOTAL PAYABLE:</span>
+                        <span class="preview-val highlight" id="summaryGrandTotal" style="font-size: 1.6rem; color: var(--neon-green);">&#8377;0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBMIT & CLEAR ACTIONS -->
+            <div style="display: flex; gap: 12px; margin-top: 6px;">
+                <button type="button"
+                        id="btnConfirmSale"
+                        class="btn btn-primary"
+                        style="flex: 1;"
+                        onclick="commitBatchSale()"
+                        disabled>
+                    &#10003; Complete Sale &amp; Dispense Bill
+                </button>
+                <button type="button"
+                        id="btnClearBill"
+                        class="btn btn-outline"
+                        onclick="clearBillCart()"
+                        disabled>
+                    Clear Bill
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const medicinesData = /*[[${medicines}]]*/ [];
+    const medMap = {};
+    medicinesData.forEach(m => {
+        if (m && m.name) {
+            medMap[m.name.trim().toLowerCase()] = m;
+        }
+    });
+
+    // Cart items array: [ { name, category, unitPrice, quantity } ]
+    let billItems = [];
+
+    // Elements
+    const customerNameInput = document.getElementById('customerNameInput');
+    const customerPhoneInput = document.getElementById('customerPhoneInput');
+    const dispCustomerName = document.getElementById('dispCustomerName');
+    const dispCustomerPhone = document.getElementById('dispCustomerPhone');
+
+    const medInput = document.getElementById('medicineInput');
+    const qtyInput = document.getElementById('quantityInput');
+    const panel = document.getElementById('medicineInfoPanel');
+    const displayCategory = document.getElementById('displayCategory');
+    const displayStock = document.getElementById('displayStock');
+    const displayUnitPrice = document.getElementById('displayUnitPrice');
+    const stockLimitHint = document.getElementById('stockLimitHint');
+    const stockWarning = document.getElementById('stockWarning');
+    const calcFormula = document.getElementById('calcFormula');
+    const calcTotal = document.getElementById('calcTotal');
+    const btnAddToBill = document.getElementById('btnAddToBill');
+
+    const billTableBody = document.getElementById('billTableBody');
+    const emptyBillState = document.getElementById('emptyBillState');
+    const billSummaryCard = document.getElementById('billSummaryCard');
+    const billItemCountBadge = document.getElementById('billItemCountBadge');
+    const btnConfirmSale = document.getElementById('btnConfirmSale');
+    const btnClearBill = document.getElementById('btnClearBill');
+
+    const summaryBillItems = document.getElementById('summaryBillItems');
+    const summaryBillUnits = document.getElementById('summaryBillUnits');
+    const summaryGrandTotal = document.getElementById('summaryGrandTotal');
+
+    let currentSelectedMedicine = null;
+
+    function updateCustomerDisplay() {
+        const cName = customerNameInput.value.trim();
+        const cPhone = customerPhoneInput.value.trim();
+
+        dispCustomerName.textContent = cName ? cName : 'Pending input...';
+        dispCustomerPhone.textContent = cPhone ? cPhone : 'Pending input...';
+    }
+
+    customerNameInput.addEventListener('input', updateCustomerDisplay);
+    customerPhoneInput.addEventListener('input', updateCustomerDisplay);
+
+    function getEffectiveAvailableStock(medName) {
+        if (!medName) return 0;
+        const med = medMap[medName.trim().toLowerCase()];
+        if (!med) return 0;
+
+        let totalInCatalog = med.quantity != null ? med.quantity : 0;
+
+        // Deduct quantities of this medicine already in cart!
+        let alreadyInCart = 0;
+        billItems.forEach(item => {
+            if (item.name.toLowerCase() === medName.trim().toLowerCase()) {
+                alreadyInCart += item.quantity;
+            }
+        });
+
+        return Math.max(0, totalInCatalog - alreadyInCart);
+    }
+
+    function onMedicineChange() {
+        const query = medInput.value.trim().toLowerCase();
+        const med = medMap[query];
+
+        if (med) {
+            currentSelectedMedicine = med;
+            panel.style.display = 'flex';
+            displayCategory.textContent = med.category || 'General';
+
+            const effectiveStock = getEffectiveAvailableStock(med.name);
+            const threshold = med.lowStockThreshold != null ? med.lowStockThreshold : 5;
+
+            if (effectiveStock <= 0) {
+                displayStock.innerHTML = '<span class="badge badge-out-of-stock">0 UNITS (OUT / IN CART)</span>';
+            } else if (effectiveStock < threshold) {
+                displayStock.innerHTML = '<span class="badge badge-low-stock">ONLY ' + effectiveStock + ' LEFT (LOW STOCK)</span>';
+            } else {
+                displayStock.innerHTML = '<span class="badge badge-in-stock">' + effectiveStock + ' AVAILABLE</span>';
+            }
+
+            const unitPrice = Number(med.sellingPrice || 0);
+            displayUnitPrice.textContent = '\u20b9' + unitPrice.toFixed(2);
+            stockLimitHint.textContent = 'Max ' + effectiveStock + ' available';
+            qtyInput.max = effectiveStock;
+
+            updateCalculation();
+        } else {
+            currentSelectedMedicine = null;
+            panel.style.display = 'none';
+            stockLimitHint.textContent = 'Units';
+            qtyInput.removeAttribute('max');
+            updateCalculation();
+        }
+    }
+
+    function updateCalculation() {
+        const qty = parseInt(qtyInput.value) || 0;
+        const unitPrice = currentSelectedMedicine ? Number(currentSelectedMedicine.sellingPrice || 0) : 0;
+        const total = qty * unitPrice;
+
+        calcFormula.textContent = qty + ' units \u00d7 \u20b9' + unitPrice.toFixed(2);
+        calcTotal.textContent = '\u20b9' + total.toFixed(2);
+
+        if (currentSelectedMedicine) {
+            const effectiveStock = getEffectiveAvailableStock(currentSelectedMedicine.name);
+            if (qty > effectiveStock) {
+                stockWarning.style.display = 'block';
+                stockWarning.textContent = '\u26a0\ufe0f Requested quantity (' + qty + ') exceeds available shelf stock (' + effectiveStock + ')!';
+                btnAddToBill.disabled = true;
+                btnAddToBill.style.opacity = '0.5';
+            } else if (effectiveStock <= 0) {
+                stockWarning.style.display = 'block';
+                stockWarning.textContent = '\u26a0\ufe0f Medicine has 0 available units left.';
+                btnAddToBill.disabled = true;
+                btnAddToBill.style.opacity = '0.5';
+            } else {
+                stockWarning.style.display = 'none';
+                btnAddToBill.disabled = false;
+                btnAddToBill.style.opacity = '1';
+            }
+        } else {
+            stockWarning.style.display = 'none';
+            btnAddToBill.disabled = false;
+            btnAddToBill.style.opacity = '1';
+        }
+    }
+
+    function setQty(val) {
+        qtyInput.value = val;
+        updateCalculation();
+    }
+
+    function setMaxQty() {
+        if (currentSelectedMedicine) {
+            const effectiveStock = getEffectiveAvailableStock(currentSelectedMedicine.name);
+            if (effectiveStock > 0) {
+                qtyInput.value = effectiveStock;
+                updateCalculation();
+            }
+        }
+    }
+
+    medInput.addEventListener('input', onMedicineChange);
+    medInput.addEventListener('change', onMedicineChange);
+    qtyInput.addEventListener('input', updateCalculation);
+
+    // Add item to bill side table
+    function addItemToBill() {
+        const name = medInput.value.trim();
+        const qty = parseInt(qtyInput.value) || 0;
+
+        if (!name) {
+            showAlert('Please select a medicine to add.', 'danger');
+            medInput.focus();
+            return;
+        }
+
+        const med = medMap[name.toLowerCase()];
+        if (!med) {
+            showAlert('Medicine "' + name + '" not recognized in stock inventory.', 'danger');
+            medInput.focus();
+            return;
+        }
+
+        if (qty <= 0) {
+            showAlert('Quantity must be at least 1 unit.', 'danger');
+            qtyInput.focus();
+            return;
+        }
+
+        const effectiveStock = getEffectiveAvailableStock(med.name);
+        if (qty > effectiveStock) {
+            showAlert('Cannot add ' + qty + ' units. Only ' + effectiveStock + ' units available in stock!', 'danger');
+            return;
+        }
+
+        const unitPrice = Number(med.sellingPrice || 0);
+        const category = med.category || 'General';
+
+        // Check if item already exists in bill cart
+        const existingIdx = billItems.findIndex(i => i.name.toLowerCase() === med.name.toLowerCase());
+        if (existingIdx !== -1) {
+            billItems[existingIdx].quantity += qty;
+        } else {
+            billItems.push({
+                name: med.name,
+                category: category,
+                unitPrice: unitPrice,
+                quantity: qty
+            });
+        }
+
+        renderBillTable();
+
+        // Clear input for next medicine
+        medInput.value = '';
+        qtyInput.value = '';
+        panel.style.display = 'none';
+        currentSelectedMedicine = null;
+        updateCalculation();
+
+        showAlert('Added ' + qty + ' unit(s) of "' + med.name + '" to the bill.', 'success', false);
+        const qNotice = document.getElementById('quickItemAddedNotice');
+        if (qNotice) {
+            qNotice.style.display = 'block';
+            setTimeout(() => { qNotice.style.display = 'none'; }, 2000);
+        }
+        medInput.focus();
+    }
+
+    function removeItemFromBill(index) {
+        if (index >= 0 && index < billItems.length) {
+            const removed = billItems.splice(index, 1)[0];
+            renderBillTable();
+            onMedicineChange(); // recalculates available stock if that medicine is currently open in input
+            showAlert('Removed "' + removed.name + '" from the bill.', 'info');
+        }
+    }
+
+    function clearBillCart() {
+        if (confirm('Clear all items from this customer bill?')) {
+            billItems = [];
+            renderBillTable();
+            onMedicineChange();
+        }
+    }
+
+    function renderBillTable() {
+        billTableBody.innerHTML = '';
+
+        if (billItems.length === 0) {
+            emptyBillState.style.display = 'block';
+            billSummaryCard.style.display = 'none';
+            billItemCountBadge.textContent = '0 ITEMS IN BILL';
+            billItemCountBadge.className = 'badge';
+            btnConfirmSale.disabled = true;
+            btnClearBill.disabled = true;
+            return;
+        }
+
+        emptyBillState.style.display = 'none';
+        billSummaryCard.style.display = 'block';
+        billItemCountBadge.textContent = billItems.length + ' MEDICINE(S) IN BILL';
+        billItemCountBadge.className = 'badge badge-in-stock';
+        btnConfirmSale.disabled = false;
+        btnClearBill.disabled = false;
+
+        let totalUnits = 0;
+        let grandTotal = 0.0;
+
+        billItems.forEach((item, index) => {
+            const subtotal = item.quantity * item.unitPrice;
+            totalUnits += item.quantity;
+            grandTotal += subtotal;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
+                <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
+                <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
+                <td style="text-align: right;" class="mono-cell">&#8377;${item.unitPrice.toFixed(2)}</td>
+                <td style="text-align: right;" class="mono-cell highlight">${item.quantity}</td>
+                <td style="text-align: right;" class="mono-cell" style="color: var(--neon-green);">&#8377;${subtotal.toFixed(2)}</td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn-remove-item" onclick="removeItemFromBill(${index})" title="Remove item">&#10005;</button>
+                </td>
+            `;
+            billTableBody.appendChild(tr);
+        });
+
+        summaryBillItems.textContent = billItems.length;
+        summaryBillUnits.textContent = totalUnits + ' units';
+        summaryGrandTotal.textContent = '\u20b9' + grandTotal.toFixed(2);
+    }
+
+    // Submit batch sale
+    async function commitBatchSale() {
+        const customerName = customerNameInput.value.trim();
+        const customerPhone = customerPhoneInput.value.trim();
+
+        if (!customerName) {
+            showAlert('Please enter the Customer Name before completing sale.', 'danger');
+            customerNameInput.focus();
+            return;
+        }
+
+        if (billItems.length === 0) {
+            showAlert('No medicines in bill to dispense.', 'danger');
+            return;
+        }
+
+        btnConfirmSale.disabled = true;
+        btnConfirmSale.innerHTML = '&#9203; Dispensing &amp; Generating Invoice...';
+
+        const payload = {
+            customerName: customerName,
+            customerPhone: customerPhone || 'N/A',
+            items: billItems.map(i => ({ name: i.name, quantity: i.quantity }))
+        };
+
+        try {
+            const response = await fetch('/admin/sell/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                showAlert(result.message || 'Sale recorded successfully!', 'success');
+                billItems = [];
+                renderBillTable();
+                customerNameInput.value = '';
+                customerPhoneInput.value = '';
+                updateCustomerDisplay();
+
+                const isOwner = /*[[${isOwner}]]*/ true;
+                setTimeout(() => {
+                    window.location.href = isOwner ? '/admin/reports' : '/admin/sell';
+                }, 1400);
+            } else {
+                showAlert(result.message || 'Error occurred while dispensing medicine.', 'danger');
+                btnConfirmSale.disabled = false;
+                btnConfirmSale.innerHTML = '&#10003; Complete Sale &amp; Dispense Bill';
+            }
+        } catch (err) {
+            console.error(err);
+            showAlert('Network or server error: ' + err.message, 'danger');
+            btnConfirmSale.disabled = false;
+            btnConfirmSale.innerHTML = '&#10003; Complete Sale &amp; Dispense Bill';
+        }
+    }
+
+    function showAlert(message, type, shouldScroll = false) {
+        const alertBox = document.getElementById('dynamicAlert');
+        const alertIcon = document.getElementById('dynamicAlertIcon');
+        const alertMsg = document.getElementById('dynamicAlertMsg');
+
+        alertMsg.textContent = message;
+        if (type === 'danger') {
+            alertBox.className = 'alert alert-danger';
+            alertIcon.innerHTML = '&#9888;';
+        } else if (type === 'info') {
+            alertBox.className = 'alert';
+            alertBox.style.background = 'rgba(0, 229, 255, 0.1)';
+            alertBox.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+            alertBox.style.color = 'var(--neon-cyan)';
+            alertIcon.innerHTML = '&#8505;';
+        } else {
+            alertBox.className = 'alert alert-success';
+            alertIcon.innerHTML = '&#10003;';
+        }
+
+        alertBox.style.display = 'flex';
+        if (shouldScroll) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+    /*]]>*/
+</script>
+
 </body>
 </html>

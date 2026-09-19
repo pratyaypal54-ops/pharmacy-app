@@ -2,25 +2,172 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <h1>Admin Dashboard</h1>
-</header>
-<main>
-    <div style="display:flex; gap:16px; margin-bottom:20px;">
-        <a th:href="@{/admin/add-stock}"><button type="button">Add Stock</button></a>
-        <a th:href="@{/admin/sell}"><button type="button">Sell</button></a>
-        <a th:href="@{/admin/edit}"><button type="button">Edit</button></a>
+
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link active">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">OWNER</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128421; Mission Control Dashboard</h1>
+            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial telemetry, and security archives' : 'Cashier operational terminal: patient dispensing and shelf stock inventory'}">Dashboard overview</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Dispense Sale</a>
+            <a th:href="@{/admin/add-stock}" class="btn btn-cyber-cyan btn-sm">&#128230; Restock Inventory</a>
+        </div>
     </div>
 
-    <p><a th:href="@{/admin/reports}">📊 View Sales Reports</a></p>
+    <!-- KPI STATS CARDS -->
+    <div class="stats-grid">
+        <div class="stat-card neon-green">
+            <div class="stat-label">Total Catalog Items</div>
+            <div class="stat-value" th:text="${totalMedicines}">0</div>
+            <div class="stat-sub">Active registered medicines</div>
+        </div>
 
-    <form th:action="@{/logout}" method="post" style="margin-top:20px;">
-        <button type="submit">Logout</button>
-    </form>
-</main>
+        <div class="stat-card" th:classappend="${lowStockCount > 0 ? 'neon-amber' : 'neon-green'}">
+            <div class="stat-label">
+                <span>Low Stock Warnings</span>
+                <span th:if="${lowStockCount > 0}" class="badge badge-low-stock">&#9888; Action Req</span>
+            </div>
+            <div class="stat-value" th:text="${lowStockCount}" th:style="${lowStockCount > 0 ? 'color: var(--neon-amber);' : 'color: var(--neon-green);'}">0</div>
+            <div class="stat-sub">Below replenishment threshold</div>
+        </div>
+
+        <div class="stat-card neon-green">
+            <div class="stat-label">Today's Units Sold</div>
+            <div class="stat-value" th:text="${todaySummary != null ? todaySummary.totalItemsSold : 0}">0</div>
+            <div class="stat-sub">Units dispensed today</div>
+        </div>
+
+        <!-- OWNER ONLY CONFIDENTIAL FINANCIAL STATS -->
+        <div th:if="${isOwner}" class="stat-card neon-green">
+            <div class="stat-label">Today's Sales Revenue</div>
+            <div class="stat-value" th:text="'&#8377;' + ${todaySummary != null ? todaySummary.totalRevenue : '0.00'}">&#8377;0.00</div>
+            <div class="stat-sub" th:text="'Net Profit: &#8377;' + ${todaySummary != null ? todaySummary.totalProfit : '0.00'}">Net Profit: &#8377;0.00</div>
+        </div>
+
+        <div th:if="${isOwner}" class="stat-card neon-cyan">
+            <div class="stat-label">Today's Restock Inward</div>
+            <div class="stat-value" style="color: var(--neon-cyan);" th:text="${todayStockSummary != null ? todayStockSummary.totalItemsAdded : 0}">0</div>
+            <div class="stat-sub" th:text="'Purchase Cost: &#8377;' + ${todayStockSummary != null ? todayStockSummary.totalCost : '0.00'}">Purchase Cost: &#8377;0.00</div>
+        </div>
+    </div>
+
+    <!-- QUICK WORKFLOW TILES -->
+    <div class="action-grid">
+        <a th:href="@{/admin/sell}" class="action-tile">
+            <span class="action-icon">&#128179;</span>
+            <span class="action-title">Patient Dispense</span>
+            <span class="action-desc">Record customer info, multi-item live review cart, and bulk sales.</span>
+        </a>
+
+        <a th:href="@{/admin/add-stock}" class="action-tile">
+            <span class="action-icon">&#128230;</span>
+            <span class="action-title">Inward Restock</span>
+            <span class="action-desc">Record provider manifest, stage incoming medicines, and update inventory.</span>
+        </a>
+
+        <!-- OWNER ONLY ACTION TILES -->
+        <a th:href="@{/admin/edit}" class="action-tile">
+            <span class="action-icon">&#9881;</span>
+            <span class="action-title">Audit / Correction</span>
+            <span class="action-desc">Reconcile physical counts with live adjustment tracking table.</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="action-tile">
+            <span class="action-icon">&#128220;</span>
+            <span class="action-title">Stock Inward History</span>
+            <span class="action-desc">Historical supplier intake logs with provider contact details and timestamps.</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="action-tile">
+            <span class="action-icon">&#128202;</span>
+            <span class="action-title">Sales History &amp; Reports</span>
+            <span class="action-desc">Patient billing history with customer details, profit margins, and timestamps.</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="action-tile">
+            <span class="action-icon">&#128101;</span>
+            <span class="action-title">Staff Accounts &amp; Access</span>
+            <span class="action-desc">Create employee accounts, reset staff passwords, and manage permissions.</span>
+        </a>
+
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="action-tile">
+            <span class="action-icon">&#128190;</span>
+            <span class="action-title">Database Cloud Backup</span>
+            <span class="action-desc">One-click SQL database snapshot download and Google Drive automated protection.</span>
+        </a>
+    </div>
+
+    <!-- LOW STOCK ATTENTION SECTION (IF ANY) -->
+    <div th:if="${lowStockCount > 0}" style="margin-top: 16px; margin-bottom: 32px;">
+        <div class="table-container" style="border-color: rgba(255, 183, 3, 0.3);">
+            <div class="table-toolbar" style="background: rgba(255, 183, 3, 0.08);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge badge-low-stock">&#9888; CRITICAL ATTENTION</span>
+                    <strong style="color: var(--text-bright); font-size: 0.95rem;">Replenishment Required</strong>
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted);" th:text="${lowStockCount} + ' item(s) running dangerously low'"></span>
+            </div>
+            <table class="cyber-table">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Category</th>
+                        <th>Current Quantity</th>
+                        <th>Threshold</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="m : ${lowStockMedicines}">
+                        <td><strong style="color: var(--text-bright);" th:text="${m.name}">Name</strong></td>
+                        <td><span class="badge badge-category" th:text="${m.category}">Category</span></td>
+                        <td>
+                            <span class="badge badge-low-stock" th:text="${m.quantity} + ' UNITS LEFT'">3 UNITS</span>
+                        </td>
+                        <td class="mono-cell" th:text="${m.lowStockThreshold} + ' units'">5 units</td>
+                        <td>
+                            <a th:href="@{/admin/add-stock}" class="btn btn-cyber-cyan btn-sm">&#128230; Restock Now</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

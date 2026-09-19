@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Disaster Backup - PHARMA//CORE</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link active">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">OWNER</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128190; Disaster Recovery &amp; Cloud Database Backup</h1>
+            <p class="page-subtitle">Protect your pharmacy against PC crashes, physical damage, or theft. Keep automated backups in Google Drive.</p>
+        </div>
+        <div>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- ONE-CLICK BACKUP CARD -->
+    <div class="cyber-card" style="padding: 28px; margin-bottom: 24px; border-left: 4px solid var(--neon-green); background: linear-gradient(135deg, rgba(0,255,157,0.03) 0%, rgba(10,14,23,0.95) 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h2 style="font-size: 1.25rem; color: var(--neon-green); margin-bottom: 6px;">
+                    &#128229; One-Click Emergency Database Snapshot (.SQL)
+                </h2>
+                <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 650px; line-height: 1.5;">
+                    Instantly generates a full, portable SQL backup file containing your complete inventory catalog, all historical sales transactions, supplier restock records, and accounts. Save this file to your pen drive or cloud storage.
+                </p>
+            </div>
+            <a th:href="@{/admin/backup/download}" class="btn btn-primary" style="padding: 12px 24px; font-size: 0.95rem; font-weight: 700;">
+                &#128229; Download Full Database Backup Now &rarr;
+            </a>
+        </div>
+    </div>
+
+    <!-- DATABASE INTEGRITY AUDIT CARDS -->
+    <div class="stats-grid" style="margin-bottom: 28px;">
+        <div class="stat-card neon-green">
+            <div class="stat-label">Active Medicines</div>
+            <div class="stat-value" th:text="${tableCounts['medicine'] != null ? tableCounts['medicine'] : 0}">0</div>
+            <div class="stat-sub">Stock &amp; price catalog items</div>
+        </div>
+
+        <div class="stat-card neon-cyan">
+            <div class="stat-label">Sales Transactions</div>
+            <div class="stat-value" th:text="${tableCounts['sales_transaction'] != null ? tableCounts['sales_transaction'] : 0}">0</div>
+            <div class="stat-sub">Historical patient sales</div>
+        </div>
+
+        <div class="stat-card neon-cyan">
+            <div class="stat-label">Stock Inward Batches</div>
+            <div class="stat-value" th:text="${tableCounts['stock_addition'] != null ? tableCounts['stock_addition'] : 0}">0</div>
+            <div class="stat-sub">Distributor delivery logs</div>
+        </div>
+
+        <div class="stat-card neon-amber">
+            <div class="stat-label">System Accounts</div>
+            <div class="stat-value" th:text="${tableCounts['admin_user'] != null ? tableCounts['admin_user'] : 0}">0</div>
+            <div class="stat-sub">Admin &amp; staff credentials</div>
+        </div>
+    </div>
+
+    <!-- GOOGLE DRIVE AUTOMATION TUTORIAL -->
+    <div class="cyber-card" style="padding: 24px;">
+        <h3 style="color: var(--neon-cyan); font-size: 1.1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <span>&#9729;</span> Automated Google Drive Cloud Protection
+        </h3>
+        <p style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6; margin-bottom: 16px;">
+            To guarantee that you <strong>never lose data even if your shop PC physically burns or breaks</strong>, follow these 2 simple steps to automatically save a copy to your Google Drive:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
+                <div style="color: var(--neon-cyan); font-weight: 700; margin-bottom: 6px;">Step 1: Install Google Drive on PC</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+                    Download and install official <strong style="color: var(--text-bright);">Google Drive for Desktop</strong>. It creates a virtual Google Drive folder on your Windows computer (e.g. <code>G:\My Drive\PharmacyBackups</code>).
+                </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
+                <div style="color: var(--neon-green); font-weight: 700; margin-bottom: 6px;">Step 2: Save Backups to That Folder</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+                    Whenever you download the backup or run the automated script, it drops the <code>.sql</code> file directly into your Google Drive folder. Google automatically uploads it to cloud servers instantly.
+                </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
+                <div style="color: var(--neon-amber); font-weight: 700; margin-bottom: 6px;">Step 3: Instant 2-Minute Restore</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+                    If the shop PC ever breaks, you simply log in to your Google Drive on any other laptop, download the latest <code>.sql</code> backup file, and import it into MySQL. Every sale and medicine is 100% restored without paying a single rupee!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

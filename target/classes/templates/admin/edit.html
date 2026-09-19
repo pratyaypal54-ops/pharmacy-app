@@ -2,40 +2,324 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Stock</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Stock & Entry Corrections - PHARMA//CORE</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<header>
-    <h1>Edit Stock (Fix a Mistake)</h1>
-</header>
 
-<main style="max-width: 500px;">
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link active">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
 
-    <p th:if="${success}" th:text="${success}" style="color: #3ba55d;"></p>
-    <p th:if="${error}" th:text="${error}" style="color: #e35d5d;"></p>
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#9881; Stock Audit & Entry Mistake Corrections</h1>
+            <p class="page-subtitle">Reconcile inventory counts, correct clerical typos, or adjust selling prices for any registered medicine</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a th:if="${isOwner}" th:href="@{/admin/reports?tab=adjustments}" class="btn btn-cyber-cyan btn-sm">&#128220; Full Audit History</a>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+        </div>
+    </div>
 
-    <form th:action="@{/admin/edit}" method="post">
+    <!-- NOTIFICATION MESSAGES -->
+    <div th:if="${success}" class="alert alert-success">
+        <span>&#10003;</span> <span th:text="${success}">Success message</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger">
+        <span>&#9888;</span> <span th:text="${error}">Error message</span>
+    </div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Medicine Name</label><br>
-            <input type="text" name="name" required style="width:100%; padding:8px;">
+    <!-- SPLIT WORKBENCH LAYOUT -->
+    <div class="split-layout">
+        <!-- LEFT COLUMN: CORRECTION CONTROLS -->
+        <div class="cyber-card">
+            <div class="card-title-bar">
+                <h3>&#9998; Correct Entry Mistake / Reconcile</h3>
+                <span class="badge badge-category">CORRECTION WORKBENCH</span>
+            </div>
+
+            <form th:action="@{/admin/edit}" method="post">
+                <div class="form-group">
+                    <label class="form-label" for="editMedName">
+                        <span>Target Medicine *</span>
+                        <span class="helper-tag">Select registered item</span>
+                    </label>
+                    <input type="text"
+                           id="editMedName"
+                           name="name"
+                           list="editDatalist"
+                           class="cyber-input"
+                           placeholder="Type to search medicine name..."
+                           autocomplete="off"
+                           required>
+
+                    <datalist id="editDatalist">
+                        <option th:each="med : ${medicines}"
+                                th:value="${med.name}"
+                                th:data-stock="${med.quantity}"
+                                th:data-price="${med.sellingPrice}"
+                                th:data-category="${med.category}">
+                        </option>
+                    </datalist>
+                </div>
+
+                <!-- DYNAMIC DELTA CALCULATION PANEL -->
+                <div id="auditPanel" class="interactive-panel" style="display: none; border-color: rgba(255, 183, 3, 0.4); background: rgba(255, 183, 3, 0.04); margin-bottom: 16px;">
+                    <div class="preview-row">
+                        <span class="preview-label">Current System Quantity:</span>
+                        <span class="preview-val mono-cell" id="curStockVal">0 units</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-label">Calculated Stock Delta:</span>
+                        <span class="preview-val" id="deltaDisplay">No change</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="correctQtyInput">
+                        <span>Verified Correct Quantity (Units) *</span>
+                        <span class="helper-tag">Actual shelf count</span>
+                    </label>
+                    <input type="number"
+                           id="correctQtyInput"
+                           name="correctQuantity"
+                           min="0"
+                           class="cyber-input"
+                           placeholder="Enter corrected quantity"
+                           required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label" for="sellingPriceInput">
+                            <span>Correct Selling Price (₹)</span>
+                            <span class="helper-tag">MRP / Unit</span>
+                        </label>
+                        <input type="number"
+                               id="sellingPriceInput"
+                               name="sellingPrice"
+                               step="0.01"
+                               min="0"
+                               class="cyber-input"
+                               placeholder="e.g. 15.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="categoryInput">
+                            <span>Correct Category</span>
+                            <span class="helper-tag">Classification</span>
+                        </label>
+                        <input type="text"
+                               id="categoryInput"
+                               name="category"
+                               class="cyber-input"
+                               placeholder="e.g. Tablets, Syrups">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reasonInput">
+                        <span>Correction Note / Reason</span>
+                        <span class="helper-tag">Accountability record</span>
+                    </label>
+                    <input type="text"
+                           id="reasonInput"
+                           name="reason"
+                           class="cyber-input"
+                           placeholder="e.g. Data entry clerical typo / Physical count correction">
+
+                    <div style="display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setReason('Data entry clerical mistake')">&#9998; Entry Typo</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setReason('Physical audit count discrepancy')">&#128065; Audit Count</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setReason('Damaged / Broken packaging')">&#9888; Damaged</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setReason('Selling price correction')">&#8377; Price Fix</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 14px;">
+                    &#10003; Save &amp; Apply Corrections
+                </button>
+            </form>
         </div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Correct Quantity (what it should actually be)</label><br>
-            <input type="number" name="correctQuantity" min="0" required style="width:100%; padding:8px;">
+        <!-- RIGHT COLUMN: LIVE RECENT ADJUSTMENTS SIDE TABLE -->
+        <div class="live-review-container">
+            <div class="card-title-bar">
+                <h3>&#128221; Recent Mistake Corrections &amp; Audits</h3>
+                <span class="badge badge-tag" th:text="${recentAdjustments != null ? recentAdjustments.size() + ' Logs' : '0 Logs'}">Logs</span>
+            </div>
+
+            <!-- SEARCH FILTER FOR ADJUSTMENTS -->
+            <div style="margin-bottom: 8px;">
+                <input type="text"
+                       id="filterAdjustmentInput"
+                       class="cyber-input"
+                       placeholder="Filter recent corrections by medicine or reason..."
+                       style="padding: 8px 12px; font-size: 0.85rem;"
+                       onkeyup="filterAdjustmentsTable()">
+            </div>
+
+            <div class="table-container">
+                <table class="cyber-table" id="adjustmentsSideTable">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time</th>
+                            <th>Medicine</th>
+                            <th style="text-align: right;">Before &rarr; After</th>
+                            <th style="text-align: right;">Delta</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="adj : ${recentAdjustments}" class="adj-row">
+                            <td class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);"
+                                th:text="${#temporals.format(adj.adjustedAt, 'yyyy-MM-dd HH:mm')}">2026-09-18 10:30</td>
+                            <td>
+                                <strong style="color: var(--text-bright);" th:text="${adj.medicineName}">Paracetamol</strong>
+                            </td>
+                            <td style="text-align: right;" class="mono-cell">
+                                <span style="color: var(--text-muted);" th:text="${adj.quantityBefore}">100</span>
+                                <span style="color: var(--text-dim);">&rarr;</span>
+                                <span style="color: var(--text-bright); font-weight: 700;" th:text="${adj.quantityAfter}">85</span>
+                            </td>
+                            <td style="text-align: right;" class="mono-cell">
+                                <span th:if="${adj.quantityAfter > adj.quantityBefore}"
+                                      style="color: var(--neon-green); font-weight: 700;"
+                                      th:text="'+' + (${adj.quantityAfter} - ${adj.quantityBefore})">+15</span>
+                                <span th:if="${adj.quantityAfter < adj.quantityBefore}"
+                                      style="color: var(--neon-crimson); font-weight: 700;"
+                                      th:text="'' + (${adj.quantityAfter} - ${adj.quantityBefore})">-15</span>
+                                <span th:if="${adj.quantityAfter == adj.quantityBefore}"
+                                      style="color: var(--text-muted);">0</span>
+                            </td>
+                            <td style="font-size: 0.82rem; color: var(--text-main);"
+                                th:text="${adj.reason != null ? adj.reason : 'General adjustment'}">Physical audit</td>
+                        </tr>
+                        <tr th:if="${recentAdjustments == null or #lists.isEmpty(recentAdjustments)}">
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px 16px;">
+                                No stock corrections recorded yet.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div style="margin-bottom: 14px;">
-            <label>Reason (optional)</label><br>
-            <input type="text" name="reason" placeholder="e.g. Entered wrong quantity by mistake" style="width:100%; padding:8px;">
-        </div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const medicinesData = /*[[${medicines}]]*/ [];
+    const medMap = {};
+    medicinesData.forEach(m => {
+        if (m && m.name) {
+            medMap[m.name.trim().toLowerCase()] = m;
+        }
+    });
 
-        <button type="submit">Save Correction</button>
-    </form>
+    const editMedName = document.getElementById('editMedName');
+    const correctQtyInput = document.getElementById('correctQtyInput');
+    const sellingPriceInput = document.getElementById('sellingPriceInput');
+    const categoryInput = document.getElementById('categoryInput');
+    const reasonInput = document.getElementById('reasonInput');
+    const auditPanel = document.getElementById('auditPanel');
+    const curStockVal = document.getElementById('curStockVal');
+    const deltaDisplay = document.getElementById('deltaDisplay');
 
-    <p style="margin-top:20px;"><a th:href="@{/admin/dashboard}">&larr; Back to Dashboard</a></p>
-</main>
+    let selectedMedicine = null;
+
+    function handleMedSelect() {
+        const query = editMedName.value.trim().toLowerCase();
+        const found = medMap[query];
+
+        if (found) {
+            selectedMedicine = found;
+            auditPanel.style.display = 'flex';
+            curStockVal.textContent = (found.quantity || 0) + ' units';
+            if (!correctQtyInput.value || correctQtyInput.value == 0) {
+                correctQtyInput.value = found.quantity || 0;
+            }
+            if (found.sellingPrice !== undefined && found.sellingPrice !== null) {
+                sellingPriceInput.value = found.sellingPrice;
+            }
+            if (found.category) {
+                categoryInput.value = found.category;
+            }
+        } else {
+            selectedMedicine = null;
+            auditPanel.style.display = 'none';
+        }
+        computeDelta();
+    }
+
+    function computeDelta() {
+        if (!selectedMedicine) {
+            deltaDisplay.textContent = 'No change';
+            return;
+        }
+
+        const current = selectedMedicine.quantity || 0;
+        const target = parseInt(correctQtyInput.value);
+
+        if (isNaN(target)) {
+            deltaDisplay.textContent = 'Awaiting input';
+            return;
+        }
+
+        const diff = target - current;
+        if (diff > 0) {
+            deltaDisplay.innerHTML = '<span style="color: var(--neon-green); font-weight: 700;">+' + diff + ' units (Inventory Increase)</span>';
+        } else if (diff < 0) {
+            deltaDisplay.innerHTML = '<span style="color: var(--neon-crimson); font-weight: 700;">' + diff + ' units (Inventory Decrease)</span>';
+        } else {
+            deltaDisplay.innerHTML = '<span style="color: var(--text-muted);">0 units (No Quantity Change)</span>';
+        }
+    }
+
+    function setReason(text) {
+        reasonInput.value = text;
+    }
+
+    function filterAdjustmentsTable() {
+        const filter = document.getElementById('filterAdjustmentInput').value.toLowerCase();
+        const rows = document.querySelectorAll('#adjustmentsSideTable tbody tr.adj-row');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    }
+
+    editMedName.addEventListener('input', handleMedSelect);
+    correctQtyInput.addEventListener('input', computeDelta);
+    /*]]>*/
+</script>
+
 </body>
 </html>

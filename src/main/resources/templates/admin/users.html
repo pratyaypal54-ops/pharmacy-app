@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff & Access Management - PHARMA//CORE</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .access-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .access-card:hover {
+            border-color: var(--border-bright);
+            box-shadow: 0 4px 16px rgba(0, 229, 255, 0.08);
+        }
+        .access-card.owner-card {
+            border-left: 4px solid var(--neon-green);
+        }
+        .access-card.staff-card {
+            border-left: 4px solid var(--neon-cyan);
+        }
+        .privilege-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .priv-tag {
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .priv-allow {
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--neon-green);
+            border: 1px solid rgba(0, 255, 157, 0.25);
+        }
+        .priv-deny {
+            background: rgba(255, 0, 85, 0.08);
+            color: var(--neon-crimson);
+            border: 1px solid rgba(255, 0, 85, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+<!-- CYBER NAVIGATION BAR -->
+<nav class="cyber-nav">
+    <div class="brand-section">
+        <div class="brand-logo">&#9889;</div>
+        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+    </div>
+    <div class="nav-links">
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
+        <a th:if="${isOwner}" th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
+        <a th:if="${isOwner}" th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link active">Staff Access</a>
+        <a th:if="${isOwner}" th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+    </div>
+    <div class="nav-actions">
+        <div class="nav-status">
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">OWNER</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">&#128101; Staff Accounts &amp; Access Control</h1>
+            <p class="page-subtitle">Owner master center: view every person with system access, their role permissions, and create new staff logins</p>
+        </div>
+        <div>
+            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION ALERTS -->
+    <div th:if="${success}" class="alert alert-success">
+        <span>&#10003;</span> <span th:text="${success}">Success message</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger">
+        <span>&#9888;</span> <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="pos-layout">
+        <!-- LEFT: CREATE ACCOUNT FORM -->
+        <div class="cyber-card" style="padding: 24px; height: fit-content;">
+            <h2 style="font-size: 1.15rem; color: var(--neon-cyan); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <span>+</span> Create New Account
+            </h2>
+
+            <form th:action="@{/admin/users/create}" method="post" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="username">Username / Login ID *</label>
+                    <input type="text"
+                           id="username"
+                           name="username"
+                           class="cyber-input"
+                           placeholder="e.g. rahul_cashier or staff1"
+                           required
+                           minlength="3"
+                           autocomplete="off">
+                    <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">
+                        Used to log into the system. Must be unique.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fullName">Employee Full Name</label>
+                    <input type="text"
+                           id="fullName"
+                           name="fullName"
+                           class="cyber-input"
+                           placeholder="e.g. Rahul Sharma"
+                           autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password *</label>
+                    <input type="password"
+                           id="password"
+                           name="password"
+                           class="cyber-input"
+                           placeholder="At least 4 characters"
+                           required
+                           minlength="4"
+                           autocomplete="new-password">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="role">Account Role *</label>
+                    <select id="role" name="role" class="cyber-select" required>
+                        <option value="ROLE_STAFF" selected>Staff / Cashier (Cannot see profits/buying rates)</option>
+                        <option value="ROLE_ADMIN">Co-Owner / Admin (Full Access to all data)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 8px;">
+                    Create User Account &rarr;
+                </button>
+            </form>
+
+            <div style="margin-top: 24px; padding: 14px; background: rgba(0, 229, 255, 0.04); border: 1px dashed var(--border-dim); border-radius: 8px;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--neon-cyan); margin-bottom: 6px;">
+                    &#128274; Role Boundary Summary:
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+                    Staff members can dispense medicines, enter inward deliveries, and fix clerical entry mistakes. Sensitive financial revenue, net profits, wholesale buying costs, and user archives are strictly hidden.
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: WHO HAS ACCESS (DEDICATED ROSTER PANEL) -->
+        <div class="cyber-card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dim); padding-bottom: 14px; margin-bottom: 16px;">
+                <div>
+                    <h2 style="font-size: 1.15rem; color: var(--text-bright); display: flex; align-items: center; gap: 8px; margin: 0;">
+                        <span>&#128100;</span> Who Has Access
+                    </h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0 0;">
+                        Complete directory of active logins and their assigned security role
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <span class="badge badge-in-stock" th:text="${users.size()} + ' Total Users'">0 Total</span>
+                </div>
+            </div>
+
+            <!-- SEARCH FILTER -->
+            <div style="margin-bottom: 16px;">
+                <input type="text"
+                       id="userSearchInput"
+                       class="cyber-input"
+                       placeholder="Filter users by name, username, or role..."
+                       style="padding: 8px 12px; font-size: 0.85rem;"
+                       onkeyup="filterUsersList()">
+            </div>
+
+            <!-- USER ACCESS CARDS LIST -->
+            <div id="usersListContainer">
+                <div th:each="u : ${users}"
+                     class="access-card user-item"
+                     th:classappend="${u.admin ? 'owner-card' : 'staff-card'}"
+                     th:data-search="${(u.username + ' ' + (u.fullName != null ? u.fullName : '') + ' ' + u.role).toLowerCase()}">
+
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong style="font-size: 1rem; color: var(--text-bright);" th:text="${u.fullName != null && !u.fullName.isBlank() ? u.fullName : u.username}">Full Name</strong>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);" th:text="'(@' + ${u.username} + ')'">(@username)</span>
+                                <span th:if="${u.username == currentUsername}" class="badge-tag" style="font-size: 0.68rem;">YOU</span>
+                            </div>
+
+                            <div style="margin-top: 6px;">
+                                <span th:if="${u.admin}" class="badge badge-category" style="color: var(--neon-green); border-color: rgba(0, 255, 157, 0.4);">
+                                    &#128081; OWNER / ADMIN (Full System Master)
+                                </span>
+                                <span th:if="${!u.admin}" class="badge badge-low-stock" style="color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.4);">
+                                    &#128100; STAFF / CASHIER (Counter Billing &amp; Mistake Edits)
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- ACTIONS: RESET PASSWORD & DELETE -->
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <button type="button"
+                                    class="btn btn-outline btn-sm"
+                                    style="padding: 4px 10px; font-size: 0.75rem;"
+                                    th:data-userid="${u.id}"
+                                    th:data-username="${u.username}"
+                                    onclick="openResetModalFromBtn(this)">
+                                &#128273; Reset Password
+                            </button>
+
+                            <form th:if="${u.username != 'admin' && u.username != currentUsername}"
+                                  th:action="@{/admin/users/delete/{id}(id=${u.id})}"
+                                  method="post"
+                                  style="margin: 0;"
+                                  th:data-user="${u.username}">
+                                <button type="submit" class="btn btn-outline btn-sm" style="color: var(--neon-crimson); border-color: rgba(255, 0, 85, 0.4); padding: 4px 10px; font-size: 0.75rem;">
+                                    &#128465; Revoke Access
+                                </button>
+                            </form>
+                            <span th:if="${u.username == 'admin'}" style="font-size: 0.72rem; color: var(--text-dim); padding: 4px;">Protected Root</span>
+                        </div>
+                    </div>
+
+                    <!-- PERMISSION CHIPS EXPLAINING EXACT PRIVILEGES -->
+                    <div class="privilege-tags">
+                        <span class="priv-tag priv-allow">&#10003; Bill Customers &amp; Dispense</span>
+                        <span class="priv-tag priv-allow">&#10003; View Public Catalog</span>
+                        <span class="priv-tag priv-allow">&#10003; Check Shelf Stock</span>
+                        <span class="priv-tag priv-allow">&#10003; Inward Delivery Intake</span>
+                        <span class="priv-tag priv-allow">&#10003; Correct Entry Mistakes</span>
+
+                        <!-- OWNER SPECIFIC TAGS -->
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; View Net Profits &amp; Financials</span>
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Wholesale Buying Rates</span>
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; Manage User Accounts</span>
+                        <span th:if="${u.admin}" class="priv-tag priv-allow" style="background: rgba(0, 229, 255, 0.12); color: var(--neon-cyan); border-color: rgba(0, 229, 255, 0.3);">&#10003; 1-Click Database Cloud Backup</span>
+
+                        <!-- STAFF RESTRICTIONS TAGS -->
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Wholesale Costs Hidden</span>
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Profit Reports Blocked</span>
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; User Management Blocked</span>
+                        <span th:if="${!u.admin}" class="priv-tag priv-deny">&#10007; Cloud Backups Blocked</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RESET PASSWORD MODAL -->
+<div id="resetModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center;">
+    <div class="cyber-card" style="width: 100%; max-width: 400px; padding: 24px; margin: 20px;">
+        <h3 style="color: var(--neon-cyan); margin-bottom: 12px; font-size: 1.1rem;">
+            &#128273; Reset Password: <span id="modalUsername" style="color: var(--text-bright);"></span>
+        </h3>
+        <form th:action="@{/admin/users/reset-password}" method="post" style="display: flex; flex-direction: column; gap: 14px;">
+            <input type="hidden" id="modalUserId" name="id">
+            <div class="form-group">
+                <label class="form-label" for="newPassword">New Password *</label>
+                <input type="password" id="newPassword" name="newPassword" class="cyber-input" required minlength="4" placeholder="Enter new password">
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeResetModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm">Save New Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openResetModalFromBtn(btn) {
+        const userId = btn.getAttribute('data-userid');
+        const username = btn.getAttribute('data-username');
+        document.getElementById('modalUserId').value = userId;
+        document.getElementById('modalUsername').textContent = username;
+        document.getElementById('resetModal').style.display = 'flex';
+    }
+    function closeResetModal() {
+        document.getElementById('resetModal').style.display = 'none';
+    }
+    function filterUsersList() {
+        const query = document.getElementById('userSearchInput').value.toLowerCase().trim();
+        const items = document.querySelectorAll('.user-item');
+        items.forEach(el => {
+            const match = el.getAttribute('data-search') || '';
+            el.style.display = match.includes(query) ? '' : 'none';
+        });
+    }
+</script>
+
+</body>
+</html>
