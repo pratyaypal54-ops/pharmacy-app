@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dispense & Multi-Item Billing - PHARMA//CORE</title>
+    <title>Dispense & Multi-Item Billing - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -11,8 +11,8 @@
 <!-- CYBER NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
-        <div class="brand-logo">&#9889;</div>
-        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+        <div class="brand-logo">&#10010;</div>
+        <div class="brand-title">Pharm<span>Care</span></div>
     </div>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
@@ -273,8 +273,8 @@
                                    min="0"
                                    step="0.5"
                                    class="cyber-input"
-                                   placeholder="0"
-                                   value="0"
+                                   placeholder="10"
+                                   value="10"
                                    style="padding: 6px 10px; font-size: 0.9rem;"
                                    oninput="updateDiscount()">
                             <select id="discountType" class="cyber-select" style="width: 100px; padding: 6px 8px; font-size: 0.85rem;" onchange="updateDiscount()">
@@ -283,11 +283,11 @@
                             </select>
                         </div>
                         <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(0, 'percent')">0%</button>
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(5, 'percent')">5%</button>
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(10, 'percent')">10%</button>
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(15, 'percent')">15%</button>
-                            <button type="button" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(20, 'percent')">20%</button>
+                            <button type="button" id="preset0" class="btn btn-outline btn-sm preset-btn" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(0, 'percent')">0%</button>
+                            <button type="button" id="preset5" class="btn btn-outline btn-sm preset-btn" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(5, 'percent')">5%</button>
+                            <button type="button" id="preset10" class="btn btn-cyber-cyan btn-sm preset-btn" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(10, 'percent')">10%</button>
+                            <button type="button" id="preset15" class="btn btn-outline btn-sm preset-btn" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(15, 'percent')">15%</button>
+                            <button type="button" id="preset20" class="btn btn-outline btn-sm preset-btn" style="padding: 4px 8px; font-size: 0.74rem;" onclick="setDiscountPreset(20, 'percent')">20%</button>
                         </div>
                     </div>
                 </div>
@@ -332,7 +332,7 @@
 
     // Cart items array: [ { name, category, unitPrice, quantity } ]
     let billItems = [];
-    let currentDiscountValue = 0.0;
+    let currentDiscountValue = 10.0;
     let currentDiscountType = 'percent';
 
     // Elements
@@ -382,15 +382,31 @@
     customerNameInput.addEventListener('input', updateCustomerDisplay);
     customerPhoneInput.addEventListener('input', updateCustomerDisplay);
 
+    function highlightActivePreset(val, type) {
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('btn-cyber-cyan');
+            btn.classList.add('btn-outline');
+        });
+        if (type === 'percent') {
+            const active = document.getElementById('preset' + val);
+            if (active) {
+                active.classList.remove('btn-outline');
+                active.classList.add('btn-cyber-cyan');
+            }
+        }
+    }
+
     function updateDiscount() {
         currentDiscountValue = Math.max(0, parseFloat(discountInput.value) || 0);
         currentDiscountType = discountType.value;
+        highlightActivePreset(currentDiscountValue, currentDiscountType);
         renderBillTable();
     }
 
     function setDiscountPreset(val, type) {
         discountInput.value = val;
         discountType.value = type;
+        highlightActivePreset(val, type);
         updateDiscount();
     }
 
@@ -696,7 +712,7 @@
                 renderBillTable();
                 customerNameInput.value = '';
                 customerPhoneInput.value = '';
-                setDiscountPreset(0, 'percent');
+                setDiscountPreset(10, 'percent');
                 updateCustomerDisplay();
 
                 setTimeout(() => {

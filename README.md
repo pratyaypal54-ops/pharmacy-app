@@ -1,4 +1,4 @@
-# ⚡ PHARMA//CORE — Full-Stack Pharmacy Management & POS System
+# ⚡ PharmCare — Full-Stack Pharmacy Management & POS System
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg?style=flat&logo=openjdk)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.2-brightgreen.svg?style=flat&logo=springboot)](https://spring.io/projects/spring-boot)

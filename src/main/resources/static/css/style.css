@@ -1,5 +1,5 @@
 /* ==========================================================================
-   CYBER / DARK TECH DESIGN SYSTEM - PHARMA//CORE
+   PHARMCARE - PHARMACY MANAGEMENT & RETAIL POS DESIGN SYSTEM
    ========================================================================== */
 
 :root {
@@ -102,11 +102,11 @@ body {
 }
 
 .brand-title {
-    font-family: var(--font-mono);
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    font-weight: 800;
     color: var(--text-bright);
-    letter-spacing: 0.08em;
+    letter-spacing: -0.02em;
 }
 
 .brand-title span {
