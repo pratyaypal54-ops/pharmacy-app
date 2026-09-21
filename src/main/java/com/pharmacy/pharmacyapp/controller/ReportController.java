@@ -31,12 +31,14 @@ public class ReportController {
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @RequestParam(defaultValue = "sales") String tab,
-            @RequestParam(required = false, defaultValue = "false") boolean allTime,
+            @RequestParam(required = false) Boolean allTime,
             Model model) {
 
+        // Default to allTime=true if neither date nor allTime is specified, so historical records are immediately visible
+        boolean effectiveAllTime = (allTime != null) ? allTime : (date == null);
         LocalDate targetDate = (date != null) ? date : LocalDate.now();
 
-        if (allTime) {
+        if (effectiveAllTime) {
             model.addAttribute("summary", reportService.getAllTimeSalesSummary());
             model.addAttribute("stockSummary", reportService.getAllTimeStockSummary());
         } else {
@@ -47,7 +49,7 @@ public class ReportController {
         model.addAttribute("adjustments", medicineService.getAllStockAdjustments());
         model.addAttribute("selectedDate", targetDate);
         model.addAttribute("currentTab", tab);
-        model.addAttribute("allTime", allTime);
+        model.addAttribute("allTime", effectiveAllTime);
 
         return "admin/reports";
     }
@@ -57,7 +59,7 @@ public class ReportController {
         if (date != null) {
             return "redirect:/admin/reports?tab=stock&date=" + date;
         }
-        return "redirect:/admin/reports?tab=stock";
+        return "redirect:/admin/reports?tab=stock&allTime=true";
     }
 
     @GetMapping("/admin/history/sales")
@@ -65,7 +67,7 @@ public class ReportController {
         if (date != null) {
             return "redirect:/admin/reports?tab=sales&date=" + date;
         }
-        return "redirect:/admin/reports?tab=sales";
+        return "redirect:/admin/reports?tab=sales&allTime=true";
     }
 
     @GetMapping("/admin/history/adjustments")
