@@ -61,7 +61,7 @@ public class MedicineService {
 
         String providerName = (batchDto.getProviderName() != null && !batchDto.getProviderName().isBlank())
                 ? batchDto.getProviderName().trim()
-                : "General Provider";
+                : "Direct Inward / Shelf Stock";
 
         String providerPhone = (batchDto.getProviderPhone() != null && !batchDto.getProviderPhone().isBlank())
                 ? batchDto.getProviderPhone().trim()
@@ -96,8 +96,12 @@ public class MedicineService {
                 int currentQty = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
                 medicine.setQuantity(currentQty + totalBaseUnits);
                 medicine.setPackSize(packSize);
-                medicine.setBuyingPrice(buyPrice);
-                medicine.setSellingPrice(sellPrice);
+                if (buyPrice > 0 || medicine.getBuyingPrice() == null) {
+                    medicine.setBuyingPrice(buyPrice);
+                }
+                if (sellPrice > 0 || medicine.getSellingPrice() == null) {
+                    medicine.setSellingPrice(sellPrice);
+                }
                 if (item.getCategory() != null && !item.getCategory().isBlank()) {
                     medicine.setCategory(category);
                 }
@@ -142,7 +146,7 @@ public class MedicineService {
     @Transactional
     public void addStock(String name, String category, Integer quantityAdded,
                          Double buyingPrice, Double sellingPrice) {
-        addStock(name, category, quantityAdded, 1, buyingPrice, sellingPrice, "General Provider", "N/A");
+        addStock(name, category, quantityAdded, 1, buyingPrice, sellingPrice, "Direct Inward / Shelf Stock", "N/A");
     }
 
     @Transactional
@@ -157,10 +161,14 @@ public class MedicineService {
                          Double buyingPrice, Double sellingPrice,
                          String providerName, String providerPhone) {
 
-        String pName = (providerName != null && !providerName.isBlank()) ? providerName.trim() : "General Provider";
+        String pName = (providerName != null && !providerName.isBlank()) ? providerName.trim() : "Direct Inward / Shelf Stock";
         String pPhone = (providerPhone != null && !providerPhone.isBlank()) ? providerPhone.trim() : "N/A";
         int ps = (packSize != null && packSize > 0) ? packSize : 1;
-        int totalBaseUnits = quantityAdded * ps;
+        int qty = (quantityAdded != null && quantityAdded > 0) ? quantityAdded : 0;
+        int totalBaseUnits = qty * ps;
+
+        double bp = (buyingPrice != null && buyingPrice >= 0) ? buyingPrice : 0.0;
+        double sp = (sellingPrice != null && sellingPrice >= 0) ? sellingPrice : 0.0;
 
         Optional<Medicine> existing = medicineRepository.findByNameIgnoreCase(name);
         Medicine medicine;
@@ -170,19 +178,23 @@ public class MedicineService {
             int currentQty = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
             medicine.setQuantity(currentQty + totalBaseUnits);
             medicine.setPackSize(ps);
-            medicine.setBuyingPrice(buyingPrice);
-            medicine.setSellingPrice(sellingPrice);
+            if (bp > 0 || medicine.getBuyingPrice() == null) {
+                medicine.setBuyingPrice(bp);
+            }
+            if (sp > 0 || medicine.getSellingPrice() == null) {
+                medicine.setSellingPrice(sp);
+            }
             if (category != null && !category.isBlank()) {
-                medicine.setCategory(category);
+                medicine.setCategory(category.trim());
             }
         } else {
             medicine = new Medicine();
-            medicine.setName(name);
-            medicine.setCategory(category);
+            medicine.setName(name != null ? name.trim() : "Unknown");
+            medicine.setCategory(category != null && !category.isBlank() ? category.trim() : "General");
             medicine.setPackSize(ps);
             medicine.setQuantity(totalBaseUnits);
-            medicine.setBuyingPrice(buyingPrice);
-            medicine.setSellingPrice(sellingPrice);
+            medicine.setBuyingPrice(bp);
+            medicine.setSellingPrice(sp);
         }
         medicineRepository.save(medicine);
 
@@ -192,11 +204,11 @@ public class MedicineService {
         addition.setBatchInvoiceNumber("SINGLE-" + System.currentTimeMillis());
         addition.setMedicineName(medicine.getName());
         addition.setCategory(medicine.getCategory());
-        addition.setQuantityAdded(quantityAdded);
+        addition.setQuantityAdded(qty);
         addition.setPackSize(ps);
-        addition.setBuyingPrice(buyingPrice);
-        addition.setSellingPrice(sellingPrice);
-        addition.setTotalCost(buyingPrice * quantityAdded);
+        addition.setBuyingPrice(bp);
+        addition.setSellingPrice(sp);
+        addition.setTotalCost(bp * qty);
         addition.setAddedAt(LocalDateTime.now());
 
         stockAdditionRepository.save(addition);

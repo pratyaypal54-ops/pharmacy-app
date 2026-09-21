@@ -71,10 +71,10 @@ public class MedicineController {
             medicineService.processBatchStockAddition(batchDto);
             String provider = (batchDto.getProviderName() != null && !batchDto.getProviderName().isBlank())
                     ? batchDto.getProviderName()
-                    : "Provider";
+                    : "Direct Inward";
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Successfully added " + batchDto.getItems().size() + " medicine item(s) from " + provider + " into stock."
+                    "message", "Successfully added " + batchDto.getItems().size() + " medicine item(s) into stock."
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -86,16 +86,17 @@ public class MedicineController {
 
     @PostMapping("/admin/add-stock")
     public String submitAddStock(@RequestParam String name,
-                                 @RequestParam String category,
+                                 @RequestParam(required = false, defaultValue = "General") String category,
                                  @RequestParam Integer quantity,
                                  @RequestParam(required = false, defaultValue = "1") Integer packSize,
-                                 @RequestParam Double buyingPrice,
-                                 @RequestParam Double sellingPrice,
-                                 @RequestParam(required = false) String providerName,
-                                 @RequestParam(required = false) String providerPhone,
+                                 @RequestParam(required = false, defaultValue = "0.0") Double buyingPrice,
+                                 @RequestParam(required = false, defaultValue = "0.0") Double sellingPrice,
+                                 @RequestParam(required = false, defaultValue = "Direct Inward / Shelf Stock") String providerName,
+                                 @RequestParam(required = false, defaultValue = "N/A") String providerPhone,
                                  RedirectAttributes redirectAttributes) {
         medicineService.addStock(name, category, quantity, packSize, buyingPrice, sellingPrice, providerName, providerPhone);
-        redirectAttributes.addFlashAttribute("success", "Stock of " + name + " updated successfully (+" + (quantity * packSize) + " units).");
+        int totalTabs = quantity * (packSize != null && packSize > 0 ? packSize : 1);
+        redirectAttributes.addFlashAttribute("success", "Successfully added " + quantity + " pack(s) of " + name + " (" + totalTabs + " total units) into inventory.");
         return "redirect:/admin/add-stock";
     }
 }
