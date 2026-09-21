@@ -34,6 +34,16 @@ public class ReportService {
         return calculateSalesSummary(date, transactions);
     }
 
+    public DailySalesSummary getSalesSummaryForDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+
+        List<SalesTransaction> transactions =
+                salesTransactionRepository.findBySaleDateBetweenOrderBySaleDateDesc(start, end);
+
+        return calculateSalesSummary(null, transactions);
+    }
+
     public DailySalesSummary getAllTimeSalesSummary() {
         List<SalesTransaction> transactions = salesTransactionRepository.findAllByOrderBySaleDateDesc();
         return calculateSalesSummary(null, transactions);
@@ -99,6 +109,16 @@ public class ReportService {
                 stockAdditionRepository.findByAddedAtBetweenOrderByAddedAtDesc(startOfDay, endOfDay);
 
         return calculateStockSummary(date, additions);
+    }
+
+    public DailyStockSummary getStockSummaryForDateRange(LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+
+        List<StockAddition> additions =
+                stockAdditionRepository.findByAddedAtBetweenOrderByAddedAtDesc(start, end);
+
+        return calculateStockSummary(null, additions);
     }
 
     public DailyStockSummary getAllTimeStockSummary() {

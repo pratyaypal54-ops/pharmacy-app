@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="theme-color" content="#080b11">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -10,7 +10,7 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Database Disaster Backup - PharmCare</title>
+    <title>Data Backup &amp; Archiving - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -46,29 +46,92 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128190; Disaster Recovery &amp; Cloud Database Backup</h1>
-            <p class="page-subtitle">Protect your pharmacy against PC crashes, physical damage, or theft. Keep automated backups in Google Drive.</p>
+            <h1 class="page-title">&#128190; Simple PDF Data Backup &amp; Device Archive</h1>
+            <p class="page-subtitle">Select any date range to generate a clean, official PDF backup of your sales, restocks, and medicine stock. Save directly to your PC or phone.</p>
         </div>
         <div>
             <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Back to Dashboard</a>
         </div>
     </div>
 
-    <!-- ONE-CLICK BACKUP CARD -->
-    <div class="cyber-card" style="padding: 28px; margin-bottom: 24px; border-left: 4px solid var(--neon-green); background: linear-gradient(135deg, rgba(0,255,157,0.03) 0%, rgba(10,14,23,0.95) 100%);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+    <!-- PRIMARY: SIMPLE PDF BACKUP WITH DATE RANGE SELECTOR -->
+    <div class="cyber-card" style="padding: 28px; margin-bottom: 28px; border-left: 4px solid var(--neon-green); background: linear-gradient(135deg, rgba(0, 255, 136, 0.04) 0%, rgba(15, 21, 35, 0.95) 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
             <div>
-                <h2 style="font-size: 1.25rem; color: var(--neon-green); margin-bottom: 6px;">
-                    &#128229; One-Click Emergency Database Snapshot (.SQL)
+                <h2 style="font-size: 1.3rem; color: var(--neon-green); margin: 0 0 6px 0; display: flex; align-items: center; gap: 8px;">
+                    <span>&#128196;</span> Export Human-Readable PDF Data Backup
                 </h2>
-                <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 650px; line-height: 1.5;">
-                    Instantly generates a full, portable SQL backup file containing your complete inventory catalog, all historical sales transactions, supplier restock records, and accounts. Save this file to your pen drive or cloud storage.
+                <p style="color: var(--text-muted); font-size: 0.88rem; max-width: 680px; margin: 0; line-height: 1.5;">
+                    No technical SQL knowledge needed! Choose a date range below to compile an audit-ready PDF containing all customer sales invoices, distributor restock inward records, and master inventory levels. The downloaded PDF file is automatically named with your selected date range.
                 </p>
             </div>
-            <a th:href="@{/admin/backup/download}" class="btn btn-primary" style="padding: 12px 24px; font-size: 0.95rem; font-weight: 700;">
-                &#128229; Download Full Database Backup Now &rarr;
-            </a>
+            <div class="badge badge-in-stock" style="font-size: 0.8rem; padding: 6px 12px;">
+                &#10003; 100% Offline Compatible
+            </div>
         </div>
+
+        <!-- DATE RANGE PICKER FORM -->
+        <form id="backupForm" th:action="@{/admin/backup/pdf}" method="get" target="_blank" style="background: rgba(8, 11, 17, 0.7); border: 1px solid var(--border-dim); border-radius: var(--radius-md); padding: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: flex-end; margin-bottom: 16px;">
+                
+                <div>
+                    <label class="form-label" for="startDateInput" style="color: var(--neon-cyan);">
+                        <span>&#128197; Start Date (From)</span>
+                    </label>
+                    <input type="date" 
+                           id="startDateInput" 
+                           name="startDate" 
+                           th:value="${defaultStartDate}" 
+                           class="cyber-input" 
+                           style="font-family: var(--font-mono); font-size: 0.9rem;"
+                           required>
+                </div>
+
+                <div>
+                    <label class="form-label" for="endDateInput" style="color: var(--neon-cyan);">
+                        <span>&#128197; End Date (To)</span>
+                    </label>
+                    <input type="date" 
+                           id="endDateInput" 
+                           name="endDate" 
+                           th:value="${defaultEndDate}" 
+                           class="cyber-input" 
+                           style="font-family: var(--font-mono); font-size: 0.9rem;"
+                           required>
+                </div>
+
+                <div>
+                    <label class="form-label" style="color: var(--text-muted);">
+                        <span>File Name Preview</span>
+                    </label>
+                    <div id="fileNamePreview" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--neon-amber); padding: 10px 12px; background: var(--bg-surface-elevated); border: 1px solid var(--border-dim); border-radius: var(--radius-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        PharmCare_Backup_...pdf
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUICK RANGE PRESET BUTTONS -->
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; padding-top: 6px;">
+                <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">QUICK PRESETS:</span>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPreset('today')">Today</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPreset('last7')">Last 7 Days</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="setPreset('thisMonth')">This Month</button>
+                <button type="button" class="btn btn-cyber-cyan btn-sm" onclick="setAllTime()">&#128336; All-Time Lifetime Backup</button>
+            </div>
+
+            <input type="hidden" id="allTimeInput" name="allTime" value="false">
+            <input type="hidden" id="autoDownloadInput" name="autoDownload" value="true">
+
+            <!-- ACTION BUTTONS -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button type="button" onclick="submitBackup(true)" class="btn btn-primary" style="padding: 12px 24px; font-weight: 700; font-size: 0.95rem;">
+                    &#128229; Create &amp; Download PDF Backup &rarr;
+                </button>
+                <button type="button" onclick="submitBackup(false)" class="btn btn-outline" style="padding: 12px 20px; font-size: 0.92rem;">
+                    &#128065; View &amp; Print Document
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- DATABASE INTEGRITY AUDIT CARDS -->
@@ -98,39 +161,89 @@
         </div>
     </div>
 
-    <!-- GOOGLE DRIVE AUTOMATION TUTORIAL -->
-    <div class="cyber-card" style="padding: 24px;">
-        <h3 style="color: var(--neon-cyan); font-size: 1.1rem; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-            <span>&#9729;</span> Automated Google Drive Cloud Protection
-        </h3>
-        <p style="font-size: 0.88rem; color: var(--text-main); line-height: 1.6; margin-bottom: 16px;">
-            To guarantee that you <strong>never lose data even if your shop PC physically burns or breaks</strong>, follow these 2 simple steps to automatically save a copy to your Google Drive:
-        </p>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
-                <div style="color: var(--neon-cyan); font-weight: 700; margin-bottom: 6px;">Step 1: Install Google Drive on PC</div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
-                    Download and install official <strong style="color: var(--text-bright);">Google Drive for Desktop</strong>. It creates a virtual Google Drive folder on your Windows computer (e.g. <code>G:\My Drive\PharmacyBackups</code>).
-                </div>
+    <!-- ADVANCED TECHNICAL SECTION: SQL DATABASE DUMP -->
+    <div class="cyber-card" style="padding: 20px; border-color: var(--border-dim); opacity: 0.85;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+                <h4 style="margin: 0 0 4px 0; color: var(--text-bright); font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
+                    <span>&#128736;</span> Advanced Database Dump (.SQL for MySQL Developers)
+                </h4>
+                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">
+                    Raw database dump used by database administrators for MySQL server imports or full structural migration.
+                </p>
             </div>
-
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
-                <div style="color: var(--neon-green); font-weight: 700; margin-bottom: 6px;">Step 2: Save Backups to That Folder</div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
-                    Whenever you download the backup or run the automated script, it drops the <code>.sql</code> file directly into your Google Drive folder. Google automatically uploads it to cloud servers instantly.
-                </div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 8px; padding: 16px;">
-                <div style="color: var(--neon-amber); font-weight: 700; margin-bottom: 6px;">Step 3: Instant 2-Minute Restore</div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
-                    If the shop PC ever breaks, you simply log in to your Google Drive on any other laptop, download the latest <code>.sql</code> backup file, and import it into MySQL. Every sale and medicine is 100% restored without paying a single rupee!
-                </div>
-            </div>
+            <a th:href="@{/admin/backup/download}" class="btn btn-outline btn-sm">
+                &#128229; Download Raw .SQL
+            </a>
         </div>
     </div>
 </div>
+
+<script>
+    const startInput = document.getElementById('startDateInput');
+    const endInput = document.getElementById('endDateInput');
+    const fileNamePreview = document.getElementById('fileNamePreview');
+    const allTimeInput = document.getElementById('allTimeInput');
+    const autoDownloadInput = document.getElementById('autoDownloadInput');
+    const form = document.getElementById('backupForm');
+
+    function updatePreview() {
+        if (allTimeInput.value === 'true') {
+            const today = new Date().toISOString().split('T')[0];
+            fileNamePreview.textContent = 'PharmCare_Backup_AllTime_up_to_' + today + '.pdf';
+            return;
+        }
+
+        const s = startInput.value || 'YYYY-MM-DD';
+        const e = endInput.value || 'YYYY-MM-DD';
+        fileNamePreview.textContent = 'PharmCare_Backup_' + s + '_to_' + e + '.pdf';
+    }
+
+    function setPreset(type) {
+        allTimeInput.value = 'false';
+        const now = new Date();
+        const endStr = now.toISOString().split('T')[0];
+        let startStr = endStr;
+
+        if (type === 'today') {
+            startStr = endStr;
+        } else if (type === 'last7') {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            startStr = d.toISOString().split('T')[0];
+        } else if (type === 'thisMonth') {
+            const first = new Date(now.getFullYear(), now.getMonth(), 1);
+            startStr = first.toISOString().split('T')[0];
+        }
+
+        startInput.value = startStr;
+        endInput.value = endStr;
+        updatePreview();
+    }
+
+    function setAllTime() {
+        allTimeInput.value = 'true';
+        updatePreview();
+    }
+
+    startInput.addEventListener('change', () => {
+        allTimeInput.value = 'false';
+        updatePreview();
+    });
+
+    endInput.addEventListener('change', () => {
+        allTimeInput.value = 'false';
+        updatePreview();
+    });
+
+    function submitBackup(isAutoDownload) {
+        autoDownloadInput.value = isAutoDownload ? 'true' : 'false';
+        form.submit();
+    }
+
+    // Initialize filename preview
+    updatePreview();
+</script>
 
 </body>
 </html>

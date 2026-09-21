@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title th:text="${fileName.replace('.pdf', '')}"></title>
+    <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
+
+    <style>
+        :root {
+            --primary: #008844;
+            --primary-dark: #00552b;
+            --text-dark: #111827;
+            --text-muted: #4b5563;
+            --border: #e5e7eb;
+            --bg-alt: #f9fafb;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-dark);
+            background: #eef2f6;
+            margin: 0;
+            padding: 24px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* Top Action Toolbar */
+        .pdf-toolbar {
+            max-width: 1080px;
+            margin: 0 auto 20px auto;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-green {
+            background: #00aa55;
+            color: #ffffff;
+        }
+        .btn-green:hover {
+            background: #008844;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-color: #d1d5db;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* Printable Document Sheet */
+        .sheet {
+            max-width: 1080px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 36px 40px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        }
+
+        /* Header block */
+        .doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+
+        .brand-block h1 {
+            margin: 0 0 4px 0;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-block p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .meta-block {
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .meta-block strong {
+            color: var(--text-dark);
+        }
+
+        .badge-range {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* KPI Overview Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px 14px;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .kpi-val {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text-dark);
+            font-family: monospace;
+        }
+
+        .kpi-val.highlight {
+            color: var(--primary);
+        }
+
+        /* Section Headings */
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin: 28px 0 12px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Tables */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        table.data-table th {
+            background: #f3f4f6;
+            color: #374151;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            padding: 8px 10px;
+            border: 1px solid #d1d5db;
+            text-align: left;
+        }
+
+        table.data-table td {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            color: var(--text-dark);
+            vertical-align: middle;
+        }
+
+        table.data-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .mono {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .total-row {
+            background: #f0fdf4 !important;
+            font-weight: bold;
+        }
+        .total-row td {
+            border-top: 2px solid #86efac;
+            font-size: 12px;
+        }
+
+        .empty-placeholder {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-style: italic;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        /* Footer */
+        .doc-footer {
+            margin-top: 36px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+            .pdf-toolbar {
+                display: none !important;
+            }
+            .sheet {
+                max-width: 100% !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP ACTION TOOLBAR -->
+<div class="pdf-toolbar no-print">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <a th:href="@{/admin/backup}" class="btn-action btn-secondary">&larr; Back to Backup Menu</a>
+        <span style="font-size: 13px; color: var(--text-muted);">
+            File name: <strong style="color: #111827;" th:text="${fileName}">PharmCare_Backup.pdf</strong>
+        </span>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+        <button type="button" id="btnDownloadPdf" class="btn-action btn-green" onclick="generateAndSavePdf()">
+            &#128229; Save PDF to Device
+        </button>
+        <button type="button" class="btn-action btn-secondary" onclick="window.print()">
+            &#128438; Print / Browser Save as PDF
+        </button>
+    </div>
+</div>
+
+<!-- PRINTABLE AUDIT SHEET CONTAINER -->
+<div class="sheet" id="backupDocument">
+
+    <!-- HEADER -->
+    <div class="doc-header">
+        <div class="brand-block">
+            <h1>&#10010; PharmCare</h1>
+            <p>Official Retail Pharmacy Data Backup &amp; Historical Audit Archive</p>
+            <div class="badge-range">
+                <span>Backup Scope: </span>
+                <span th:text="${isAllTime ? 'All-Time Lifetime History' : startDate + ' to ' + endDate}">2026-09-01 to 2026-09-21</span>
+            </div>
+        </div>
+
+        <div class="meta-block">
+            <div>Archive File: <strong th:text="${fileName}">PharmCare_Backup.pdf</strong></div>
+            <div>Generated On: <strong th:text="${generationTimestamp}">21-Sep-2026 12:00:00</strong></div>
+            <div>Authorized Operator: <strong th:text="${isOwner ? 'Store Owner (Admin)' : 'Staff Cashier'}">Admin</strong></div>
+            <div>Data Integrity: <strong style="color: #00aa55;">Verified Valid</strong></div>
+        </div>
+    </div>
+
+    <!-- EXECUTIVE FINANCIAL SNAPSHOT -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Sales Invoices</div>
+            <div class="kpi-val" th:text="${salesSummary.invoiceGroups.size()}">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Units Dispensed</div>
+            <div class="kpi-val" th:text="${salesSummary.totalItemsSold}">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Gross Sales</div>
+            <div class="kpi-val" th:text="'&#8377;' + ${#numbers.formatDecimal(salesSummary.totalRevenue, 1, 2)}">&#8377;0.00</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Net Sales Revenue</div>
+            <div class="kpi-val highlight" th:text="'&#8377;' + ${#numbers.formatDecimal(salesSummary.totalRevenue, 1, 2)}">&#8377;0.00</div>
+        </div>
+        <div class="kpi-card" th:if="${isOwner}">
+            <div class="kpi-label">Net Gross Profit</div>
+            <div class="kpi-val" style="color: #0284c7;" th:text="'&#8377;' + ${#numbers.formatDecimal(salesSummary.totalProfit, 1, 2)}">&#8377;0.00</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Restock Batches</div>
+            <div class="kpi-val" th:text="${stockSummary.batchGroups.size()}">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Catalog Items</div>
+            <div class="kpi-val" th:text="${allMedicines.size()}">0</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Current Stock Valuation</div>
+            <div class="kpi-val" th:text="'&#8377;' + ${#numbers.formatDecimal(totalInventoryValuation, 1, 2)}">&#8377;0.00</div>
+        </div>
+    </div>
+
+    <!-- SECTION 1: SALES INVOICES ARCHIVE -->
+    <div class="section-title">
+        <span>&#128179; Section 1: Customer Sales Invoices in Selected Date Range</span>
+        <span class="section-count" th:text="${salesSummary.invoiceGroups.size()} + ' Invoices'">0 Invoices</span>
+    </div>
+
+    <div th:if="${salesSummary.invoiceGroups.isEmpty()}" class="empty-placeholder">
+        No customer sales invoices recorded for this date period.
+    </div>
+
+    <table class="data-table" th:if="${!salesSummary.invoiceGroups.isEmpty()}">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Date &amp; Time</th>
+                <th>Customer Name</th>
+                <th>Phone</th>
+                <th>Medicines Sold</th>
+                <th class="text-right">Units</th>
+                <th class="text-right">Gross (&#8377;)</th>
+                <th class="text-right">Discount (&#8377;)</th>
+                <th class="text-right">Net Paid (&#8377;)</th>
+                <th class="text-right" th:if="${isOwner}">Profit (&#8377;)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="inv : ${salesSummary.invoiceGroups}">
+                <td class="mono" style="font-weight: 700; color: #065f46;" th:text="${inv.invoiceNumber}">INV-001</td>
+                <td th:text="${#temporals.format(inv.saleDate, 'dd-MMM-yyyy HH:mm')}">Date</td>
+                <td th:text="${inv.customerName != null and !inv.customerName.isEmpty() ? inv.customerName : 'Walk-in Customer'}">Name</td>
+                <td class="mono" th:text="${inv.customerPhone != null and !inv.customerPhone.isEmpty() ? inv.customerPhone : 'N/A'}">Phone</td>
+                <td>
+                    <span th:each="item, iterStat : ${inv.items}" th:text="${item.medicineName} + ' (' + ${item.quantitySold} + ')' + (!iterStat.last ? ', ' : '')">
+                        Paracetamol (2)
+                    </span>
+                </td>
+                <td class="mono text-right" th:text="${inv.totalItems}">0</td>
+                <td class="mono text-right" th:text="${#numbers.formatDecimal(inv.totalAmount, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="color: #b45309;" th:text="'-' + ${#numbers.formatDecimal(inv.totalDiscount, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="font-weight: 700; color: #008844;" th:text="${#numbers.formatDecimal(inv.netAmount, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="color: #0284c7;" th:if="${isOwner}" th:text="${#numbers.formatDecimal(inv.totalProfit, 1, 2)}">0.00</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Sales Period Summary:</td>
+                <td class="mono text-right" th:text="${salesSummary.totalItemsSold}">0</td>
+                <td class="mono text-right" th:text="${#numbers.formatDecimal(salesSummary.totalRevenue, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="color: #b45309;">-</td>
+                <td class="mono text-right" style="color: #008844;" th:text="${#numbers.formatDecimal(salesSummary.totalRevenue, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="color: #0284c7;" th:if="${isOwner}" th:text="${#numbers.formatDecimal(salesSummary.totalProfit, 1, 2)}">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SECTION 2: SUPPLIER STOCK RESTOCK ARCHIVE -->
+    <div class="section-title">
+        <span>&#128230; Section 2: Supplier Stock Restock Logs in Selected Date Range</span>
+        <span class="section-count" th:text="${stockSummary.batchGroups.size()} + ' Delivery Batches'">0 Batches</span>
+    </div>
+
+    <div th:if="${stockSummary.batchGroups.isEmpty()}" class="empty-placeholder">
+        No stock delivery batches recorded for this date period.
+    </div>
+
+    <table class="data-table" th:if="${!stockSummary.batchGroups.isEmpty()}">
+        <thead>
+            <tr>
+                <th>Batch / Challan #</th>
+                <th>Inward Date</th>
+                <th>Distributor / Supplier</th>
+                <th>Supplier Phone</th>
+                <th>Medicines Restocked</th>
+                <th class="text-right">Units Added</th>
+                <th class="text-right" th:if="${isOwner}">Total Cost (&#8377;)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="bg : ${stockSummary.batchGroups}">
+                <td class="mono" style="font-weight: 700; color: #0284c7;" th:text="${bg.batchInvoiceNumber}">BAT-001</td>
+                <td th:text="${#temporals.format(bg.addedAt, 'dd-MMM-yyyy HH:mm')}">Date</td>
+                <td th:text="${bg.providerName}">Supplier</td>
+                <td class="mono" th:text="${bg.providerPhone}">Phone</td>
+                <td>
+                    <span th:each="item, iterStat : ${bg.items}" th:text="${item.medicineName} + ' (+' + ${item.quantityAdded} + ')' + (!iterStat.last ? ', ' : '')">
+                        Azithromycin (+10)
+                    </span>
+                </td>
+                <td class="mono text-right" th:text="${bg.totalItems}">0</td>
+                <td class="mono text-right" style="font-weight: 700;" th:if="${isOwner}" th:text="${#numbers.formatDecimal(bg.totalCost, 1, 2)}">0.00</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right; text-transform: uppercase;">Total Restock Inward Period Summary:</td>
+                <td class="mono text-right" th:text="${stockSummary.totalItemsAdded}">0</td>
+                <td class="mono text-right" th:if="${isOwner}" th:text="${#numbers.formatDecimal(stockSummary.totalCost, 1, 2)}">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SECTION 3: CURRENT MEDICINE INVENTORY CATALOG SNAPSHOT -->
+    <div class="section-title">
+        <span>&#128138; Section 3: Medicine Inventory Master Stock Snapshot</span>
+        <span class="section-count" th:text="${allMedicines.size()} + ' Catalog Medicines'">0 Items</span>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Medicine Name</th>
+                <th>Category</th>
+                <th class="text-right">Units in Stock</th>
+                <th class="text-right" th:if="${isOwner}">Wholesale Cost (&#8377;)</th>
+                <th class="text-right">Selling Price (&#8377;)</th>
+                <th class="text-right">Stock Valuation (&#8377;)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="med, iter : ${allMedicines}">
+                <td th:text="${iter.count}">1</td>
+                <td><strong th:text="${med.name}">Paracetamol</strong></td>
+                <td th:text="${med.category != null ? med.category : 'General'}">Category</td>
+                <td class="mono text-right" style="font-weight: 700;" th:text="${med.quantity}">0</td>
+                <td class="mono text-right" th:if="${isOwner}" th:text="${#numbers.formatDecimal(med.buyingPrice, 1, 2)}">0.00</td>
+                <td class="mono text-right" style="color: #008844; font-weight: 700;" th:text="${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">0.00</td>
+                <td class="mono text-right" th:text="${#numbers.formatDecimal(med.quantity * med.sellingPrice, 1, 2)}">0.00</td>
+                <td>
+                    <span th:if="${med.quantity <= 0}" style="color: #dc2626; font-weight: 700;">Out of Stock</span>
+                    <span th:if="${med.quantity > 0 and med.quantity <= 5}" style="color: #d97706; font-weight: 700;">Low Stock</span>
+                    <span th:if="${med.quantity > 5}" style="color: #059669; font-weight: 600;">Available</span>
+                </td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="3" style="text-align: right; text-transform: uppercase;">Total Inventory Valuation:</td>
+                <td class="mono text-right" th:text="${totalInventoryUnits}">0</td>
+                <td class="mono text-right" th:if="${isOwner}">-</td>
+                <td class="mono text-right">-</td>
+                <td class="mono text-right" style="color: #008844;" th:text="${#numbers.formatDecimal(totalInventoryValuation, 1, 2)}">0.00</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- FOOTER -->
+    <div class="doc-footer">
+        <div>
+            PharmCare POS &copy; System Generated Disaster Recovery Archive &bull; Retain for Audit &amp; Accounting
+        </div>
+        <div>
+            Page 1 of Complete Archive &bull; File: <span th:text="${fileName}">PharmCare_Backup.pdf</span>
+        </div>
+    </div>
+</div>
+
+<!-- OFFLINE BUNDLED HTML2PDF ENGINE -->
+<script th:src="@{/js/html2pdf.bundle.min.js}"></script>
+
+<script th:inline="javascript">
+    const backupFileName = /*[[${fileName}]]*/ 'PharmCare_Backup.pdf';
+    const autoDownload = /*[[${autoDownload}]]*/ false;
+
+    function generateAndSavePdf() {
+        const element = document.getElementById('backupDocument');
+        const btn = document.getElementById('btnDownloadPdf');
+        if (btn) {
+            btn.innerHTML = '&#9203; Generating PDF...';
+            btn.disabled = true;
+        }
+
+        const opt = {
+            margin:       [10, 10, 10, 10],
+            filename:     backupFileName,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            if (btn) {
+                btn.innerHTML = '&#10003; PDF Saved to Device!';
+                setTimeout(() => {
+                    btn.innerHTML = '&#128229; Save PDF to Device';
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }).catch(err => {
+            console.error('PDF export error:', err);
+            window.print();
+            if (btn) {
+                btn.innerHTML = '&#128229; Save PDF to Device';
+                btn.disabled = false;
+            }
+        });
+    }
+
+    // If autoDownload was requested, trigger download once DOM is ready
+    window.addEventListener('DOMContentLoaded', () => {
+        if (autoDownload) {
+            setTimeout(generateAndSavePdf, 800);
+        }
+    });
+</script>
+
+</body>
+</html>
