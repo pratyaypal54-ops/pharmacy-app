@@ -20,12 +20,15 @@ public class SalesService {
 
     private final MedicineRepository medicineRepository;
     private final SalesTransactionRepository salesTransactionRepository;
+    private final BackupService backupService;
 
     @Autowired
     public SalesService(MedicineRepository medicineRepository,
-                        SalesTransactionRepository salesTransactionRepository) {
+                        SalesTransactionRepository salesTransactionRepository,
+                        BackupService backupService) {
         this.medicineRepository = medicineRepository;
         this.salesTransactionRepository = salesTransactionRepository;
+        this.backupService = backupService;
     }
 
     @Transactional
@@ -130,6 +133,7 @@ public class SalesService {
             salesTransactionRepository.saveAll(transactionsToSave);
         }
 
+        backupService.triggerRealtimeAutoBackupAsync();
         return invoiceNumber;
     }
 
@@ -182,6 +186,7 @@ public class SalesService {
         transaction.setSaleDate(LocalDateTime.now());
 
         salesTransactionRepository.save(transaction);
+        backupService.triggerRealtimeAutoBackupAsync();
     }
 
     public List<SalesTransaction> getAllTransactions() {
@@ -205,5 +210,6 @@ public class SalesService {
         transaction.setNetAmount(Math.max(0.0, gross - disc));
 
         salesTransactionRepository.save(transaction);
+        backupService.triggerRealtimeAutoBackupAsync();
     }
 }

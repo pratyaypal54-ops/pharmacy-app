@@ -2,6 +2,7 @@ package com.pharmacy.pharmacyapp.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.sql.DataSource;
@@ -24,6 +25,23 @@ public class BackupService {
 
     @Value("${spring.datasource.password:}")
     private String dbPassword;
+
+    @Async
+    public void triggerRealtimeAutoBackupAsync() {
+        try {
+            byte[] dump = generateDatabaseDump();
+            File dir = new File("backups");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File backupFile = new File(dir, "realtime_auto_backup.sql");
+            try (FileOutputStream fos = new FileOutputStream(backupFile)) {
+                fos.write(dump);
+            }
+        } catch (Exception e) {
+            System.err.println("Realtime auto-backup notice: " + e.getMessage());
+        }
+    }
 
     public byte[] generateDatabaseDump() throws Exception {
         // Try mysqldump first if installed in standard location
@@ -70,7 +88,7 @@ public class BackupService {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
         sql.append("-- ========================================================\n");
-        sql.append("-- PHARMA//CORE EMERGENCY DATABASE BACKUP\n");
+        sql.append("-- PharmCare Realtime Automated Backup Snapshot\n");
         sql.append("-- Exported: ").append(timestamp).append("\n");
         sql.append("-- Database: pharmacy_db\n");
         sql.append("-- ========================================================\n\n");

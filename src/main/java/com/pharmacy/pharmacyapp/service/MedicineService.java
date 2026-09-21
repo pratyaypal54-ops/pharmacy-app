@@ -24,14 +24,17 @@ public class MedicineService {
     private final MedicineRepository medicineRepository;
     private final StockAdjustmentRepository stockAdjustmentRepository;
     private final StockAdditionRepository stockAdditionRepository;
+    private final BackupService backupService;
 
     @Autowired
     public MedicineService(MedicineRepository medicineRepository,
                            StockAdjustmentRepository stockAdjustmentRepository,
-                           StockAdditionRepository stockAdditionRepository) {
+                           StockAdditionRepository stockAdditionRepository,
+                           BackupService backupService) {
         this.medicineRepository = medicineRepository;
         this.stockAdjustmentRepository = stockAdjustmentRepository;
         this.stockAdditionRepository = stockAdditionRepository;
+        this.backupService = backupService;
     }
 
     public List<Medicine> searchMedicines(String keyword) {
@@ -127,6 +130,7 @@ public class MedicineService {
         if (!additionsToSave.isEmpty()) {
             stockAdditionRepository.saveAll(additionsToSave);
         }
+        backupService.triggerRealtimeAutoBackupAsync();
     }
 
     @Transactional
@@ -178,6 +182,7 @@ public class MedicineService {
         addition.setAddedAt(LocalDateTime.now());
 
         stockAdditionRepository.save(addition);
+        backupService.triggerRealtimeAutoBackupAsync();
     }
 
     @Transactional
@@ -210,6 +215,7 @@ public class MedicineService {
         adjustment.setAdjustedAt(LocalDateTime.now());
 
         stockAdjustmentRepository.save(adjustment);
+        backupService.triggerRealtimeAutoBackupAsync();
     }
 
     public List<StockAdjustment> getAllStockAdjustments() {
