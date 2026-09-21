@@ -138,6 +138,7 @@
                                 th:value="${med.name}"
                                 th:data-category="${med.category}"
                                 th:data-stock="${med.quantity}"
+                                th:data-packsize="${med.getPackSize()}"
                                 th:data-buying="${med.buyingPrice}"
                                 th:data-selling="${med.sellingPrice}">
                         </option>
@@ -170,20 +171,35 @@
                            placeholder="e.g. Analgesic, Antibiotic, Vitamins">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="qtyReceivedInput">
-                        <span>Quantity Received</span>
-                        <span class="helper-tag">Units in delivery</span>
-                    </label>
-                    <div class="qty-picker-group">
+                <div class="grid-2col-responsive">
+                    <div class="form-group">
+                        <label class="form-label" for="qtyReceivedInput">
+                            <span>Packs / Strips Received</span>
+                            <span class="helper-tag">Strips / Packs</span>
+                        </label>
+                        <div class="qty-picker-group">
+                            <input type="number"
+                                   id="qtyReceivedInput"
+                                   min="1"
+                                   class="cyber-input"
+                                   placeholder="e.g. 10">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(5)">+5</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(10)">+10</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(25)">+25</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="packSizeInput">
+                            <span>Pack Size (Tabs/Strip)</span>
+                            <span class="helper-tag">10 for strip, 1 for bottle</span>
+                        </label>
                         <input type="number"
-                               id="qtyReceivedInput"
+                               id="packSizeInput"
                                min="1"
+                               value="10"
                                class="cyber-input"
-                               placeholder="e.g. 50">
-                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(25)">+25</button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(50)">+50</button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(100)">+100</button>
+                               placeholder="10">
                     </div>
                 </div>
 
@@ -267,7 +283,7 @@
                             <th style="width: 40px;">#</th>
                             <th>Medicine</th>
                             <th>Category</th>
-                            <th style="text-align: right;">Qty</th>
+                            <th style="text-align: right;">Inward Qty</th>
                             <th th:if="${isOwner}" style="text-align: right;">Cost (&#8377;)</th>
                             <th style="text-align: right;">Retail (&#8377;)</th>
                             <th th:if="${isOwner}" style="text-align: right;">Subtotal (&#8377;)</th>
@@ -358,6 +374,7 @@
     const dispBatchRef = document.getElementById('dispBatchRef');
 
     const medNameInput = document.getElementById('medNameInput');
+    const packSizeInput = document.getElementById('packSizeInput');
     const categoryInput = document.getElementById('categoryInput');
     const qtyReceivedInput = document.getElementById('qtyReceivedInput');
     const buyingPriceInput = document.getElementById('buyingPriceInput');
@@ -429,12 +446,15 @@
 
     function recalculateItemPreview() {
         const qty = parseInt(qtyReceivedInput.value) || 0;
+        const packSize = parseInt(packSizeInput ? packSizeInput.value : 1) || 1;
+        const totalBaseUnits = qty * packSize;
         const buyPrice = (buyingPriceInput ? parseFloat(buyingPriceInput.value) : 0) || 0;
         const sellPrice = parseFloat(sellingPriceInput.value) || 0;
 
         if (currentSelectedMed) {
             const currentStock = currentSelectedMed.quantity || 0;
-            projectedStockDisplay.textContent = currentStock + ' + ' + qty + ' = ' + (currentStock + qty) + ' units';
+            const newStock = currentStock + totalBaseUnits;
+            projectedStockDisplay.textContent = currentStock + ' + ' + totalBaseUnits + ' = ' + newStock + ' tablets (' + qty + ' strips)';
         }
 
         if (itemLineCost) {
@@ -462,6 +482,7 @@
 
     medNameInput.addEventListener('input', handleMedicineSelect);
     qtyReceivedInput.addEventListener('input', recalculateItemPreview);
+    if (packSizeInput) packSizeInput.addEventListener('input', recalculateItemPreview);
     if (buyingPriceInput) {
         buyingPriceInput.addEventListener('input', () => {
             delete buyingPriceInput.dataset.autofilled;
@@ -501,10 +522,13 @@
             return;
         }
 
+        const packSize = parseInt(packSizeInput ? packSizeInput.value : 1) || 1;
+
         // Check if item already exists in staging - if so, aggregate quantity
         const existingIdx = stagedItems.findIndex(i => i.name.toLowerCase() === name.toLowerCase());
         if (existingIdx !== -1) {
             stagedItems[existingIdx].quantity += qty;
+            stagedItems[existingIdx].packSize = packSize;
             stagedItems[existingIdx].buyingPrice = buyPrice;
             stagedItems[existingIdx].sellingPrice = sellPrice;
             stagedItems[existingIdx].category = category;
@@ -513,6 +537,7 @@
                 name: name,
                 category: category,
                 quantity: qty,
+                packSize: packSize,
                 buyingPrice: buyPrice,
                 sellingPrice: sellPrice
             });
@@ -592,11 +617,16 @@
             totalRetail += subtotalRetail;
 
             const tr = document.createElement('tr');
+            const totalTabs = item.quantity * (item.packSize || 1);
+            const qtyDisplay = (item.packSize && item.packSize > 1)
+                ? (item.quantity + ' strips (' + totalTabs + ' tabs)')
+                : (item.quantity + ' units');
+
             let innerHtml = `
                 <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
                 <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
                 <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
-                <td style="text-align: right;" class="mono-cell highlight">${item.quantity}</td>`;
+                <td style="text-align: right;" class="mono-cell highlight">${qtyDisplay}</td>`;
 
             if (isOwnerUser) {
                 innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.buyingPrice.toFixed(2)}</td>`;

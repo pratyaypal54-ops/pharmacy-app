@@ -1,5 +1,6 @@
 package com.pharmacy.pharmacyapp.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +38,10 @@ public class StockAddition {
     private String medicineName;
     private String category;
     private Integer quantityAdded;
+
+    // Packaging: units per strip/pack at time of addition
+    @Column(columnDefinition = "int default 1")
+    private Integer packSize = 1;
 
     private Double buyingPrice;
     private Double sellingPrice;

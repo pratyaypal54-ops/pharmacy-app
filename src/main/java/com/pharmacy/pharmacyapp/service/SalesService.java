@@ -65,17 +65,38 @@ public class SalesService {
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Medicine not found in catalog: " + item.getName()));
 
+            int packSize = medicine.getPackSize();
             int currentStock = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
-            if (currentStock < item.getQuantity()) {
-                throw new IllegalArgumentException(
-                        "Insufficient stock for '" + medicine.getName() + "'. Available: " + currentStock + ", Requested: " + item.getQuantity());
+
+            String unitType = (item.getUnitType() != null && !item.getUnitType().isBlank())
+                    ? item.getUnitType().trim().toUpperCase()
+                    : "STRIP";
+            boolean isLoose = "LOOSE".equals(unitType);
+
+            int unitsToDeduct;
+            double itemSellingRate;
+            double itemBuyingRate;
+
+            if (isLoose) {
+                unitsToDeduct = item.getQuantity();
+                itemSellingRate = medicine.getPerUnitPrice();
+                itemBuyingRate = medicine.getPerUnitBuyingPrice();
+            } else {
+                unitsToDeduct = item.getQuantity() * packSize;
+                itemSellingRate = (medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0;
+                itemBuyingRate = (medicine.getBuyingPrice() != null) ? medicine.getBuyingPrice() : 0.0;
             }
 
-            medicine.setQuantity(currentStock - item.getQuantity());
+            if (currentStock < unitsToDeduct) {
+                String requestedDesc = isLoose ? (item.getQuantity() + " loose tablet(s)") : (item.getQuantity() + " full strip(s)");
+                throw new IllegalArgumentException(
+                        "Insufficient stock for '" + medicine.getName() + "'. Required: " + requestedDesc + " (" + unitsToDeduct + " units), Available in stock: " + currentStock + " units (" + medicine.getFormattedStock() + ")");
+            }
+
+            medicine.setQuantity(currentStock - unitsToDeduct);
             medicinesToUpdate.add(medicine);
 
-            double sellPrice = (medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0;
-            double itemGross = sellPrice * item.getQuantity();
+            double itemGross = Math.round(itemSellingRate * item.getQuantity() * 100.0) / 100.0;
             grossSubtotal += itemGross;
 
             SalesTransaction transaction = new SalesTransaction();
@@ -84,8 +105,10 @@ public class SalesService {
             transaction.setInvoiceNumber(invoiceNumber);
             transaction.setMedicineName(medicine.getName());
             transaction.setQuantitySold(item.getQuantity());
-            transaction.setBuyingPriceAtSale(medicine.getBuyingPrice() != null ? medicine.getBuyingPrice() : 0.0);
-            transaction.setSellingPriceAtSale(sellPrice);
+            transaction.setUnitSoldAs(isLoose ? "LOOSE" : "STRIP");
+            transaction.setUnitsDeducted(unitsToDeduct);
+            transaction.setBuyingPriceAtSale(itemBuyingRate);
+            transaction.setSellingPriceAtSale(itemSellingRate);
             transaction.setTotalAmount(itemGross);
             transaction.setSaleDate(now);
 
@@ -122,7 +145,7 @@ public class SalesService {
             }
 
             t.setDiscountAmount(itemDiscount);
-            t.setNetAmount(Math.max(0.0, itemGross - itemDiscount));
+            t.setNetAmount(Math.max(0.0, Math.round((itemGross - itemDiscount) * 100.0) / 100.0));
         }
 
         // 3. High-performance batch persistence
@@ -154,13 +177,16 @@ public class SalesService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No medicine found with that name: " + name));
 
-        if (medicine.getQuantity() == null || medicine.getQuantity() < quantitySold) {
+        int packSize = medicine.getPackSize();
+        int totalUnits = quantitySold * packSize;
+
+        if (medicine.getQuantity() == null || medicine.getQuantity() < totalUnits) {
             int available = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
             throw new IllegalArgumentException(
-                    "Not enough stock. Only " + available + " left.");
+                    "Not enough stock. Only " + available + " units left.");
         }
 
-        medicine.setQuantity(medicine.getQuantity() - quantitySold);
+        medicine.setQuantity(medicine.getQuantity() - totalUnits);
         medicineRepository.save(medicine);
 
         String cName = (customerName != null && !customerName.isBlank()) ? customerName.trim() : "Walk-in Customer";
@@ -178,6 +204,8 @@ public class SalesService {
         transaction.setInvoiceNumber(invoice);
         transaction.setMedicineName(medicine.getName());
         transaction.setQuantitySold(quantitySold);
+        transaction.setUnitSoldAs("STRIP");
+        transaction.setUnitsDeducted(totalUnits);
         transaction.setBuyingPriceAtSale(medicine.getBuyingPrice() != null ? medicine.getBuyingPrice() : 0.0);
         transaction.setSellingPriceAtSale(sellPrice);
         transaction.setTotalAmount(gross);

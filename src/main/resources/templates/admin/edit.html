@@ -92,7 +92,8 @@
                                 th:value="${med.name}"
                                 th:data-stock="${med.quantity}"
                                 th:data-price="${med.sellingPrice}"
-                                th:data-category="${med.category}">
+                                th:data-category="${med.category}"
+                                th:data-packsize="${med.getPackSize()}">
                         </option>
                     </datalist>
                 </div>
@@ -123,11 +124,11 @@
                            required>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
                     <div class="form-group">
                         <label class="form-label" for="sellingPriceInput">
-                            <span>Correct Selling Price (&#8377;)</span>
-                            <span class="helper-tag">MRP / Unit</span>
+                            <span>Selling Price (&#8377;)</span>
+                            <span class="helper-tag">MRP / Strip</span>
                         </label>
                         <input type="number"
                                id="sellingPriceInput"
@@ -139,15 +140,28 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="form-label" for="packSizeInput">
+                            <span>Pack Size</span>
+                            <span class="helper-tag">Tabs / Strip</span>
+                        </label>
+                        <input type="number"
+                               id="packSizeInput"
+                               name="packSize"
+                               min="1"
+                               class="cyber-input"
+                               placeholder="10">
+                    </div>
+
+                    <div class="form-group">
                         <label class="form-label" for="categoryInput">
-                            <span>Correct Category</span>
+                            <span>Category</span>
                             <span class="helper-tag">Classification</span>
                         </label>
                         <input type="text"
                                id="categoryInput"
                                name="category"
                                class="cyber-input"
-                               placeholder="e.g. Tablets, Syrups">
+                               placeholder="e.g. Tablets">
                     </div>
                 </div>
 
@@ -255,6 +269,7 @@
     const correctQtyInput = document.getElementById('correctQtyInput');
     const sellingPriceInput = document.getElementById('sellingPriceInput');
     const categoryInput = document.getElementById('categoryInput');
+    const packSizeInput = document.getElementById('packSizeInput');
     const reasonInput = document.getElementById('reasonInput');
     const auditPanel = document.getElementById('auditPanel');
     const curStockVal = document.getElementById('curStockVal');
@@ -278,6 +293,9 @@
             }
             if (found.category) {
                 categoryInput.value = found.category;
+            }
+            if (packSizeInput) {
+                packSizeInput.value = found.packSize != null ? found.packSize : 1;
             }
         } else {
             selectedMedicine = null;

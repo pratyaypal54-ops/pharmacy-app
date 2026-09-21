@@ -88,13 +88,14 @@ public class MedicineController {
     public String submitAddStock(@RequestParam String name,
                                  @RequestParam String category,
                                  @RequestParam Integer quantity,
+                                 @RequestParam(required = false, defaultValue = "1") Integer packSize,
                                  @RequestParam Double buyingPrice,
                                  @RequestParam Double sellingPrice,
                                  @RequestParam(required = false) String providerName,
                                  @RequestParam(required = false) String providerPhone,
                                  RedirectAttributes redirectAttributes) {
-        medicineService.addStock(name, category, quantity, buyingPrice, sellingPrice, providerName, providerPhone);
-        redirectAttributes.addFlashAttribute("success", "Stock of " + name + " updated successfully (+" + quantity + " units).");
+        medicineService.addStock(name, category, quantity, packSize, buyingPrice, sellingPrice, providerName, providerPhone);
+        redirectAttributes.addFlashAttribute("success", "Stock of " + name + " updated successfully (+" + (quantity * packSize) + " units).");
         return "redirect:/admin/add-stock";
     }
 }

@@ -89,8 +89,16 @@
                     <td>
                         <span class="badge badge-category" th:text="${med.category != null and !med.category.isEmpty() ? med.category : 'General'}">Category</span>
                     </td>
-                    <td class="mono-cell" style="font-size: 1rem; color: var(--neon-green);" 
-                        th:text="'&#8377;' + ${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">&#8377;0.00</td>
+                    <td class="mono-cell" style="font-size: 1rem; color: var(--neon-green);">
+                        <div>
+                            <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">&#8377;0.00</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;" th:text="' / ' + ${med.unitType}"> / Strip</span>
+                        </div>
+                        <div th:if="${med.packSize > 1}" style="font-size: 0.76rem; color: var(--neon-cyan); margin-top: 2px;">
+                            <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.getPerUnitPrice(), 1, 2)} + ' / loose tab'">&#8377;0.00 / tab</span>
+                            <span style="color: var(--text-muted);" th:text="' (' + ${med.packSize} + ' tabs/strip)'"> (10 tabs)</span>
+                        </div>
+                    </td>
                     <td>
                         <!-- Dynamic Stock Availability Status: Hidden exact numbers for privacy -->
                         <!-- 0 Units: Vivid Red Out of Stock -->

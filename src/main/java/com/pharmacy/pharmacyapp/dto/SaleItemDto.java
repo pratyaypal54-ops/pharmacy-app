@@ -10,4 +10,5 @@ import lombok.Setter;
 public class SaleItemDto {
     private String name;
     private Integer quantity;
+    private String unitType = "STRIP"; // "STRIP" or "LOOSE"
 }

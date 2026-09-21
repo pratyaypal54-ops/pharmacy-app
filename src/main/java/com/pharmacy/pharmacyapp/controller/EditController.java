@@ -31,10 +31,11 @@ public class EditController {
                              @RequestParam Integer correctQuantity,
                              @RequestParam(required = false) Double sellingPrice,
                              @RequestParam(required = false) String category,
+                             @RequestParam(required = false) Integer packSize,
                              @RequestParam(required = false) String reason,
                              RedirectAttributes redirectAttributes) {
         try {
-            medicineService.editStockAndDetails(name, correctQuantity, sellingPrice, category, reason);
+            medicineService.editStockAndDetails(name, correctQuantity, sellingPrice, category, packSize, reason);
             redirectAttributes.addFlashAttribute("success",
                     "Entry for '" + name + "' corrected successfully (Stock: " + correctQuantity + " units).");
         } catch (IllegalArgumentException e) {

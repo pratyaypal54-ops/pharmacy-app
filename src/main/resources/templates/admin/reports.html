@@ -224,7 +224,7 @@
                                      style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-dim); border-radius: 6px; border-left: 3px solid var(--neon-green);">
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <strong style="color: var(--text-bright); font-size: 0.88rem;" th:text="${item.medicineName}">Paracetamol 650mg</strong>
-                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'&times; ' + ${item.quantitySold} + ' units'">&times; 2 units</span>
+                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'&times; ' + ${item.getFormattedUnitDisplay()}">&times; 2 units</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 10px;">
                                         <span class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);" th:text="'@ &#8377;' + ${#numbers.formatDecimal(item.sellingPriceAtSale, 1, 2)}">@ &#8377;20.00</span>
@@ -357,7 +357,7 @@
                                     <div style="display: flex; align-items: center; gap: 8px;">
                                         <strong style="color: var(--text-bright); font-size: 0.88rem;" th:text="${item.medicineName}">Paracetamol 650mg</strong>
                                         <span class="badge badge-category" style="font-size: 0.68rem; padding: 1px 6px;" th:text="${item.category != null ? item.category : 'General'}">Category</span>
-                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'+' + ${item.quantityAdded} + ' units'">+50 units</span>
+                                        <span class="mono-cell highlight" style="font-size: 0.8rem;" th:text="'+' + ${item.quantityAdded} + ' packs' + (${item.packSize != null and item.packSize > 1} ? (' (' + (${item.quantityAdded} * ${item.packSize}) + ' tabs)') : '')">+50 units</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 12px;">
                                         <span class="mono-cell" style="font-size: 0.78rem; color: var(--text-muted);"

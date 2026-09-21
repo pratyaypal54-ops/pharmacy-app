@@ -1,5 +1,6 @@
 package com.pharmacy.pharmacyapp.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,7 +34,16 @@ public class SalesTransaction {
     private String invoiceNumber;
 
     private String medicineName;
+
+    // Number of units sold (e.g., 2 strips or 5 loose tablets)
     private Integer quantitySold;
+
+    // Unit mode: "STRIP" (full pack) or "LOOSE" (individual tablets)
+    @Column(columnDefinition = "varchar(20) default 'STRIP'")
+    private String unitSoldAs = "STRIP";
+
+    // Actual base units (tablets) deducted from stock
+    private Integer unitsDeducted;
 
     // Snapshots of price AT THE TIME of this specific sale.
     private Double buyingPriceAtSale;
@@ -57,5 +67,12 @@ public class SalesTransaction {
         double gross = (totalAmount != null) ? totalAmount : 0.0;
         double disc = (discountAmount != null) ? discountAmount : 0.0;
         return Math.max(0.0, gross - disc);
+    }
+
+    public String getFormattedUnitDisplay() {
+        if ("LOOSE".equalsIgnoreCase(unitSoldAs)) {
+            return quantitySold + " Loose Tab" + (quantitySold != null && quantitySold > 1 ? "s" : "");
+        }
+        return quantitySold + " Strip" + (quantitySold != null && quantitySold > 1 ? "s" : "");
     }
 }

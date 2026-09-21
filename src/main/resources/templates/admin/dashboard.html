@@ -163,7 +163,7 @@
                         <td><strong style="color: var(--text-bright);" th:text="${m.name}">Name</strong></td>
                         <td><span class="badge badge-category" th:text="${m.category}">Category</span></td>
                         <td>
-                            <span class="badge badge-low-stock" th:text="${m.quantity} + ' UNITS LEFT'">3 UNITS</span>
+                            <span class="badge badge-low-stock" th:text="${m.getFormattedStock()}">3 UNITS</span>
                         </td>
                         <td class="mono-cell" th:text="${m.lowStockThreshold} + ' units'">5 units</td>
                         <td>
