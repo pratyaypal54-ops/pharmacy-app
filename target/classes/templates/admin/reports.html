@@ -2,8 +2,15 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports &amp; Historical Audit - PHARMA//CORE</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#080b11">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
+    <title>Reports &amp; Historical Audit - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -11,8 +18,8 @@
 <!-- CYBER NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
-        <div class="brand-logo">&#9889;</div>
-        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+        <div class="brand-logo">&#10010;</div>
+        <div class="brand-title">Pharm<span>Care</span></div>
     </div>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
@@ -20,8 +27,8 @@
         <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
         <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link active">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
+        <a th:href="@{/admin/history/stock}" class="nav-link" th:classappend="${currentTab == 'stock' ? 'active' : ''}">Stock History</a>
+        <a th:href="@{/admin/reports}" class="nav-link" th:classappend="${currentTab == 'sales' or currentTab == null ? 'active' : ''}">Sales Reports</a>
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
         <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
     </div>
@@ -55,21 +62,21 @@
 
     <!-- DEDICATED HISTORY NAVIGATION TABS -->
     <div class="tab-navigation">
-        <a th:href="@{/admin/reports(tab='sales', date=${selectedDate}, allTime=${allTime})}"
+        <a th:href="@{/admin/reports(tab='sales', date=${allTime ? null : selectedDate}, allTime=${allTime})}"
            class="tab-link"
            th:classappend="${currentTab == 'sales' or currentTab == null ? 'active' : ''}">
             &#128179; Sales History &amp; Customer Billing
             <span class="badge-tag" th:text="${summary != null and summary.invoiceGroups != null ? summary.invoiceGroups.size() : (summary != null and summary.transactions != null ? summary.transactions.size() : 0)}">0</span>
         </a>
 
-        <a th:href="@{/admin/reports(tab='stock', date=${selectedDate}, allTime=${allTime})}"
+        <a th:href="@{/admin/reports(tab='stock', date=${allTime ? null : selectedDate}, allTime=${allTime})}"
            class="tab-link cyan-tab"
            th:classappend="${currentTab == 'stock' ? 'active' : ''}">
             &#128230; Stock Add History &amp; Provider Inward
             <span class="badge-tag" th:text="${stockSummary != null and stockSummary.batchGroups != null ? stockSummary.batchGroups.size() : (stockSummary != null and stockSummary.additions != null ? stockSummary.additions.size() : 0)}">0</span>
         </a>
 
-        <a th:href="@{/admin/reports(tab='adjustments', date=${selectedDate}, allTime=${allTime})}"
+        <a th:href="@{/admin/reports(tab='adjustments', date=${allTime ? null : selectedDate}, allTime=${allTime})}"
            class="tab-link amber-tab"
            th:classappend="${currentTab == 'adjustments' ? 'active' : ''}">
             &#9881; Stock Audit Discrepancies
@@ -251,6 +258,11 @@
             <div th:if="${summary.invoiceGroups == null or summary.invoiceGroups.isEmpty()}" style="padding: 40px; text-align: center; color: var(--text-dim);">
                 <div style="font-size: 2rem; margin-bottom: 8px;">&#128196;</div>
                 <p>No customer sales transactions logged for the selected period (<span th:text="${allTime ? 'All Time' : selectedDate}"></span>).</p>
+                <div style="margin-top: 14px;">
+                    <a th:href="@{/admin/reports(tab='sales', allTime='true')}" class="btn btn-cyber-cyan btn-sm">
+                        &#128065; View All-Time Complete Sales History
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -372,6 +384,11 @@
             <div th:if="${stockSummary.batchGroups == null or stockSummary.batchGroups.isEmpty()}" style="padding: 40px; text-align: center; color: var(--text-dim);">
                 <div style="font-size: 2rem; margin-bottom: 8px;">&#128230;</div>
                 <p>No stock additions logged for the selected period (<span th:text="${allTime ? 'All Time' : selectedDate}"></span>).</p>
+                <div style="margin-top: 14px;">
+                    <a th:href="@{/admin/reports(tab='stock', allTime='true')}" class="btn btn-cyber-cyan btn-sm">
+                        &#128065; View All-Time Restock History
+                    </a>
+                </div>
             </div>
         </div>
     </div>

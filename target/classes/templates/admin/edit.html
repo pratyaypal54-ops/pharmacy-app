@@ -2,8 +2,15 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Stock &amp; Entry Corrections - PHARMA//CORE</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#080b11">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
+    <title>Edit Stock &amp; Entry Corrections - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -11,8 +18,8 @@
 <!-- CYBER NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
-        <div class="brand-logo">&#9889;</div>
-        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+        <div class="brand-logo">&#10010;</div>
+        <div class="brand-title">Pharm<span>Care</span></div>
     </div>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>

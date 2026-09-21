@@ -2,8 +2,15 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicine Catalog - PHARMA//CORE</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#080b11">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
+    <title>Medicine Catalog - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -11,8 +18,8 @@
 <!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
-        <div class="brand-logo">&#9889;</div>
-        <div class="brand-title">PHARMA<span>//</span>CORE</div>
+        <div class="brand-logo">&#10010;</div>
+        <div class="brand-title">Pharm<span>Care</span></div>
     </div>
     <div class="nav-links">
         <a th:href="@{/medicines}" class="nav-link active">Catalog</a>
@@ -29,8 +36,16 @@
             <h1 class="page-title">&#128138; Available Medicines Catalog</h1>
             <p class="page-subtitle">Real-time inventory lookup and public stock availability monitor</p>
         </div>
-        <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);" id="catalogCounter">
-            Showing <span th:text="${medicines.size()}" style="color: var(--neon-green); font-weight: 700;">0</span> items
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-cyber-cyan btn-sm" onclick="openQrModal()">
+                &#128241; Counter QR Access
+            </button>
+            <button type="button" id="btnInstallPwa" class="btn btn-primary btn-sm" style="display: none;" onclick="triggerPwaInstall()">
+                &#129513; Install App
+            </button>
+            <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);" id="catalogCounter">
+                Showing <span th:text="${medicines.size()}" style="color: var(--neon-green); font-weight: 700;">0</span> items
+            </div>
         </div>
     </div>
 
@@ -179,7 +194,103 @@
 
     searchInput.addEventListener('input', debouncedFilter);
     categoryFilter.addEventListener('change', filterTable);
+
+    // PWA Installation & QR Modal
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('btnInstallPwa');
+        if (installBtn) installBtn.style.display = 'inline-flex';
+    });
+
+    function triggerPwaInstall() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((res) => {
+                if (res.outcome === 'accepted') {
+                    const installBtn = document.getElementById('btnInstallPwa');
+                    if (installBtn) installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+
+    function openQrModal() {
+        const url = window.location.href;
+        const qrImg = document.getElementById('qrImage');
+        const qrUrl = document.getElementById('qrTargetUrl');
+        qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(url);
+        qrUrl.textContent = url;
+        document.getElementById('qrModal').style.display = 'flex';
+    }
+
+    function closeQrModal() {
+        document.getElementById('qrModal').style.display = 'none';
+    }
+
+    function printQrCard() {
+        const url = window.location.href;
+        const printWin = window.open('', '_blank', 'width=600,height=700');
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>PharmCare Counter Standee</title>
+                <style>
+                    body { font-family: 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 40px; background: #fff; color: #111; }
+                    .card { border: 3px solid #00aa55; border-radius: 16px; padding: 36px; max-width: 440px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+                    h1 { margin: 0 0 6px 0; color: #008844; font-size: 28px; }
+                    p { color: #555; margin: 6px 0 20px 0; font-size: 15px; }
+                    img { width: 220px; height: 220px; margin: 10px 0; border: 1px solid #ddd; padding: 10px; border-radius: 8px; }
+                    .url { font-family: monospace; font-size: 13px; color: #666; margin-top: 14px; word-break: break-all; }
+                    .footer { margin-top: 24px; font-size: 13px; font-weight: bold; color: #222; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <h1>✚ PharmCare</h1>
+                    <p>Scan to Browse Live Medicine Stock &amp; Prices</p>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(url)}" alt="QR Code">
+                    <div class="url">${url}</div>
+                    <div class="footer">Keep this card at the Pharmacy Billing Counter</div>
+                </div>
+                <script>window.onload = function() { window.print(); };<\/script>
+            </body>
+            </html>
+        `);
+        printWin.document.close();
+    }
+
 </script>
+
+
+<!-- COUNTER QR CODE MODAL FOR CUSTOMERS -->
+<div id="qrModal" style="display: none; position: fixed; inset: 0; background: rgba(8, 11, 17, 0.85); backdrop-filter: blur(8px); z-index: 999; justify-content: center; align-items: center; padding: 20px;">
+    <div class="cyber-card" style="max-width: 440px; width: 100%; text-align: center; border-color: var(--neon-cyan); box-shadow: 0 0 30px rgba(0, 229, 255, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; color: var(--text-bright); font-size: 1.15rem;">&#128241; Customer Mobile Access</h3>
+            <button type="button" onclick="closeQrModal()" class="btn-remove-item" style="font-size: 1rem; padding: 4px 10px;">&#10005;</button>
+        </div>
+        
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+            Customers can scan this QR code with their phone camera to browse live stock &amp; prices on their mobile:
+        </p>
+
+        <div style="background: #ffffff; padding: 16px; border-radius: var(--radius-sm); display: inline-block; margin-bottom: 16px; box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);">
+            <img id="qrImage" src="" alt="Scan QR Code" style="width: 200px; height: 200px; display: block;">
+        </div>
+
+        <div style="background: var(--bg-surface-elevated); padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); margin-bottom: 18px; font-family: var(--font-mono); font-size: 0.78rem; word-break: break-all; color: var(--neon-cyan);" id="qrTargetUrl">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-primary" style="flex: 1;" onclick="printQrCard()">&#128438; Print Counter Standee</button>
+            <button type="button" class="btn btn-outline" onclick="closeQrModal()">Close</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

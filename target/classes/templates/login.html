@@ -2,8 +2,15 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - PHARMA//CORE</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#080b11">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" th:href="@{/manifest.json}">
+    <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
+    <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
+    <title>Admin Login - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh;">
@@ -12,9 +19,9 @@
 
     <!-- BRAND EMBLEM -->
     <div style="text-align: center; margin-bottom: 24px;">
-        <div class="brand-logo" style="width: 48px; height: 48px; font-size: 1.5rem; margin: 0 auto 12px auto;">&#9889;</div>
-        <div class="brand-title" style="font-size: 1.4rem;">PHARMA<span>//</span>CORE</div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">Secure Pharmacy Management Terminal</p>
+        <div class="brand-logo" style="width: 48px; height: 48px; font-size: 1.5rem; margin: 0 auto 12px auto;">&#10010;</div>
+        <div class="brand-title" style="font-size: 1.4rem;">Pharm<span>Care</span></div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">Retail Pharmacy Management & POS System</p>
     </div>
 
     <!-- ALERTS -->
@@ -49,6 +56,17 @@
                        class="cyber-input" 
                        placeholder="••••••••" 
                        required>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin: 14px 0 16px 0;">
+                <input type="checkbox" 
+                       id="rememberMe" 
+                       name="remember-me" 
+                       checked 
+                       style="width: 16px; height: 16px; accent-color: var(--neon-green); cursor: pointer;">
+                <label for="rememberMe" style="font-size: 0.82rem; color: var(--text-main); cursor: pointer; user-select: none;">
+                    Remember this device (Stay logged in for 30 days)
+                </label>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" style="margin-top: 12px;">
