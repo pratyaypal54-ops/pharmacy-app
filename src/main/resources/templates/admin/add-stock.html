@@ -231,7 +231,7 @@
                     + Add Medicine to Batch Table &rarr;
                 </button>
                 <div id="quickStockAddedNotice" style="display: none; color: var(--neon-cyan); font-size: 0.85rem; font-weight: 600; text-align: center; margin-top: 6px;">
-                    &#10003; Item added to staging batch below!
+                    &#10003; Item added to inward delivery list!
                 </div>
             </div>
         </div>
@@ -239,7 +239,7 @@
         <!-- RIGHT COLUMN: LIVE REVIEW SIDE TABLE -->
         <div class="live-review-container">
             <div class="card-title-bar">
-                <h3>&#128221; Live Delivery Review &amp; Staging Batch</h3>
+                <h3>&#128221; Inward Stock Delivery List</h3>
                 <span class="badge badge-in-stock" id="stagedCountBadge">0 ITEMS STAGED</span>
             </div>
 
@@ -286,7 +286,7 @@
                 </div>
             </div>
 
-            <!-- BATCH FINANCIAL TELEMETRY -->
+            <!-- BATCH FINANCIAL SUMMARY -->
             <div class="batch-summary-card" id="batchSummaryCard" style="display: none;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px;">
                     <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
@@ -327,7 +327,7 @@
                         class="btn btn-outline"
                         onclick="clearStagingBatch()"
                         disabled>
-                    Clear Staging
+                    Clear List
                 </button>
             </div>
         </div>
@@ -639,7 +639,7 @@
         }
 
         if (stagedItems.length === 0) {
-            showAlert('No medicines in staging table to add.', 'danger');
+            showAlert('Please add at least one medicine to the delivery list.', 'danger');
             return;
         }
 

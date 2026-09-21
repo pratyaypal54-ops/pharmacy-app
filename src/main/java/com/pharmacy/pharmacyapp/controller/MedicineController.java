@@ -2,6 +2,7 @@ package com.pharmacy.pharmacyapp.controller;
 
 import com.pharmacy.pharmacyapp.dto.StockAdditionBatchDto;
 import com.pharmacy.pharmacyapp.service.MedicineService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Map;
 
 @Controller
@@ -23,14 +26,36 @@ public class MedicineController {
     }
 
     @GetMapping("/medicines")
-    public String listMedicines(@RequestParam(required = false) String search, Model model) {
+    public String listMedicines(@RequestParam(required = false) String search,
+                                HttpServletRequest request,
+                                Model model) {
         if (search != null && !search.isBlank()) {
             model.addAttribute("medicines", medicineService.searchMedicines(search));
         } else {
             model.addAttribute("medicines", medicineService.getAllMedicines());
         }
         model.addAttribute("search", search);
+
+        String localIp = getLocalServerIp();
+        int serverPort = request.getServerPort();
+        String mobileCatalogUrl = "http://" + localIp + ":" + serverPort + "/medicines";
+        model.addAttribute("localIp", localIp);
+        model.addAttribute("mobileCatalogUrl", mobileCatalogUrl);
+
         return "medicines";
+    }
+
+    private String getLocalServerIp() {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+            return socket.getLocalAddress().getHostAddress();
+        } catch (Exception e) {
+            try {
+                return InetAddress.getLocalHost().getHostAddress();
+            } catch (Exception ex) {
+                return "192.168.0.48";
+            }
+        }
     }
 
     @GetMapping("/admin/add-stock")

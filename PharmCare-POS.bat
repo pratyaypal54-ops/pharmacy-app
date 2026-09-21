@@ -1,36 +1,33 @@
 @echo off
-title Starting PharmCare POS...
+title Launching PharmCare POS Terminal...
 cd /d "%~dp0"
 
-echo =========================================================
-echo    ✚ PharmCare - Retail Pharmacy Management & POS
-echo =========================================================
-echo.
-
-:: Check if port 8080 is already listening
+:: Check if port 8080 is already running
 netstat -ano | findstr ":8080" | findstr "LISTENING" >nul
 if %ERRORLEVEL% equ 0 (
-    echo [INFO] PharmCare server is already active!
     goto LaunchBrowser
 )
 
-echo [INFO] Starting PharmCare server background engine...
-start "PharmCare Server Engine" /min mvnw.cmd spring-boot:run
+:: Start background server silently using javaw (no black console window)
+if exist "%~dp0pharmacy-app.jar" (
+    start "" javaw -jar "%~dp0pharmacy-app.jar"
+    goto WaitLoop
+)
 
-echo [INFO] Waiting for server to initialize...
+if exist "%~dp0target\pharmacy-app-0.0.1-SNAPSHOT.jar" (
+    start "" javaw -jar "%~dp0target\pharmacy-app-0.0.1-SNAPSHOT.jar"
+    goto WaitLoop
+)
+
 :WaitLoop
 timeout /t 2 /nobreak >nul
 netstat -ano | findstr ":8080" | findstr "LISTENING" >nul
 if %ERRORLEVEL% neq 0 (
-    echo [WAIT] Initializing database and security layer...
     goto WaitLoop
 )
 
 :LaunchBrowser
-echo.
-echo [SUCCESS] PharmCare POS ready! Launching terminal...
-
-:: Check for Microsoft Edge and run in standalone App Mode (no URL bar, like a desktop app)
+:: Launch Microsoft Edge in native standalone App Mode (no browser search bar or tabs)
 if exist "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" (
     start "" "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --app=http://localhost:8080/admin/sell
     exit /b 0
@@ -41,7 +38,7 @@ if exist "C:\Program Files\Microsoft\Edge\Application\msedge.exe" (
     exit /b 0
 )
 
-:: Check for Google Chrome in App Mode
+:: Check Google Chrome in App Mode
 if exist "C:\Program Files\Google\Chrome\Application\chrome.exe" (
     start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --app=http://localhost:8080/admin/sell
     exit /b 0
