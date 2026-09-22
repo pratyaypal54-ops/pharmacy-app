@@ -47,7 +47,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">&#128421; Mission Control Dashboard</h1>
-            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial telemetry, and security archives' : 'Operational terminal: patient dispensing, batch restocking, and mistake corrections'}">Dashboard overview</p>
+            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial performance metrics, and security archives' : 'Operational terminal: patient dispensing, batch restocking, and mistake corrections'}">Dashboard overview</p>
         </div>
         <div style="display: flex; gap: 8px;">
             <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Dispense Sale</a>
@@ -163,7 +163,7 @@
                         <td><strong style="color: var(--text-bright);" th:text="${m.name}">Name</strong></td>
                         <td><span class="badge badge-category" th:text="${m.category}">Category</span></td>
                         <td>
-                            <span class="badge badge-low-stock" th:text="${m.quantity} + ' UNITS LEFT'">3 UNITS</span>
+                            <span class="badge badge-low-stock" th:text="${m.getFormattedStock()}">3 UNITS</span>
                         </td>
                         <td class="mono-cell" th:text="${m.lowStockThreshold} + ' units'">5 units</td>
                         <td>

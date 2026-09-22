@@ -46,7 +46,7 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128179; Patient Dispense &amp; Bulk Sales Terminal</h1>
+            <h1 class="page-title">&#128179; Point of Sale (POS) &amp; Customer Billing</h1>
             <p class="page-subtitle">Record customer details, stage medicines into bill cart, apply store discounts, and dispense in bulk</p>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -130,13 +130,17 @@
                                 th:data-price="${med.sellingPrice}"
                                 th:data-stock="${med.quantity}"
                                 th:data-category="${med.category}"
+                                th:data-packsize="${med.getPackSize()}"
+                                th:data-perunitprice="${med.getPerUnitPrice()}"
+                                th:data-unittype="${med.getUnitType()}"
+                                th:data-formattedstock="${med.getFormattedStock()}"
                                 th:data-threshold="${med.lowStockThreshold}">
                         </option>
                     </datalist>
                 </div>
 
                 <!-- DYNAMIC MEDICINE STATUS PANEL -->
-                <div id="medicineInfoPanel" class="interactive-panel" style="display: none;">
+                <div id="medicineInfoPanel" class="interactive-panel" style="display: none; flex-direction: column; gap: 6px;">
                     <div class="preview-row">
                         <span class="preview-label">Category:</span>
                         <span class="preview-val badge badge-category" id="displayCategory">-</span>
@@ -146,14 +150,34 @@
                         <span class="preview-val" id="displayStock">-</span>
                     </div>
                     <div class="preview-row">
-                        <span class="preview-label">Unit Retail Price:</span>
+                        <span class="preview-label">Full Strip / Pack Price:</span>
                         <span class="preview-val highlight" id="displayUnitPrice">&#8377;0.00</span>
+                    </div>
+                    <div class="preview-row" id="loosePriceRow" style="display: none;">
+                        <span class="preview-label" style="color: var(--neon-cyan);">Loose Single Tablet Price:</span>
+                        <span class="preview-val mono-cell" id="displayLoosePrice" style="color: var(--neon-cyan); font-weight: 700;">&#8377;0.00</span>
+                    </div>
+                </div>
+
+                <!-- PACKAGING SELECTION TOGGLE (FULL STRIP VS LOOSE TABLET) -->
+                <div id="unitModeGroup" class="form-group" style="display: none;">
+                    <label class="form-label">
+                        <span>Dispense Mode</span>
+                        <span class="helper-tag" id="packSizeBadge">10 tabs / strip</span>
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button type="button" id="btnModeStrip" class="btn btn-cyber-cyan btn-sm" onclick="setDispenseMode('STRIP')">
+                            &#128230; Full Strip
+                        </button>
+                        <button type="button" id="btnModeLoose" class="btn btn-outline btn-sm" onclick="setDispenseMode('LOOSE')">
+                            &#128138; Loose Tablets
+                        </button>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="quantityInput">
-                        <span>Quantity to Dispense</span>
+                        <span id="qtyLabelText">Quantity to Dispense</span>
                         <span class="helper-tag" id="stockLimitHint">Units</span>
                     </label>
                     <div class="qty-picker-group">
@@ -224,8 +248,8 @@
                         <tr>
                             <th style="width: 40px;">#</th>
                             <th>Medicine</th>
-                            <th>Category</th>
-                            <th style="text-align: right;">Unit Price (&#8377;)</th>
+                            <th>Dispense Mode</th>
+                            <th style="text-align: right;">Rate (&#8377;)</th>
                             <th style="text-align: right;">Qty</th>
                             <th style="text-align: right;">Subtotal (&#8377;)</th>
                             <th style="text-align: center; width: 60px;">Action</th>
@@ -337,12 +361,14 @@
         }
     });
 
-    // Cart items array: [ { name, category, unitPrice, quantity } ]
+    // Cart items array: [ { name, category, unitPrice, quantity, unitType, packSize } ]
     let billItems = [];
     let currentDiscountValue = 10.0;
     let currentDiscountType = 'percent';
+    let currentDispenseMode = 'STRIP'; // 'STRIP' or 'LOOSE'
+    let currentSelectedMedicine = null;
 
-    // Elements
+    // DOM Elements
     const customerNameInput = document.getElementById('customerNameInput');
     const customerPhoneInput = document.getElementById('customerPhoneInput');
     const dispCustomerName = document.getElementById('dispCustomerName');
@@ -354,6 +380,14 @@
     const displayCategory = document.getElementById('displayCategory');
     const displayStock = document.getElementById('displayStock');
     const displayUnitPrice = document.getElementById('displayUnitPrice');
+    const loosePriceRow = document.getElementById('loosePriceRow');
+    const displayLoosePrice = document.getElementById('displayLoosePrice');
+    const unitModeGroup = document.getElementById('unitModeGroup');
+    const packSizeBadge = document.getElementById('packSizeBadge');
+    const btnModeStrip = document.getElementById('btnModeStrip');
+    const btnModeLoose = document.getElementById('btnModeLoose');
+    const qtyLabelText = document.getElementById('qtyLabelText');
+
     const stockLimitHint = document.getElementById('stockLimitHint');
     const stockWarning = document.getElementById('stockWarning');
     const calcFormula = document.getElementById('calcFormula');
@@ -376,12 +410,9 @@
     const discountInput = document.getElementById('discountInput');
     const discountType = document.getElementById('discountType');
 
-    let currentSelectedMedicine = null;
-
     function updateCustomerDisplay() {
         const cName = customerNameInput.value.trim();
         const cPhone = customerPhoneInput.value.trim();
-
         dispCustomerName.textContent = cName ? cName : 'Pending input...';
         dispCustomerPhone.textContent = cPhone ? cPhone : 'Pending input...';
     }
@@ -417,21 +448,59 @@
         updateDiscount();
     }
 
-    function getEffectiveAvailableStock(medName) {
+    function setDispenseMode(mode) {
+        currentDispenseMode = mode;
+        if (mode === 'LOOSE') {
+            btnModeLoose.classList.remove('btn-outline');
+            btnModeLoose.classList.add('btn-cyber-cyan');
+            btnModeStrip.classList.remove('btn-cyber-cyan');
+            btnModeStrip.classList.add('btn-outline');
+            if (qtyLabelText) qtyLabelText.textContent = 'Quantity of Loose Tablets';
+        } else {
+            btnModeStrip.classList.remove('btn-outline');
+            btnModeStrip.classList.add('btn-cyber-cyan');
+            btnModeLoose.classList.remove('btn-cyber-cyan');
+            btnModeLoose.classList.add('btn-outline');
+            if (qtyLabelText) qtyLabelText.textContent = 'Quantity of Full Strips';
+        }
+        updateCalculation();
+    }
+
+    function getEffectiveAvailableBaseStock(medName) {
         if (!medName) return 0;
         const med = medMap[medName.trim().toLowerCase()];
         if (!med) return 0;
 
-        let totalInCatalog = med.quantity != null ? med.quantity : 0;
+        let totalBaseStock = med.quantity != null ? med.quantity : 0;
+        let packSize = (med.packSize && med.packSize > 0) ? med.packSize : 1;
 
-        let alreadyInCart = 0;
+        let alreadyDeductedUnits = 0;
         billItems.forEach(item => {
             if (item.name.toLowerCase() === medName.trim().toLowerCase()) {
-                alreadyInCart += item.quantity;
+                if (item.unitType === 'LOOSE') {
+                    alreadyDeductedUnits += item.quantity;
+                } else {
+                    alreadyDeductedUnits += (item.quantity * item.packSize);
+                }
             }
         });
 
-        return Math.max(0, totalInCatalog - alreadyInCart);
+        return Math.max(0, totalBaseStock - alreadyDeductedUnits);
+    }
+
+    function formatStockDisplay(totalBaseUnits, packSize) {
+        if (packSize <= 1) {
+            return totalBaseUnits + ' units';
+        }
+        const fullStrips = Math.floor(totalBaseUnits / packSize);
+        const looseTabs = totalBaseUnits % packSize;
+        if (fullStrips > 0 && looseTabs > 0) {
+            return fullStrips + ' Strips + ' + looseTabs + ' loose (' + totalBaseUnits + ' tabs)';
+        } else if (fullStrips > 0) {
+            return fullStrips + ' Strip' + (fullStrips > 1 ? 's' : '') + ' (' + totalBaseUnits + ' tabs)';
+        } else {
+            return looseTabs + ' loose tabs';
+        }
     }
 
     function onMedicineChange() {
@@ -443,26 +512,40 @@
             panel.style.display = 'flex';
             displayCategory.textContent = med.category || 'General';
 
-            const effectiveStock = getEffectiveAvailableStock(med.name);
+            const packSize = (med.packSize && med.packSize > 0) ? med.packSize : 1;
+            const effectiveBaseStock = getEffectiveAvailableBaseStock(med.name);
             const threshold = med.lowStockThreshold != null ? med.lowStockThreshold : 5;
 
-            if (effectiveStock <= 0) {
-                displayStock.innerHTML = '<span class="badge badge-out-of-stock">0 UNITS (OUT / IN CART)</span>';
-            } else if (effectiveStock < threshold) {
-                displayStock.innerHTML = '<span class="badge badge-low-stock">ONLY ' + effectiveStock + ' LEFT (LOW STOCK)</span>';
+            const stockDesc = formatStockDisplay(effectiveBaseStock, packSize);
+            if (effectiveBaseStock <= 0) {
+                displayStock.innerHTML = '<span class="badge badge-out-of-stock">0 UNITS (OUT OF STOCK)</span>';
+            } else if (effectiveBaseStock < threshold) {
+                displayStock.innerHTML = '<span class="badge badge-low-stock">' + stockDesc + ' (LOW STOCK)</span>';
             } else {
-                displayStock.innerHTML = '<span class="badge badge-in-stock">' + effectiveStock + ' AVAILABLE</span>';
+                displayStock.innerHTML = '<span class="badge badge-in-stock">' + stockDesc + '</span>';
             }
 
-            const unitPrice = Number(med.sellingPrice || 0);
-            displayUnitPrice.textContent = '\u20b9' + unitPrice.toFixed(2);
-            stockLimitHint.textContent = 'Max ' + effectiveStock + ' available';
-            qtyInput.max = effectiveStock;
+            const packPrice = Number(med.sellingPrice || 0);
+            displayUnitPrice.textContent = '\u20b9' + packPrice.toFixed(2) + ' / Strip';
+
+            if (packSize > 1) {
+                unitModeGroup.style.display = 'block';
+                loosePriceRow.style.display = 'flex';
+                const loosePrice = Math.round((packPrice / packSize) * 100) / 100;
+                displayLoosePrice.textContent = '\u20b9' + loosePrice.toFixed(2) + ' / tablet';
+                packSizeBadge.textContent = packSize + ' tablets / strip';
+            } else {
+                unitModeGroup.style.display = 'none';
+                loosePriceRow.style.display = 'none';
+                setDispenseMode('STRIP');
+            }
 
             updateCalculation();
         } else {
             currentSelectedMedicine = null;
             panel.style.display = 'none';
+            unitModeGroup.style.display = 'none';
+            loosePriceRow.style.display = 'none';
             stockLimitHint.textContent = 'Units';
             qtyInput.removeAttribute('max');
             updateCalculation();
@@ -471,29 +554,53 @@
 
     function updateCalculation() {
         const qty = parseInt(qtyInput.value) || 0;
-        const unitPrice = currentSelectedMedicine ? Number(currentSelectedMedicine.sellingPrice || 0) : 0;
-        const total = qty * unitPrice;
+        if (!currentSelectedMedicine) {
+            calcFormula.textContent = '0 units \u00d7 \u20b90.00';
+            calcTotal.textContent = '\u20b90.00';
+            stockWarning.style.display = 'none';
+            btnAddToBill.disabled = false;
+            btnAddToBill.style.opacity = '1';
+            return;
+        }
 
-        calcFormula.textContent = qty + ' units \u00d7 \u20b9' + unitPrice.toFixed(2);
+        const med = currentSelectedMedicine;
+        const packSize = (med.packSize && med.packSize > 0) ? med.packSize : 1;
+        const effectiveBaseStock = getEffectiveAvailableBaseStock(med.name);
+        const packPrice = Number(med.sellingPrice || 0);
+        const loosePrice = Math.round((packPrice / packSize) * 100) / 100;
+
+        let unitRate = packPrice;
+        let requiredBaseUnits = 0;
+        let maxAllowed = 0;
+
+        if (currentDispenseMode === 'LOOSE') {
+            unitRate = loosePrice;
+            requiredBaseUnits = qty;
+            maxAllowed = effectiveBaseStock;
+            stockLimitHint.textContent = 'Max ' + maxAllowed + ' loose tablets';
+            calcFormula.textContent = qty + ' loose tab(s) \u00d7 \u20b9' + unitRate.toFixed(2);
+        } else {
+            unitRate = packPrice;
+            requiredBaseUnits = qty * packSize;
+            maxAllowed = Math.floor(effectiveBaseStock / packSize);
+            stockLimitHint.textContent = 'Max ' + maxAllowed + ' full strip(s) (' + effectiveBaseStock + ' tabs)';
+            calcFormula.textContent = qty + ' strip(s) \u00d7 \u20b9' + unitRate.toFixed(2) + ' (' + requiredBaseUnits + ' tabs)';
+        }
+
+        const total = Math.round(qty * unitRate * 100) / 100;
         calcTotal.textContent = '\u20b9' + total.toFixed(2);
+        qtyInput.max = maxAllowed;
 
-        if (currentSelectedMedicine) {
-            const effectiveStock = getEffectiveAvailableStock(currentSelectedMedicine.name);
-            if (qty > effectiveStock) {
-                stockWarning.style.display = 'block';
-                stockWarning.textContent = '\u26a0\ufe0f Requested quantity (' + qty + ') exceeds available shelf stock (' + effectiveStock + ')!';
-                btnAddToBill.disabled = true;
-                btnAddToBill.style.opacity = '0.5';
-            } else if (effectiveStock <= 0) {
-                stockWarning.style.display = 'block';
-                stockWarning.textContent = '\u26a0\ufe0f Medicine has 0 available units left.';
-                btnAddToBill.disabled = true;
-                btnAddToBill.style.opacity = '0.5';
-            } else {
-                stockWarning.style.display = 'none';
-                btnAddToBill.disabled = false;
-                btnAddToBill.style.opacity = '1';
-            }
+        if (requiredBaseUnits > effectiveBaseStock || (currentDispenseMode === 'STRIP' && qty > maxAllowed)) {
+            stockWarning.style.display = 'block';
+            stockWarning.textContent = '\u26a0\ufe0f Requested quantity exceeds available stock (' + formatStockDisplay(effectiveBaseStock, packSize) + ')!';
+            btnAddToBill.disabled = true;
+            btnAddToBill.style.opacity = '0.5';
+        } else if (effectiveBaseStock <= 0) {
+            stockWarning.style.display = 'block';
+            stockWarning.textContent = '\u26a0\ufe0f Medicine is currently out of available stock.';
+            btnAddToBill.disabled = true;
+            btnAddToBill.style.opacity = '0.5';
         } else {
             stockWarning.style.display = 'none';
             btnAddToBill.disabled = false;
@@ -508,9 +615,12 @@
 
     function setMaxQty() {
         if (currentSelectedMedicine) {
-            const effectiveStock = getEffectiveAvailableStock(currentSelectedMedicine.name);
-            if (effectiveStock > 0) {
-                qtyInput.value = effectiveStock;
+            const med = currentSelectedMedicine;
+            const packSize = (med.packSize && med.packSize > 0) ? med.packSize : 1;
+            const effectiveBaseStock = getEffectiveAvailableBaseStock(med.name);
+            let maxAllowed = currentDispenseMode === 'LOOSE' ? effectiveBaseStock : Math.floor(effectiveBaseStock / packSize);
+            if (maxAllowed > 0) {
+                qtyInput.value = maxAllowed;
                 updateCalculation();
             }
         }
@@ -520,7 +630,7 @@
     medInput.addEventListener('change', onMedicineChange);
     qtyInput.addEventListener('input', updateCalculation);
 
-    // Add item to bill side table
+    // Add item to bill
     function addItemToBill() {
         const name = medInput.value.trim();
         const qty = parseInt(qtyInput.value) || 0;
@@ -539,30 +649,37 @@
         }
 
         if (qty <= 0) {
-            showAlert('Quantity must be at least 1 unit.', 'danger');
+            showAlert('Quantity must be at least 1.', 'danger');
             qtyInput.focus();
             return;
         }
 
-        const effectiveStock = getEffectiveAvailableStock(med.name);
-        if (qty > effectiveStock) {
-            showAlert('Cannot add ' + qty + ' units. Only ' + effectiveStock + ' units available in stock!', 'danger');
+        const packSize = (med.packSize && med.packSize > 0) ? med.packSize : 1;
+        const effectiveBaseStock = getEffectiveAvailableBaseStock(med.name);
+        const requiredUnits = currentDispenseMode === 'LOOSE' ? qty : (qty * packSize);
+
+        if (requiredUnits > effectiveBaseStock) {
+            showAlert('Insufficient stock! Only ' + formatStockDisplay(effectiveBaseStock, packSize) + ' available.', 'danger');
             return;
         }
 
-        const unitPrice = Number(med.sellingPrice || 0);
+        const packPrice = Number(med.sellingPrice || 0);
+        const loosePrice = Math.round((packPrice / packSize) * 100) / 100;
+        const unitRate = currentDispenseMode === 'LOOSE' ? loosePrice : packPrice;
         const category = med.category || 'General';
 
-        // Check if item already exists in bill cart
-        const existingIdx = billItems.findIndex(i => i.name.toLowerCase() === med.name.toLowerCase());
+        // Check if item already exists in bill cart with same unit mode
+        const existingIdx = billItems.findIndex(i => i.name.toLowerCase() === med.name.toLowerCase() && i.unitType === currentDispenseMode);
         if (existingIdx !== -1) {
             billItems[existingIdx].quantity += qty;
         } else {
             billItems.push({
                 name: med.name,
                 category: category,
-                unitPrice: unitPrice,
-                quantity: qty
+                unitPrice: unitRate,
+                quantity: qty,
+                unitType: currentDispenseMode,
+                packSize: packSize
             });
         }
 
@@ -572,10 +689,14 @@
         medInput.value = '';
         qtyInput.value = '';
         panel.style.display = 'none';
+        unitModeGroup.style.display = 'none';
+        loosePriceRow.style.display = 'none';
         currentSelectedMedicine = null;
+        setDispenseMode('STRIP');
         updateCalculation();
 
-        showAlert('Added ' + qty + ' unit(s) of "' + med.name + '" to the bill.', 'success', false);
+        const unitLabel = currentDispenseMode === 'LOOSE' ? 'loose tablet(s)' : 'strip(s)';
+        showAlert('Added ' + qty + ' ' + unitLabel + ' of "' + med.name + '" to bill.', 'success', false);
         const qNotice = document.getElementById('quickItemAddedNotice');
         if (qNotice) {
             qNotice.style.display = 'block';
@@ -589,7 +710,7 @@
             const removed = billItems.splice(index, 1)[0];
             renderBillTable();
             onMedicineChange();
-            showAlert('Removed "' + removed.name + '" from the bill.', 'info');
+            showAlert('Removed "' + removed.name + '" from bill.', 'info');
         }
     }
 
@@ -621,21 +742,26 @@
         btnConfirmSale.disabled = false;
         btnClearBill.disabled = false;
 
-        let totalUnits = 0;
+        let totalUnitsDeducted = 0;
         let grossSubtotal = 0.0;
 
         billItems.forEach((item, index) => {
-            const subtotal = item.quantity * item.unitPrice;
-            totalUnits += item.quantity;
+            const subtotal = Math.round(item.quantity * item.unitPrice * 100) / 100;
+            const itemBaseUnits = item.unitType === 'LOOSE' ? item.quantity : (item.quantity * item.packSize);
+            totalUnitsDeducted += itemBaseUnits;
             grossSubtotal += subtotal;
+
+            const modeBadge = item.unitType === 'LOOSE'
+                ? '<span class="badge" style="background: rgba(0,229,255,0.12); color: var(--neon-cyan); border: 1px solid var(--neon-cyan);">&#128138; Loose Tabs</span>'
+                : '<span class="badge badge-in-stock">&#128230; Full Strip (' + item.packSize + ' tabs)</span>';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
                 <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
-                <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
+                <td>${modeBadge}</td>
                 <td style="text-align: right;" class="mono-cell">&#8377;${item.unitPrice.toFixed(2)}</td>
-                <td style="text-align: right;" class="mono-cell highlight">${item.quantity}</td>
+                <td style="text-align: right;" class="mono-cell highlight">${item.quantity} ${item.unitType === 'LOOSE' ? 'tabs' : 'strips'}</td>
                 <td style="text-align: right;" class="mono-cell" style="color: var(--neon-green);">&#8377;${subtotal.toFixed(2)}</td>
                 <td style="text-align: center;">
                     <button type="button" class="btn-remove-item" onclick="removeItemFromBill(${index})" title="Remove item">&#10005;</button>
@@ -653,22 +779,22 @@
             discountAmount = Math.min(grossSubtotal, currentDiscountValue);
         }
 
-        const netPayable = Math.max(0.0, grossSubtotal - discountAmount);
+        const netPayable = Math.max(0.0, Math.round((grossSubtotal - discountAmount) * 100.0) / 100.0);
 
         summaryBillItems.textContent = billItems.length;
-        summaryBillUnits.textContent = totalUnits + ' units';
+        summaryBillUnits.textContent = totalUnitsDeducted + ' tablets';
         summaryGrossSubtotal.textContent = '\u20b9' + grossSubtotal.toFixed(2);
         summaryDiscountDisplay.textContent = '-\u20b9' + discountAmount.toFixed(2) + (currentDiscountType === 'percent' && currentDiscountValue > 0 ? ' (' + currentDiscountValue + '%)' : '');
         summaryGrandTotal.textContent = '\u20b9' + netPayable.toFixed(2);
     }
 
-    // Submit batch sale with discount
+    // Submit batch sale
     async function commitBatchSale() {
         const customerName = customerNameInput.value.trim();
         const customerPhone = customerPhoneInput.value.trim();
 
         if (!customerName) {
-            showAlert('Please enter the Customer Name before completing sale.', 'danger');
+            showAlert('Please enter Customer Name before completing sale.', 'danger');
             customerNameInput.focus();
             return;
         }
@@ -699,7 +825,11 @@
             customerPhone: customerPhone || 'N/A',
             discountPercent: discountPercent,
             discountAmount: discountAmount,
-            items: billItems.map(i => ({ name: i.name, quantity: i.quantity }))
+            items: billItems.map(i => ({
+                name: i.name,
+                quantity: i.quantity,
+                unitType: i.unitType
+            }))
         };
 
         try {
@@ -714,7 +844,7 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-                showAlert((result.message || 'Sale recorded successfully!') + (discountAmount > 0 ? ' [Discount applied: \u20b9' + discountAmount.toFixed(2) + ']' : ''), 'success');
+                showAlert((result.message || 'Sale recorded successfully!') + (discountAmount > 0 ? ' [Discount: \u20b9' + discountAmount.toFixed(2) + ']' : ''), 'success');
                 billItems = [];
                 renderBillTable();
                 customerNameInput.value = '';
