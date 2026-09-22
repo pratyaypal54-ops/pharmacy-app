@@ -98,15 +98,13 @@ body {
     border: 1px solid var(--neon-green-border);
     color: var(--neon-green);
     font-size: 1.1rem;
-    box-shadow: 0 0 10px var(--neon-green-glow);
 }
 
 .brand-title {
-    font-family: var(--font-sans);
     font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text-bright);
+    font-weight: 700;
     letter-spacing: -0.02em;
+    color: var(--text-bright);
 }
 
 .brand-title span {
@@ -115,111 +113,144 @@ body {
 
 .nav-links {
     display: flex;
+    gap: 8px;
     align-items: center;
-    gap: 4px;
 }
 
 .nav-link {
     color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.86rem;
+    font-size: 0.88rem;
     font-weight: 500;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
-    border: 1px solid transparent;
 }
 
 .nav-link:hover {
-    color: var(--neon-green);
-    background: var(--bg-surface-elevated);
-    border-color: var(--border-bright);
+    color: var(--text-bright);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .nav-link.active {
     color: var(--neon-green);
     background: rgba(0, 255, 136, 0.08);
-    border-color: var(--neon-green-border);
-    box-shadow: 0 0 8px var(--neon-green-glow);
+    border: 1px solid var(--neon-green-border);
 }
 
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 }
 
 .nav-status {
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--neon-green);
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(0, 255, 136, 0.08);
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--neon-green-border);
+    gap: 8px;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    background: var(--bg-surface);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-dim);
 }
 
 .pulse-dot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
-    background-color: var(--neon-green);
-    box-shadow: 0 0 6px var(--neon-green);
-    animation: cyber-pulse 2s infinite;
+    background: var(--neon-green);
+    box-shadow: 0 0 8px var(--neon-green);
+    animation: pulse 2s infinite ease-in-out;
 }
 
-@keyframes cyber-pulse {
-    0% { transform: scale(0.9); opacity: 0.7; }
-    50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 10px var(--neon-green); }
-    100% { transform: scale(0.9); opacity: 0.7; }
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
 }
 
 /* ==========================================================================
-   LAYOUT CONTAINERS & PAGE HEADERS
+   LAYOUT & CONTAINERS
    ========================================================================== */
 .main-container {
-    max-width: 1360px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 28px 24px 64px 24px;
+    padding: 32px 24px 64px 24px;
 }
 
 .page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
     padding-bottom: 16px;
     border-bottom: 1px solid var(--border-dim);
 }
 
 .page-title {
-    margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-bright);
+    margin: 0 0 6px 0;
     letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 .page-subtitle {
-    margin: 6px 0 0 0;
-    color: var(--text-muted);
     font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
 }
 
 /* ==========================================================================
-   STAT & METRIC CARDS
+   CARDS & PANELS
+   ========================================================================== */
+.cyber-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-md);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cyber-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+    opacity: 0.6;
+}
+
+.card-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-dim);
+}
+
+.card-title-bar h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-bright);
+}
+
+/* ==========================================================================
+   DASHBOARD STAT CARDS
    ========================================================================== */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 16px;
-    margin-bottom: 28px;
+    margin-bottom: 32px;
 }
 
 .stat-card {
@@ -229,32 +260,30 @@ body {
     padding: 20px;
     position: relative;
     overflow: hidden;
-    transition: transform 0.2s, border-color 0.2s;
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--border-bright);
-}
-
-.stat-card::before {
+.stat-card::after {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, var(--neon-cyan), transparent);
+    width: 3px;
+    height: 100%;
 }
 
-.stat-card.neon-green::before {
-    background: linear-gradient(90deg, var(--neon-green), transparent);
+.stat-card.neon-green::after {
+    background: var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green-glow);
 }
-.stat-card.neon-amber::before {
-    background: linear-gradient(90deg, var(--neon-amber), transparent);
+
+.stat-card.neon-cyan::after {
+    background: var(--neon-cyan);
+    box-shadow: 0 0 10px var(--neon-cyan-glow);
 }
-.stat-card.neon-crimson::before {
-    background: linear-gradient(90deg, var(--neon-crimson), transparent);
+
+.stat-card.neon-amber::after {
+    background: var(--neon-amber);
+    box-shadow: 0 0 10px var(--neon-amber-glow);
 }
 
 .stat-label {
@@ -263,63 +292,43 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
 }
 
 .stat-value {
     font-family: var(--font-mono);
-    font-size: 1.75rem;
+    font-size: 1.85rem;
     font-weight: 700;
     color: var(--text-bright);
-    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 6px;
 }
 
 .stat-sub {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-top: 6px;
+    font-size: 0.76rem;
+    color: var(--text-dim);
 }
 
 /* ==========================================================================
-   TABLES (CYBER DENSE)
+   DATA TABLES
    ========================================================================== */
 .table-container {
     background: var(--bg-surface);
     border: 1px solid var(--border-dim);
     border-radius: var(--radius-md);
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    width: 100%;
-}
-
-.table-container::-webkit-scrollbar {
-    height: 6px;
-}
-
-.table-container::-webkit-scrollbar-track {
-    background: var(--bg-surface);
-}
-
-.table-container::-webkit-scrollbar-thumb {
-    background: var(--border-bright);
-    border-radius: 3px;
-}
-
-.table-container::-webkit-scrollbar-thumb:hover {
-    background: var(--neon-green-border);
+    position: relative;
 }
 
 .table-toolbar {
-    padding: 16px 20px;
-    background: var(--bg-surface-elevated);
-    border-bottom: 1px solid var(--border-dim);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-dim);
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -332,53 +341,54 @@ body {
 }
 
 .cyber-table th {
-    background: rgba(22, 32, 50, 0.9);
+    background: var(--bg-surface-elevated);
     color: var(--text-muted);
     font-weight: 600;
+    font-size: 0.76rem;
     text-transform: uppercase;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    padding: 12px 16px;
+    letter-spacing: 0.05em;
+    padding: 12px 18px;
     border-bottom: 1px solid var(--border-dim);
-    border-top: none;
+    white-space: nowrap;
 }
 
 .cyber-table td {
-    padding: 12px 16px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--border-dim);
     color: var(--text-main);
     vertical-align: middle;
 }
 
 .cyber-table tbody tr {
-    transition: background-color 0.15s ease;
+    transition: background 0.15s ease;
 }
 
 .cyber-table tbody tr:hover {
-    background-color: var(--bg-surface-hover);
+    background: var(--bg-surface-hover);
+}
+
+.cyber-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .mono-cell {
     font-family: var(--font-mono);
-    font-weight: 600;
-    color: var(--text-bright);
+    font-weight: 500;
 }
 
 /* ==========================================================================
-   BADGES & CHIPS
+   BADGES & STATUS PILLS
    ========================================================================== */
 .badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
+    gap: 6px;
+    font-size: 0.75rem;
     font-weight: 600;
+    font-family: var(--font-mono);
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    line-height: 1.2;
 }
 
 .badge-in-stock {
@@ -388,14 +398,13 @@ body {
 }
 
 .badge-low-stock {
-    background: rgba(255, 183, 3, 0.12);
+    background: rgba(255, 183, 3, 0.1);
     color: var(--neon-amber);
     border: 1px solid rgba(255, 183, 3, 0.4);
-    animation: amber-blink 2.5s infinite;
 }
 
 .badge-out-of-stock {
-    background: rgba(255, 42, 109, 0.12);
+    background: rgba(255, 42, 109, 0.1);
     color: var(--neon-crimson);
     border: 1px solid rgba(255, 42, 109, 0.4);
 }
@@ -403,48 +412,24 @@ body {
 .badge-category {
     background: var(--bg-surface-elevated);
     color: var(--neon-cyan);
-    border: 1px solid rgba(0, 229, 255, 0.25);
-    font-family: var(--font-sans);
-    text-transform: none;
-    font-size: 0.75rem;
+    border: 1px solid rgba(0, 229, 255, 0.3);
 }
 
 .badge-tag {
-    background: var(--bg-surface-elevated);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
     border: 1px solid var(--border-dim);
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.74rem;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 3px;
     font-family: var(--font-mono);
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-@keyframes amber-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.65; }
 }
 
 /* ==========================================================================
-   FORMS & INTERACTIVE PANELS
+   FORMS & INPUTS
    ========================================================================== */
-.cyber-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-dim);
-    border-radius: var(--radius-md);
-    padding: 24px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-}
-
-.cyber-card.form-card {
-    max-width: 580px;
-    margin: 0 auto;
-}
-
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .form-label {
@@ -679,13 +664,13 @@ body {
 }
 
 .action-icon {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     margin-bottom: 4px;
 }
 
 .action-title {
-    font-weight: 700;
     font-size: 1.05rem;
+    font-weight: 600;
     color: var(--text-bright);
 }
 
@@ -696,47 +681,26 @@ body {
 }
 
 /* ==========================================================================
-   SPLIT WORKBENCH LAYOUT & LIVE STAGING / REVIEW SIDE TABLE
+   SPLIT WORKBENCH LAYOUT
    ========================================================================== */
 .split-layout {
     display: grid;
-    grid-template-columns: 460px 1fr;
+    grid-template-columns: 480px 1fr;
     gap: 24px;
-    align-items: start;
-    margin-bottom: 32px;
+    align-items: flex-start;
 }
 
-@media (max-width: 1040px) {
+@media (max-width: 1100px) {
     .split-layout {
         grid-template-columns: 1fr;
     }
-}
-
-.card-title-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-dim);
-}
-
-.card-title-bar h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-bright);
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .live-review-container {
     background: var(--bg-surface);
     border: 1px solid var(--border-dim);
     border-radius: var(--radius-md);
-    padding: 22px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -744,7 +708,7 @@ body {
 
 .batch-meta-banner {
     background: var(--bg-surface-elevated);
-    border: 1px solid var(--border-bright);
+    border: 1px solid var(--border-dim);
     border-left: 3px solid var(--neon-cyan);
     border-radius: var(--radius-sm);
     padding: 12px 16px;
@@ -880,251 +844,4 @@ body {
     gap: 12px;
 }
 
-@media (max-width: 520px) {
-    .grid-2col-responsive {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* Utility: Quantity Picker button groups (POS Sell & Stock Add) */
-.qty-picker-group {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.qty-picker-group .cyber-input {
-    flex: 1 1 120px;
-}
-
-@media (max-width: 480px) {
-    .qty-picker-group {
-        gap: 6px;
-    }
-    .qty-picker-group .cyber-input {
-        width: 100%;
-        flex: 1 1 100%;
-        margin-bottom: 4px;
-    }
-    .qty-picker-group .btn-sm {
-        flex: 1 1 calc(20% - 6px);
-        text-align: center;
-        padding: 8px 4px;
-    }
-}
-
-/* Tablet & Mobile Nav Breakpoint (<= 992px) */
-@media (max-width: 992px) {
-    .cyber-nav {
-        padding: 8px 16px;
-        flex-wrap: wrap;
-        height: auto;
-        gap: 8px;
-    }
-
-    .brand-section {
-        flex: 1;
-    }
-
-    .nav-actions {
-        margin-left: auto;
-    }
-
-    .nav-links {
-        width: 100%;
-        order: 3;
-        display: flex;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding: 4px 0 6px 0;
-        gap: 6px;
-    }
-
-    .nav-links::-webkit-scrollbar {
-        display: none;
-    }
-
-    .nav-link {
-        flex-shrink: 0;
-        white-space: nowrap;
-        font-size: 0.82rem;
-        padding: 6px 12px;
-    }
-
-    .main-container {
-        padding: 20px 16px 48px 16px;
-    }
-}
-
-/* Small Tablet & Mobile Breakpoint (<= 768px) */
-@media (max-width: 768px) {
-    .main-container {
-        padding: 16px 12px 40px 12px;
-    }
-
-    .page-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 14px;
-        padding-bottom: 12px;
-    }
-
-    .page-title {
-        font-size: 1.35rem;
-    }
-
-    .page-subtitle {
-        font-size: 0.82rem;
-    }
-
-    .page-header > div:last-child {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        width: 100%;
-    }
-
-    .page-header > div:last-child .btn {
-        flex: 1 1 calc(50% - 8px);
-        min-width: 120px;
-    }
-
-    .table-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding: 12px 14px;
-    }
-
-    .table-toolbar form,
-    .table-toolbar > div {
-        max-width: 100% !important;
-        width: 100% !important;
-    }
-
-    .table-toolbar .cyber-select {
-        flex: 1;
-        width: 100% !important;
-    }
-
-    .cyber-table {
-        min-width: 580px;
-    }
-
-    .tab-navigation {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        flex-wrap: nowrap;
-        white-space: nowrap;
-        padding-bottom: 4px;
-    }
-
-    .tab-navigation::-webkit-scrollbar {
-        display: none;
-    }
-
-    .tab-link {
-        flex-shrink: 0;
-        padding: 8px 14px;
-        font-size: 0.82rem;
-    }
-
-    .cyber-card {
-        padding: 16px;
-    }
-
-    .live-review-container {
-        padding: 16px;
-    }
-}
-
-/* Smartphone Breakpoint (<= 640px) */
-@media (max-width: 640px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .stat-card {
-        padding: 14px 12px;
-    }
-
-    .stat-value {
-        font-size: 1.35rem;
-    }
-
-    .stat-label {
-        font-size: 0.72rem;
-    }
-
-    .stat-sub {
-        font-size: 0.72rem;
-    }
-
-    .action-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-bottom: 24px;
-    }
-
-    .action-tile {
-        padding: 14px 12px;
-    }
-
-    .action-title {
-        font-size: 0.92rem;
-    }
-
-    .action-desc {
-        font-size: 0.75rem;
-    }
-
-    .meta-item {
-        flex: 1 1 120px;
-    }
-}
-
-/* Tiny Screens (<= 380px) */
-@media (max-width: 380px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .action-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .page-header > div:last-child .btn {
-        flex: 1 1 100%;
-    }
-}
-
-/* Touch targets optimization on mobile devices */
-@media (hover: none) and (pointer: coarse) {
-    .cyber-input, .cyber-select {
-        min-height: 44px;
-        font-size: 16px; /* Prevents auto-zoom on iOS Safari */
-    }
-
-    .btn {
-        min-height: 42px;
-    }
-
-    .btn-sm {
-        min-height: 36px;
-    }
-}
-
-/* Reduced motion accessibility */
-@media (prefers-reduced-motion: reduce) {
-    *, ::before, ::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-}
+@media (max-width: 520px) {\n    .grid-2col-responsive {\n        grid-template-columns: 1fr !important;\n    }\n}\n\n/* Utility: Quantity Picker button groups (POS Sell & Stock Add) */\n.qty-picker-group {\n    display: flex;\n    gap: 8px;\n    align-items: center;\n    flex-wrap: wrap;\n}\n\n.qty-picker-group .cyber-input {\n    flex: 1 1 120px;\n}\n\n@media (max-width: 480px) {\n    .qty-picker-group {\n        gap: 6px;\n    }\n    .qty-picker-group .cyber-input {\n        width: 100%;\n        flex: 1 1 100%;\n        margin-bottom: 4px;\n    }\n    .qty-picker-group .btn-sm {\n        flex: 1 1 calc(20% - 6px);\n        text-align: center;\n        padding: 8px 4px;\n    }\n}\n\n/* ==========================================================================\n   PHARMCARE POS BILLING DESK & TABLE ENTRY SUITE (ENHANCED FORM)\n   ========================================================================== */\n.pos-desk-container {\n    display: flex;\n    flex-direction: column;\n    gap: 16px;\n    margin-bottom: 24px;\n}\n\n/* Mode Pills (Sale, Purchase, Sale Return, Purchase Return, Breakage/Expiry) */\n.pos-mode-pill {\n    background: rgba(255, 255, 255, 0.04);\n    border: 1px solid var(--border-dim);\n    color: var(--text-muted);\n    padding: 8px 16px;\n    border-radius: 6px;\n    font-size: 0.85rem;\n    font-weight: 600;\n    cursor: pointer;\n    transition: all 0.2s ease;\n    white-space: nowrap;\n}\n\n.pos-mode-pill:hover {\n    color: var(--text-bright);\n    background: rgba(255, 255, 255, 0.08);\n}\n\n.pos-mode-pill.active {\n    background: var(--neon-green);\n    color: #041009;\n    border-color: var(--neon-green);\n    box-shadow: 0 0 14px var(--neon-green-glow);\n}\n\n.pos-mode-pill.mode-return.active {\n    background: var(--neon-amber);\n    color: #041009;\n    border-color: var(--neon-amber);\n    box-shadow: 0 0 14px var(--neon-amber-glow);\n}\n\n.pos-mode-pill.mode-breakage.active {\n    background: var(--neon-crimson);\n    color: #ffffff;\n    border-color: var(--neon-crimson);\n    box-shadow: 0 0 14px var(--neon-crimson-glow);\n}\n\n.pos-table-input {\n    width: 100%;\n    padding: 7px 9px;\n    background: var(--bg-base);\n    border: 1px solid var(--border-dim);\n    border-radius: 4px;\n    color: var(--text-bright);\n    font-size: 0.86rem;\n    outline: none;\n    transition: border-color 0.15s ease, box-shadow 0.15s ease;\n}\n\n.pos-table-input:focus {\n    border-color: var(--neon-green);\n    box-shadow: 0 0 0 2px var(--neon-green-glow);\n    background: #0d121c;\n}\n\n.pos-table-input.readonly {\n    background: rgba(255, 255, 255, 0.02);\n    border-color: transparent;\n    color: var(--text-main);\n    pointer-events: none;\n}\n\n.pos-summary-kpi {\n    background: var(--bg-surface-elevated);\n    border: 1px solid var(--border-dim);\n    border-radius: 6px;\n    padding: 10px 14px;\n    display: flex;\n    flex-direction: column;\n    gap: 4px;\n}\n\n.pos-summary-kpi .kpi-label {\n    font-size: 0.72rem;\n    text-transform: uppercase;\n    letter-spacing: 0.05em;\n    color: var(--text-muted);\n    font-weight: 600;\n}\n\n.pos-summary-kpi .kpi-value {\n    font-family: var(--font-mono);\n    font-size: 1.15rem;\n    font-weight: 700;\n    color: var(--text-bright);\n}\n\n/* Tablet & Mobile Nav Breakpoint (<= 992px) */\n@media (max-width: 992px) {\n    .cyber-nav {\n        padding: 8px 16px;\n        flex-wrap: wrap;\n        height: auto;\n        gap: 8px;\n    }\n\n    .brand-section {\n        flex: 1;\n    }\n\n    .nav-actions {\n        margin-left: auto;\n    }\n\n    .nav-links {\n        width: 100%;\n        order: 3;\n        display: flex;\n        overflow-x: auto;\n        -webkit-overflow-scrolling: touch;\n        scrollbar-width: none;\n        padding: 4px 0 6px 0;\n        gap: 6px;\n    }\n\n    .nav-links::-webkit-scrollbar {\n        display: none;\n    }\n\n    .nav-link {\n        flex-shrink: 0;\n        white-space: nowrap;\n        font-size: 0.82rem;\n        padding: 6px 12px;\n    }\n\n    .main-container {\n        padding: 20px 16px 48px 16px;\n    }\n}\n\n/* Small Tablet & Mobile Breakpoint (<= 768px) */\n@media (max-width: 768px) {\n    .main-container {\n        padding: 16px 12px 40px 12px;\n    }\n\n    .page-header {\n        flex-direction: column;\n        align-items: stretch;\n        gap: 14px;\n        padding-bottom: 12px;\n    }\n\n    .page-title {\n        font-size: 1.35rem;\n    }\n\n    .page-subtitle {\n        font-size: 0.82rem;\n    }\n\n    .page-header > div:last-child {\n        display: flex;\n        flex-wrap: wrap;\n        gap: 8px;\n        width: 100%;\n    }\n\n    .page-header > div:last-child .btn {\n        flex: 1 1 calc(50% - 8px);\n        min-width: 120px;\n    }\n\n    .table-toolbar {\n        flex-direction: column;\n        align-items: stretch;\n        gap: 12px;\n        padding: 12px 14px;\n    }\n\n    .table-toolbar form,\n    .table-toolbar > div {\n        max-width: 100% !important;\n        width: 100% !important;\n    }\n\n    .table-toolbar .cyber-select {\n        flex: 1;\n        width: 100% !important;\n    }\n\n    .cyber-table {\n        min-width: 580px;\n    }\n\n    .tab-navigation {\n        overflow-x: auto;\n        -webkit-overflow-scrolling: touch;\n        scrollbar-width: none;\n        flex-wrap: nowrap;\n        white-space: nowrap;\n        padding-bottom: 4px;\n    }\n\n    .tab-navigation::-webkit-scrollbar {\n        display: none;\n    }\n\n    .tab-link {\n        flex-shrink: 0;\n        padding: 8px 14px;\n        font-size: 0.82rem;\n    }\n\n    .cyber-card {\n        padding: 16px;\n    }\n\n    .live-review-container {\n        padding: 16px;\n    }\n}\n\n/* Smartphone Breakpoint (<= 640px) */\n@media (max-width: 640px) {\n    .stats-grid {\n        grid-template-columns: repeat(2, 1fr);\n        gap: 10px;\n        margin-bottom: 20px;\n    }\n\n    .stat-card {\n        padding: 14px 12px;\n    }\n\n    .stat-value {\n        font-size: 1.35rem;\n    }\n\n    .stat-label {\n        font-size: 0.72rem;\n    }\n\n    .stat-sub {\n        font-size: 0.72rem;\n    }\n\n    .action-grid {\n        grid-template-columns: repeat(2, 1fr);\n        gap: 10px;\n        margin-bottom: 24px;\n    }\n\n    .action-tile {\n        padding: 14px 12px;\n    }\n\n    .action-title {\n        font-size: 0.92rem;\n    }\n\n    .action-desc {\n        font-size: 0.75rem;\n    }\n\n    .meta-item {\n        flex: 1 1 120px;\n    }\n}\n\n/* Tiny Screens (<= 380px) */\n@media (max-width: 380px) {\n    .stats-grid {\n        grid-template-columns: 1fr;\n    }\n\n    .action-grid {\n        grid-template-columns: 1fr;\n    }\n\n    .page-header > div:last-child .btn {\n        flex: 1 1 100%;\n    }\n}\n\n/* Touch targets optimization on mobile devices */\n@media (hover: none) and (pointer: coarse) {\n    .cyber-input, .cyber-select {\n        min-height: 44px;\n        font-size: 16px; /* Prevents auto-zoom on iOS Safari */\n    }\n\n    .btn {\n        min-height: 42px;\n    }\n\n    .btn-sm {\n        min-height: 36px;\n    }\n}\n\n/* Reduced motion accessibility */\n@media (prefers-reduced-motion: reduce) {\n    *, ::before, ::after {\n        animation-duration: 0.01ms !important;\n        animation-iteration-count: 1 !important;\n        transition-duration: 0.01ms !important;\n        scroll-behavior: auto !important;\n    }\n}\n
