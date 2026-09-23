@@ -16,23 +16,26 @@
 <body>
 
 <!-- CYBER NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link">Medicine List</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link active">Sales Reports</a>
+        <a th:href="@{/admin/reports}" class="nav-link active">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
-            <span class="pulse-dot"></span> ADMINISTRATOR
+            <span class="pulse-dot"></span>
+            <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
         </div>
         <form th:action="@{/logout}" method="post" style="margin: 0;">
             <button type="submit" class="btn btn-outline btn-sm">Logout</button>
@@ -43,8 +46,8 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#9998; Correct Past Transaction</h1>
-            <p class="page-subtitle">Reconcile erroneous price entry on an already-committed transaction</p>
+            <h1 class="page-title">&#9998; Edit Past Bill</h1>
+            <p class="page-subtitle">Fix incorrect price or details on a saved bill</p>
         </div>
         <a th:href="@{/admin/reports}" class="btn btn-outline btn-sm">&larr; Back to Reports</a>
     </div>

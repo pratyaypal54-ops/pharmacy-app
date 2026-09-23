@@ -45,6 +45,13 @@ public class MedicineController {
         return "medicines";
     }
 
+    @GetMapping(value = "/api/medicines/substitutes", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<?> getSubstitutes(@RequestParam String composition,
+                                            @RequestParam(required = false, defaultValue = "-1") Long currentId) {
+        return ResponseEntity.ok(medicineService.findSubstitutes(composition, currentId));
+    }
+
     private String getLocalServerIp() {
         try (DatagramSocket socket = new DatagramSocket()) {
             socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
@@ -69,9 +76,6 @@ public class MedicineController {
     public ResponseEntity<?> submitAddStockBatch(@RequestBody StockAdditionBatchDto batchDto) {
         try {
             medicineService.processBatchStockAddition(batchDto);
-            String provider = (batchDto.getProviderName() != null && !batchDto.getProviderName().isBlank())
-                    ? batchDto.getProviderName()
-                    : "Direct Inward";
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Successfully added " + batchDto.getItems().size() + " medicine item(s) into stock."

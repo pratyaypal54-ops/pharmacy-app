@@ -10,12 +10,30 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Inward Stock & Inventory Restock - PharmCare</title>
+    <title>Inward Purchase &amp; Stock Intake - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .meta-chip-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
 
-<!-- NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
         <div class="brand-logo">&#10010;</div>
@@ -24,8 +42,8 @@
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
         <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link active">Add Stock</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link active">Purchase / Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
         <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
         <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
@@ -35,7 +53,7 @@
     <div class="nav-actions">
         <div class="nav-status">
             <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (INVENTORY)'}">ACCESS</span>
         </div>
         <form th:action="@{/logout}" method="post" style="margin: 0;">
             <button type="submit" class="btn btn-outline btn-sm">Logout</button>
@@ -46,46 +64,37 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128230; Inward Stock &amp; Inventory Restock</h1>
-            <p class="page-subtitle">Add received stock to existing inventory or register brand new medicines with 1-click instant save</p>
+            <h1 class="page-title">&#128230; Purchase &amp; Inward Stock Intake</h1>
+            <p class="page-subtitle">Add new inventory, update rack locations, batch numbers, expiry dates, and generic molecule salt</p>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a th:href="@{/admin/history/stock}" class="btn btn-cyber-cyan btn-sm">&#128220; View Stock History</a>
-            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Retail Billing Desk &rarr;</a>
         </div>
     </div>
 
-    <!-- GLOBAL NOTIFICATION MESSAGES -->
-    <div th:if="${success}" class="alert alert-success" id="serverSuccessAlert">
-        <span>&#10003;</span> <span th:text="${success}">Stock updated successfully.</span>
-    </div>
-    <div id="dynamicAlert" style="display: none; scroll-margin-top: 80px;" class="alert">
-        <span id="dynamicAlertIcon">&#10003;</span>
-        <span id="dynamicAlertMsg"></span>
-    </div>
+    <!-- MAIN 2-COLUMN WORKSPACE -->
+    <div class="stock-entry-grid">
 
-    <!-- SPLIT WORKBENCH LAYOUT -->
-    <div class="split-layout">
-        <!-- LEFT COLUMN: INTAKE CONTROLS -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
+        <!-- COLUMN 1: MEDICINE ENTRY FORM -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
 
-            <!-- CARD 1: MEDICINE ENTRY (PRIMARY) -->
-            <div class="cyber-card" style="border-color: rgba(0, 229, 255, 0.4);">
+            <!-- CARD 1: MEDICINE DETAILS -->
+            <div class="cyber-card">
                 <div class="card-title-bar">
-                    <h3>&#128138; Medicine Stock Details</h3>
-                    <span class="helper-tag" id="existingIndicator">Auto-detects registered medicines</span>
+                    <h3>&#128138; Medicine Stock Specification</h3>
+                    <span class="badge badge-in-stock">INWARD ENTRY</span>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="medNameInput">
-                        <span>Medicine Name *</span>
-                        <span class="helper-tag">Select from list or type new</span>
+                        <span>Medicine Brand Name *</span>
+                        <span class="helper-tag">Select or type new</span>
                     </label>
                     <input type="text"
                            id="medNameInput"
                            list="inventoryDatalist"
                            class="cyber-input"
-                           placeholder="e.g. Paracetamol 650mg"
+                           placeholder="e.g. Dolo 650, Azithral 500, Pan-D"
                            autocomplete="off"
                            required>
 
@@ -96,13 +105,20 @@
                                 th:data-stock="${med.quantity}"
                                 th:data-packsize="${med.getPackSize()}"
                                 th:data-buying="${med.buyingPrice}"
-                                th:data-selling="${med.sellingPrice}">
+                                th:data-selling="${med.sellingPrice}"
+                                th:data-composition="${med.getComposition()}"
+                                th:data-manufacturer="${med.getManufacturer()}"
+                                th:data-rack="${med.getRackLocation()}"
+                                th:data-batch="${med.batchNumber}"
+                                th:data-expiry="${med.expiryDate}"
+                                th:data-schedule="${med.getDrugSchedule()}"
+                                th:data-gst="${med.getGstRate()}">
                         </option>
                     </datalist>
                 </div>
 
                 <!-- DYNAMIC INVENTORY STATUS (IF EXISTING) -->
-                <div id="existingStockPanel" class="interactive-panel" style="display: none; border-color: var(--neon-cyan);">
+                <div id="existingStockPanel" class="interactive-panel" style="display: none; border-color: var(--neon-cyan); margin-bottom: 14px;">
                     <div class="preview-row">
                         <span class="preview-label">Catalog Status:</span>
                         <span class="preview-val badge badge-category" id="statusBadge">REGISTERED PRODUCT</span>
@@ -117,22 +133,97 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="categoryInput">
-                        <span>Category / Group</span>
-                        <span class="helper-tag">e.g. Analgesic, Antibiotic</span>
-                    </label>
-                    <input type="text"
-                           id="categoryInput"
-                           class="cyber-input"
-                           placeholder="e.g. Analgesic, Antibiotic, Syrup">
+                <div class="grid-2col-responsive">
+                    <div class="form-group">
+                        <label class="form-label" for="compositionInput">
+                            <span>Generic Salt / Composition</span>
+                            <span class="helper-tag">Active Molecule</span>
+                        </label>
+                        <input type="text"
+                               id="compositionInput"
+                               class="cyber-input"
+                               placeholder="e.g. Paracetamol 650mg">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="manufacturerInput">
+                            <span>Manufacturer / Company</span>
+                            <span class="helper-tag">Brand Origin</span>
+                        </label>
+                        <input type="text"
+                               id="manufacturerInput"
+                               class="cyber-input"
+                               placeholder="e.g. Cipla, Micro Labs, Sun Pharma">
+                    </div>
+                </div>
+
+                <div class="grid-3col">
+                    <div class="form-group">
+                        <label class="form-label" for="rackLocationInput">
+                            <span>&#128205; Rack / Shelf</span>
+                            <span class="helper-tag">Counter spot</span>
+                        </label>
+                        <input type="text"
+                               id="rackLocationInput"
+                               class="cyber-input"
+                               placeholder="e.g. Rack A-1, Fridge"
+                               value="Rack A-1">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="batchInput">
+                            <span>Batch Number</span>
+                            <span class="helper-tag">Printed</span>
+                        </label>
+                        <input type="text"
+                               id="batchInput"
+                               class="cyber-input"
+                               placeholder="e.g. B204">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="expiryInput">
+                            <span>Expiry Date</span>
+                            <span class="helper-tag">MM/YY</span>
+                        </label>
+                        <input type="text"
+                               id="expiryInput"
+                               class="cyber-input"
+                               placeholder="MM/YY">
+                    </div>
+                </div>
+
+                <div class="grid-2col-responsive">
+                    <div class="form-group">
+                        <label class="form-label" for="categoryInput">
+                            <span>Category / Group</span>
+                            <span class="helper-tag">Classification</span>
+                        </label>
+                        <input type="text"
+                               id="categoryInput"
+                               class="cyber-input"
+                               placeholder="e.g. Analgesic, Antibiotic, Syrup">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="drugScheduleSelect">
+                            <span>Drug Schedule</span>
+                            <span class="helper-tag">Rx Regulatory</span>
+                        </label>
+                        <select id="drugScheduleSelect" class="cyber-select">
+                            <option value="OTC" selected>OTC (Over The Counter)</option>
+                            <option value="Schedule H">Schedule H (Prescription)</option>
+                            <option value="Schedule H1">Schedule H1 (Controlled)</option>
+                            <option value="Schedule X">Schedule X / Narcotic</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="grid-2col-responsive">
                     <div class="form-group">
                         <label class="form-label" for="qtyReceivedInput">
                             <span>Packs / Strips Received *</span>
-                            <span class="helper-tag">Quantity</span>
+                            <span class="helper-tag">Inward Qty</span>
                         </label>
                         <div class="qty-picker-group">
                             <input type="number"
@@ -161,11 +252,11 @@
                     </div>
                 </div>
 
-                <div class="grid-2col-responsive">
+                <div class="grid-3col">
                     <div class="form-group" th:style="${isOwner ? '' : 'display: none;'}">
                         <label class="form-label" for="buyingPriceInput">
-                            <span>Buying Wholesale Cost (&#8377;)</span>
-                            <span class="helper-tag">Per pack/strip</span>
+                            <span>Wholesale Cost (&#8377;)</span>
+                            <span class="helper-tag">Per pack</span>
                         </label>
                         <input type="number"
                                step="0.01"
@@ -177,8 +268,8 @@
 
                     <div class="form-group">
                         <label class="form-label" for="sellingPriceInput">
-                            <span>Selling Retail MRP (&#8377;) *</span>
-                            <span class="helper-tag">Per pack/strip</span>
+                            <span>Selling MRP (&#8377;) *</span>
+                            <span class="helper-tag">Per pack</span>
                         </label>
                         <input type="number"
                                step="0.01"
@@ -186,6 +277,19 @@
                                min="0"
                                class="cyber-input"
                                placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gstRateSelect">
+                            <span>GST Rate (%)</span>
+                            <span class="helper-tag">Tax slab</span>
+                        </label>
+                        <select id="gstRateSelect" class="cyber-select">
+                            <option value="12" selected>12% (Standard Pharma)</option>
+                            <option value="5">5% (Life Saving)</option>
+                            <option value="18">18% (Disinfectants/Supplements)</option>
+                            <option value="0">0% (Nil / Exempt)</option>
+                        </select>
                     </div>
                 </div>
 
@@ -250,37 +354,39 @@
 
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label" for="batchInvoiceInput">
-                            <span>Challan / Invoice Ref</span>
+                            <span>Supplier Invoice / Ref #</span>
                             <span class="helper-tag">Optional</span>
                         </label>
                         <input type="text"
                                id="batchInvoiceInput"
                                class="cyber-input"
-                               placeholder="e.g. CH-8890">
+                               placeholder="e.g. INV-2026-992">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: LIVE REVIEW SIDE TABLE -->
-        <div class="live-review-container">
+        <!-- COLUMN 2: LIVE MULTI-ITEM STAGING REVIEW DESK -->
+        <div class="cyber-card" style="display: flex; flex-direction: column;">
             <div class="card-title-bar">
-                <h3>&#128221; Inward Multi-Item Delivery List</h3>
-                <span class="badge badge-in-stock" id="stagedCountBadge">0 ITEMS STAGED</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <h3>&#128221; Multi-Item Inward Review Table</h3>
+                    <span class="badge badge-primary" id="stagedCountBadge">0 ITEMS</span>
+                </div>
             </div>
 
-            <!-- PROVIDER MANIFEST BANNER -->
-            <div class="batch-meta-banner" id="reviewMetaBanner">
+            <!-- META INFO BAR -->
+            <div class="meta-chip-box">
                 <div class="meta-item">
-                    <span class="meta-label">Distributor / Provider</span>
+                    <span class="meta-label">Supplier:</span>
                     <span class="meta-value" id="dispProviderName">Direct Inward / Shelf Stock</span>
                 </div>
                 <div class="meta-item">
-                    <span class="meta-label">Phone Contact</span>
+                    <span class="meta-label">Phone:</span>
                     <span class="meta-value" id="dispProviderPhone">N/A</span>
                 </div>
                 <div class="meta-item">
-                    <span class="meta-label">Delivery Ref</span>
+                    <span class="meta-label">Delivery Ref:</span>
                     <span class="meta-value" id="dispBatchRef">AUTO-GEN</span>
                 </div>
             </div>
@@ -292,7 +398,7 @@
                         <tr>
                             <th style="width: 40px;">#</th>
                             <th>Medicine</th>
-                            <th>Category</th>
+                            <th>Rack / Batch</th>
                             <th style="text-align: right;">Inward Qty</th>
                             <th th:if="${isOwner}" style="text-align: right;">Cost (&#8377;)</th>
                             <th style="text-align: right;">Retail (&#8377;)</th>
@@ -312,7 +418,7 @@
             </div>
 
             <!-- BATCH FINANCIAL SUMMARY -->
-            <div class="batch-summary-card" id="batchSummaryCard" style="display: none;">
+            <div class="batch-summary-card" id="batchSummaryCard" style="display: none; margin-top: 14px;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px;">
                     <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
                         <span class="preview-label">Medicines:</span>
@@ -338,7 +444,7 @@
             </div>
 
             <!-- SUBMIT & CLEAR ACTIONS -->
-            <div style="display: flex; gap: 12px; margin-top: 6px;">
+            <div style="display: flex; gap: 12px; margin-top: 14px;">
                 <button type="button"
                         id="btnConfirmBatch"
                         class="btn btn-primary"
@@ -370,7 +476,6 @@
         }
     });
 
-    // Staging array for multi-item delivery batch
     let stagedItems = [];
 
     // DOM Elements
@@ -383,6 +488,14 @@
     const dispBatchRef = document.getElementById('dispBatchRef');
 
     const medNameInput = document.getElementById('medNameInput');
+    const compositionInput = document.getElementById('compositionInput');
+    const manufacturerInput = document.getElementById('manufacturerInput');
+    const rackLocationInput = document.getElementById('rackLocationInput');
+    const batchInput = document.getElementById('batchInput');
+    const expiryInput = document.getElementById('expiryInput');
+    const drugScheduleSelect = document.getElementById('drugScheduleSelect');
+    const gstRateSelect = document.getElementById('gstRateSelect');
+
     const packSizeInput = document.getElementById('packSizeInput');
     const categoryInput = document.getElementById('categoryInput');
     const qtyReceivedInput = document.getElementById('qtyReceivedInput');
@@ -441,22 +554,18 @@
             const loose = currentStock % pack;
             currentStockDisplay.textContent = pack > 1 ? (fullStrips + ' strips + ' + loose + ' tabs (' + currentStock + ' total tabs)') : (currentStock + ' units');
 
-            if (packSizeInput && (!packSizeInput.value || packSizeInput.dataset.autofilled === "true")) {
-                packSizeInput.value = pack;
-                packSizeInput.dataset.autofilled = "true";
-            }
-            if (!categoryInput.value || categoryInput.dataset.autofilled === "true") {
-                categoryInput.value = found.category || '';
-                categoryInput.dataset.autofilled = "true";
-            }
-            if (buyingPriceInput && (!buyingPriceInput.value || buyingPriceInput.dataset.autofilled === "true")) {
-                buyingPriceInput.value = found.buyingPrice != null ? found.buyingPrice : '';
-                buyingPriceInput.dataset.autofilled = "true";
-            }
-            if (!sellingPriceInput.value || sellingPriceInput.dataset.autofilled === "true") {
-                sellingPriceInput.value = found.sellingPrice != null ? found.sellingPrice : '';
-                sellingPriceInput.dataset.autofilled = "true";
-            }
+            if (packSizeInput) packSizeInput.value = pack;
+            if (categoryInput) categoryInput.value = found.category || '';
+            if (compositionInput && found.composition) compositionInput.value = found.composition;
+            if (manufacturerInput && found.manufacturer) manufacturerInput.value = found.manufacturer;
+            if (rackLocationInput && found.rackLocation) rackLocationInput.value = found.rackLocation;
+            if (batchInput && found.batchNumber) batchInput.value = found.batchNumber;
+            if (expiryInput && found.expiryDate) expiryInput.value = found.expiryDate;
+            if (drugScheduleSelect && found.drugSchedule) drugScheduleSelect.value = found.drugSchedule;
+            if (gstRateSelect && found.gstRate !== undefined) gstRateSelect.value = String(Math.round(found.gstRate));
+
+            if (buyingPriceInput) buyingPriceInput.value = (found.buyingPrice != null) ? found.buyingPrice : '';
+            if (sellingPriceInput) sellingPriceInput.value = (found.sellingPrice != null) ? found.sellingPrice : '';
         } else {
             currentSelectedMed = null;
             existingPanel.style.display = 'none';
@@ -479,7 +588,7 @@
 
         if (itemLineCost) {
             const cost = qty * buyPrice;
-            itemLineCost.textContent = '\u20b9' + cost.toFixed(2);
+            itemLineCost.textContent = '₹' + cost.toFixed(2);
         }
 
         if (unitMarginDisplay) {
@@ -487,9 +596,9 @@
             const marginPercent = buyPrice > 0 ? ((unitProfit / buyPrice) * 100).toFixed(1) : '0';
 
             if (unitProfit >= 0) {
-                unitMarginDisplay.innerHTML = '<span style="color: var(--neon-green);">+\u20b9' + unitProfit.toFixed(2) + ' (' + marginPercent + '%)</span>';
+                unitMarginDisplay.innerHTML = '<span style="color: var(--neon-green);">+₹' + unitProfit.toFixed(2) + ' (' + marginPercent + '%)</span>';
             } else {
-                unitMarginDisplay.innerHTML = '<span style="color: var(--neon-crimson);">-\u20b9' + Math.abs(unitProfit).toFixed(2) + ' (' + marginPercent + '%)</span>';
+                unitMarginDisplay.innerHTML = '<span style="color: var(--neon-crimson);">-₹' + Math.abs(unitProfit).toFixed(2) + ' (' + marginPercent + '%)</span>';
             }
         }
     }
@@ -507,17 +616,8 @@
         recalculateItemPreview();
     });
     if (packSizeInput) packSizeInput.addEventListener('input', recalculateItemPreview);
-    if (buyingPriceInput) {
-        buyingPriceInput.addEventListener('input', () => {
-            delete buyingPriceInput.dataset.autofilled;
-            recalculateItemPreview();
-        });
-    }
-    sellingPriceInput.addEventListener('input', () => {
-        sellingPriceInput.style.borderColor = '';
-        delete sellingPriceInput.dataset.autofilled;
-        recalculateItemPreview();
-    });
+    if (buyingPriceInput) buyingPriceInput.addEventListener('input', recalculateItemPreview);
+    sellingPriceInput.addEventListener('input', recalculateItemPreview);
 
     // 1-CLICK INSTANT SAVE FOR A SINGLE MEDICINE
     async function saveSingleMedicineDirectly() {
@@ -525,6 +625,14 @@
         const category = categoryInput.value.trim() || 'General';
         const qty = parseInt(qtyReceivedInput.value) || 0;
         const packSize = parseInt(packSizeInput ? packSizeInput.value : 10) || 10;
+        const composition = compositionInput.value.trim();
+        const manufacturer = manufacturerInput.value.trim();
+        const rackLocation = rackLocationInput.value.trim() || 'Rack A-1';
+        const batchNumber = batchInput.value.trim();
+        const expiryDate = expiryInput.value.trim();
+        const drugSchedule = drugScheduleSelect.value;
+        const gstRate = parseFloat(gstRateSelect.value) || 12.0;
+
         let buyPrice = buyingPriceInput ? (parseFloat(buyingPriceInput.value) || 0) : 0;
         if (!isOwnerUser && currentSelectedMed && currentSelectedMed.buyingPrice != null) {
             buyPrice = currentSelectedMed.buyingPrice;
@@ -573,7 +681,14 @@
                     quantity: qty,
                     packSize: packSize,
                     buyingPrice: buyPrice,
-                    sellingPrice: sellPrice
+                    sellingPrice: sellPrice,
+                    composition: composition,
+                    manufacturer: manufacturer,
+                    rackLocation: rackLocation,
+                    batchNumber: batchNumber,
+                    expiryDate: expiryDate,
+                    drugSchedule: drugSchedule,
+                    gstRate: gstRate
                 }
             ]
         };
@@ -589,9 +704,8 @@
 
             if (response.ok && result.success) {
                 const totalTabsAdded = qty * packSize;
-                const msg = '&#10003; Successfully added ' + qty + ' pack(s) (' + totalTabsAdded + ' total units) of \"' + name + '\" into inventory!';
+                const msg = '&#10003; Successfully added ' + qty + ' pack(s) (' + totalTabsAdded + ' total units) of "' + name + '" to ' + rackLocation + '!';
                 showInlineAlert(msg, 'success');
-                showAlert(msg, 'success', true);
 
                 // Update in-memory catalog
                 const qKey = name.toLowerCase();
@@ -599,6 +713,8 @@
                     catalogMap[qKey].quantity = (catalogMap[qKey].quantity || 0) + totalTabsAdded;
                     catalogMap[qKey].packSize = packSize;
                     catalogMap[qKey].sellingPrice = sellPrice;
+                    catalogMap[qKey].rackLocation = rackLocation;
+                    catalogMap[qKey].composition = composition;
                     if (buyPrice > 0) catalogMap[qKey].buyingPrice = buyPrice;
                 } else {
                     catalogMap[qKey] = {
@@ -607,16 +723,21 @@
                         quantity: totalTabsAdded,
                         packSize: packSize,
                         buyingPrice: buyPrice,
-                        sellingPrice: sellPrice
+                        sellingPrice: sellPrice,
+                        composition: composition,
+                        manufacturer: manufacturer,
+                        rackLocation: rackLocation,
+                        batchNumber: batchNumber,
+                        expiryDate: expiryDate
                     };
                 }
 
                 // Clear input fields for next entry
                 medNameInput.value = '';
-                categoryInput.value = '';
                 qtyReceivedInput.value = '';
                 sellingPriceInput.value = '';
                 if (buyingPriceInput) buyingPriceInput.value = '';
+                batchInput.value = '';
                 existingPanel.style.display = 'none';
                 currentSelectedMed = null;
                 recalculateItemPreview();
@@ -625,7 +746,6 @@
                 showInlineAlert(result.message || 'Error occurred while saving stock.', 'danger');
             }
         } catch (err) {
-            console.error(err);
             showInlineAlert('Network or server error: ' + err.message, 'danger');
         } finally {
             btnDirectSave.disabled = false;
@@ -639,6 +759,14 @@
         const category = categoryInput.value.trim() || 'General';
         const qty = parseInt(qtyReceivedInput.value) || 0;
         const packSize = parseInt(packSizeInput ? packSizeInput.value : 10) || 10;
+        const composition = compositionInput.value.trim();
+        const manufacturer = manufacturerInput.value.trim();
+        const rackLocation = rackLocationInput.value.trim() || 'Rack A-1';
+        const batchNumber = batchInput.value.trim();
+        const expiryDate = expiryInput.value.trim();
+        const drugSchedule = drugScheduleSelect.value;
+        const gstRate = parseFloat(gstRateSelect.value) || 12.0;
+
         let buyPrice = buyingPriceInput ? (parseFloat(buyingPriceInput.value) || 0) : 0;
         if (!isOwnerUser && currentSelectedMed && currentSelectedMed.buyingPrice != null) {
             buyPrice = currentSelectedMed.buyingPrice;
@@ -676,6 +804,9 @@
             stagedItems[existingIdx].buyingPrice = buyPrice;
             stagedItems[existingIdx].sellingPrice = sellPrice;
             stagedItems[existingIdx].category = category;
+            stagedItems[existingIdx].rackLocation = rackLocation;
+            stagedItems[existingIdx].batchNumber = batchNumber;
+            stagedItems[existingIdx].expiryDate = expiryDate;
         } else {
             stagedItems.push({
                 name: name,
@@ -683,7 +814,14 @@
                 quantity: qty,
                 packSize: packSize,
                 buyingPrice: buyPrice,
-                sellingPrice: sellPrice
+                sellingPrice: sellPrice,
+                composition: composition,
+                manufacturer: manufacturer,
+                rackLocation: rackLocation,
+                batchNumber: batchNumber,
+                expiryDate: expiryDate,
+                drugSchedule: drugSchedule,
+                gstRate: gstRate
             });
         }
 
@@ -691,31 +829,14 @@
 
         // Reset inputs
         medNameInput.value = '';
-        categoryInput.value = '';
         qtyReceivedInput.value = '';
         if (buyingPriceInput) buyingPriceInput.value = '';
         sellingPriceInput.value = '';
+        batchInput.value = '';
         existingPanel.style.display = 'none';
         currentSelectedMed = null;
         recalculateItemPreview();
-
-        showInlineAlert('Added \"' + name + '\" (' + qty + ' packs) to batch review table.', 'success');
         medNameInput.focus();
-    }
-
-    function removeItemFromStaging(index) {
-        if (index >= 0 && index < stagedItems.length) {
-            const removed = stagedItems.splice(index, 1)[0];
-            renderStagingTable();
-            showInlineAlert('Removed \"' + removed.name + '\" from batch.', 'info');
-        }
-    }
-
-    function clearStagingBatch() {
-        if (confirm('Clear all staged medicines from this delivery batch?')) {
-            stagedItems = [];
-            renderStagingTable();
-        }
     }
 
     function renderStagingTable() {
@@ -724,93 +845,87 @@
         if (stagedItems.length === 0) {
             emptyStagingState.style.display = 'block';
             batchSummaryCard.style.display = 'none';
-            stagedCountBadge.textContent = '0 ITEMS STAGED';
-            stagedCountBadge.className = 'badge';
             btnConfirmBatch.disabled = true;
             btnClearBatch.disabled = true;
+            stagedCountBadge.textContent = '0 ITEMS';
             return;
         }
 
         emptyStagingState.style.display = 'none';
         batchSummaryCard.style.display = 'block';
-        stagedCountBadge.textContent = stagedItems.length + ' MEDICINE(S) STAGED';
-        stagedCountBadge.className = 'badge badge-in-stock';
         btnConfirmBatch.disabled = false;
         btnClearBatch.disabled = false;
+        stagedCountBadge.textContent = stagedItems.length + ' ITEMS';
 
-        let totalUnits = 0;
+        let totalBaseUnits = 0;
         let totalCost = 0.0;
         let totalRetail = 0.0;
 
         stagedItems.forEach((item, index) => {
-            const subtotalCost = item.quantity * item.buyingPrice;
-            const subtotalRetail = item.quantity * item.sellingPrice;
+            const rowTotalUnits = item.quantity * item.packSize;
+            const lineCost = item.quantity * item.buyingPrice;
+            const lineRetail = item.quantity * item.sellingPrice;
 
-            totalUnits += item.quantity;
-            totalCost += subtotalCost;
-            totalRetail += subtotalRetail;
+            totalBaseUnits += rowTotalUnits;
+            totalCost += lineCost;
+            totalRetail += lineRetail;
 
             const tr = document.createElement('tr');
-            const totalTabs = item.quantity * (item.packSize || 10);
-            const qtyDisplay = (item.packSize && item.packSize > 1)
-                ? (item.quantity + ' strips (' + totalTabs + ' tabs)')
-                : (item.quantity + ' units');
-
-            let innerHtml = `
-                <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
-                <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
-                <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
-                <td style="text-align: right;" class="mono-cell highlight">${qtyDisplay}</td>`;
-
-            if (isOwnerUser) {
-                innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.buyingPrice.toFixed(2)}</td>`;
-            }
-
-            innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.sellingPrice.toFixed(2)}</td>`;
-
-            if (isOwnerUser) {
-                innerHtml += `<td style="text-align: right;" class="mono-cell" style="color: var(--neon-cyan);">&#8377;${subtotalCost.toFixed(2)}</td>`;
-            }
-
-            innerHtml += `
+            tr.innerHTML = `
+                <td style="color: var(--text-dim); font-size: 0.8rem;">${index + 1}</td>
+                <td>
+                    <strong>${escapeHtml(item.name)}</strong>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(item.category)} &bull; ${item.packSize} tabs/strip</div>
+                </td>
+                <td>
+                    <span style="color: var(--neon-cyan); font-size: 0.82rem;">${escapeHtml(item.rackLocation || 'Rack A-1')}</span>
+                    <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(item.batchNumber || 'Batch N/A')} (${escapeHtml(item.expiryDate || '--')})</div>
+                </td>
+                <td style="text-align: right;" class="mono-cell">
+                    <strong>${item.quantity}</strong> packs
+                    <div style="font-size: 0.75rem; color: var(--neon-cyan);">${rowTotalUnits} tabs</div>
+                </td>
+                ${isOwnerUser ? `<td style="text-align: right;" class="mono-cell">₹${item.buyingPrice.toFixed(2)}</td>` : ''}
+                <td style="text-align: right;" class="mono-cell" style="color: var(--neon-green);">₹${item.sellingPrice.toFixed(2)}</td>
+                ${isOwnerUser ? `<td style="text-align: right;" class="mono-cell highlight">₹${lineCost.toFixed(2)}</td>` : ''}
                 <td style="text-align: center;">
-                    <button type="button" class="btn-remove-item" onclick="removeItemFromStaging(${index})" title="Remove item">&#10005;</button>
+                    <button type="button" class="btn-remove-item" onclick="removeStagedItem(${index})" title="Remove">✕</button>
                 </td>
             `;
-            tr.innerHTML = innerHtml;
             stagingTableBody.appendChild(tr);
         });
 
-        const totalProfit = totalRetail - totalCost;
-
         summaryDistinctMeds.textContent = stagedItems.length;
-        summaryTotalUnits.textContent = totalUnits + ' packs';
-        if (summaryTotalCost) summaryTotalCost.textContent = '\u20b9' + totalCost.toFixed(2);
-        summaryTotalRetail.textContent = '\u20b9' + totalRetail.toFixed(2);
-        if (summaryTotalProfit) summaryTotalProfit.textContent = '\u20b9' + totalProfit.toFixed(2);
+        summaryTotalUnits.textContent = totalBaseUnits + ' tabs';
+        if (summaryTotalCost) summaryTotalCost.textContent = '₹' + totalCost.toFixed(2);
+        summaryTotalRetail.textContent = '₹' + totalRetail.toFixed(2);
+        if (summaryTotalProfit) {
+            const profit = totalRetail - totalCost;
+            summaryTotalProfit.textContent = (profit >= 0 ? '+₹' : '-₹') + Math.abs(profit).toFixed(2);
+        }
     }
 
-    // Submit multi-item batch
-    async function commitBatchStock() {
-        // If batch table is empty but inputs have a medicine, auto-add it first!
-        if (stagedItems.length === 0) {
-            const curName = medNameInput.value.trim();
-            const curQty = parseInt(qtyReceivedInput.value) || 0;
-            if (curName && curQty > 0) {
-                addItemToStaging();
-            } else {
-                showInlineAlert('Please enter a medicine and quantity to add to stock.', 'danger');
-                medNameInput.focus();
-                return;
-            }
+    function removeStagedItem(idx) {
+        stagedItems.splice(idx, 1);
+        renderStagingTable();
+    }
+
+    function clearStagingBatch() {
+        if (confirm('Are you sure you want to clear all items in this delivery staging table?')) {
+            stagedItems = [];
+            renderStagingTable();
         }
+    }
+
+    async function commitBatchStock() {
+        if (stagedItems.length === 0) return;
 
         const providerName = providerNameInput.value.trim() || 'Direct Inward / Shelf Stock';
         const providerPhone = providerPhoneInput.value.trim() || 'N/A';
-        const batchRef = batchInvoiceInput.value.trim() || ('BAT-' + Date.now());
+        const batchRef = batchInvoiceInput.value.trim() || ('DELIVERY-' + Date.now());
 
         btnConfirmBatch.disabled = true;
-        btnConfirmBatch.innerHTML = '&#9203; Saving All Stocks...';
+        btnConfirmBatch.innerHTML = '&#9203; Saving all stock items...';
 
         const payload = {
             providerName: providerName,
@@ -829,92 +944,41 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const count = stagedItems.length;
-                showAlert('&#10003; Successfully committed ' + count + ' medicine(s) into inventory!', 'success', true);
-                showInlineAlert('&#10003; Successfully saved all ' + count + ' items into inventory!', 'success');
-
-                stagedItems.forEach(item => {
-                    const qKey = item.name.toLowerCase();
-                    const addedTabs = item.quantity * (item.packSize || 10);
-                    if (catalogMap[qKey]) {
-                        catalogMap[qKey].quantity = (catalogMap[qKey].quantity || 0) + addedTabs;
-                    }
-                });
-
+                alert('✓ ' + result.message);
                 stagedItems = [];
                 renderStagingTable();
-                providerNameInput.value = '';
-                providerPhoneInput.value = '';
-                batchInvoiceInput.value = '';
-                updateProviderDisplay();
+                window.location.reload();
             } else {
-                showAlert(result.message || 'Error occurred while saving stocks.', 'danger', true);
-                showInlineAlert(result.message || 'Error occurred while saving stocks.', 'danger');
+                alert('Error: ' + (result.message || 'Could not save stock batch.'));
             }
         } catch (err) {
-            console.error(err);
-            showAlert('Network or server error: ' + err.message, 'danger', true);
-            showInlineAlert('Network or server error: ' + err.message, 'danger');
+            alert('Network error: ' + err.message);
         } finally {
-            btnConfirmBatch.disabled = stagedItems.length === 0;
-            btnConfirmBatch.innerHTML = '&#10003; Confirm &amp; Save All Staged Stocks';
+            btnConfirmBatch.disabled = false;
+            btnConfirmBatch.innerHTML = '&#10003; Confirm & Save All Staged Stocks';
         }
     }
 
-    function showInlineAlert(message, type) {
+    function showInlineAlert(msg, type) {
         const box = document.getElementById('inlineCardAlert');
         const icon = document.getElementById('inlineCardAlertIcon');
-        const msg = document.getElementById('inlineCardAlertMsg');
+        const msgEl = document.getElementById('inlineCardAlertMsg');
 
-        msg.innerHTML = message;
-        if (type === 'danger') {
-            box.className = 'alert alert-danger';
-            icon.innerHTML = '&#9888;';
-        } else if (type === 'info') {
-            box.className = 'alert';
-            box.style.background = 'rgba(0, 229, 255, 0.1)';
-            box.style.borderColor = 'rgba(0, 229, 255, 0.4)';
-            box.style.color = 'var(--neon-cyan)';
-            icon.innerHTML = '&#8505;';
-        } else {
-            box.className = 'alert alert-success';
-            icon.innerHTML = '&#10003;';
-        }
+        box.className = 'alert alert-' + type;
+        icon.innerHTML = (type === 'success') ? '&#10003;' : '&#9888;';
+        msgEl.innerHTML = msg;
         box.style.display = 'flex';
+
+        setTimeout(() => {
+            box.style.display = 'none';
+        }, 5000);
     }
 
-    function showAlert(message, type, shouldScroll = false) {
-        const alertBox = document.getElementById('dynamicAlert');
-        const alertIcon = document.getElementById('dynamicAlertIcon');
-        const alertMsg = document.getElementById('dynamicAlertMsg');
-
-        alertMsg.innerHTML = message;
-        if (type === 'danger') {
-            alertBox.className = 'alert alert-danger';
-            alertIcon.innerHTML = '&#9888;';
-        } else if (type === 'info') {
-            alertBox.className = 'alert';
-            alertBox.style.background = 'rgba(0, 229, 255, 0.1)';
-            alertBox.style.borderColor = 'rgba(0, 229, 255, 0.4)';
-            alertBox.style.color = 'var(--neon-cyan)';
-            alertIcon.innerHTML = '&#8505;';
-        } else {
-            alertBox.className = 'alert alert-success';
-            alertIcon.innerHTML = '&#10003;';
-        }
-
-        alertBox.style.display = 'flex';
-        if (shouldScroll) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     /*]]>*/
 </script>
-
 </body>
 </html>

@@ -15,7 +15,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "sales_transaction", indexes = {
     @Index(name = "idx_sales_sale_date", columnList = "saleDate"),
-    @Index(name = "idx_sales_invoice", columnList = "invoiceNumber")
+    @Index(name = "idx_sales_invoice", columnList = "invoiceNumber"),
+    @Index(name = "idx_sales_doctor", columnList = "doctorName")
 })
 @Getter
 @Setter
@@ -29,6 +30,25 @@ public class SalesTransaction {
     // Customer details
     private String customerName;
     private String customerPhone;
+
+    // Prescribing Doctor (Rule 65 & Schedule H/H1 compliance)
+    @Column(columnDefinition = "varchar(100) default 'N/A'")
+    private String doctorName = "N/A";
+
+    // Payment Mode: "Cash", "Bank/UPI", "Credit"
+    @Column(columnDefinition = "varchar(30) default 'Cash'")
+    private String paymentMode = "Cash";
+
+    // Batch and Expiry at sale time
+    @Column(columnDefinition = "varchar(50) default ''")
+    private String batchNumber = "";
+
+    @Column(columnDefinition = "varchar(20) default ''")
+    private String expiryDate = "";
+
+    // Drug Schedule (OTC, Schedule H, H1)
+    @Column(columnDefinition = "varchar(30) default 'OTC'")
+    private String drugSchedule = "OTC";
 
     // Invoice / Receipt reference grouping multiple items in a sale
     private String invoiceNumber;

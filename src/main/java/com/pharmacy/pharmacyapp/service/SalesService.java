@@ -45,7 +45,18 @@ public class SalesService {
                 ? batchDto.getCustomerPhone().trim()
                 : "N/A";
 
-        String invoiceNumber = "INV-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String doctorName = (batchDto.getDoctorName() != null && !batchDto.getDoctorName().isBlank())
+                ? batchDto.getDoctorName().trim()
+                : "N/A";
+
+        String paymentMode = (batchDto.getPaymentMode() != null && !batchDto.getPaymentMode().isBlank())
+                ? batchDto.getPaymentMode().trim()
+                : "Cash";
+
+        String invoiceNumber = (batchDto.getBillNumber() != null && !batchDto.getBillNumber().isBlank())
+                ? batchDto.getBillNumber().trim()
+                : "INV-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
         LocalDateTime now = LocalDateTime.now();
 
         List<Medicine> medicinesToUpdate = new ArrayList<>();
@@ -83,7 +94,9 @@ public class SalesService {
                 itemBuyingRate = medicine.getPerUnitBuyingPrice();
             } else {
                 unitsToDeduct = item.getQuantity() * packSize;
-                itemSellingRate = (medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0;
+                itemSellingRate = (item.getRate() != null && item.getRate() > 0)
+                        ? item.getRate()
+                        : ((medicine.getSellingPrice() != null) ? medicine.getSellingPrice() : 0.0);
                 itemBuyingRate = (medicine.getBuyingPrice() != null) ? medicine.getBuyingPrice() : 0.0;
             }
 
@@ -102,6 +115,8 @@ public class SalesService {
             SalesTransaction transaction = new SalesTransaction();
             transaction.setCustomerName(customerName);
             transaction.setCustomerPhone(customerPhone);
+            transaction.setDoctorName(doctorName);
+            transaction.setPaymentMode(paymentMode);
             transaction.setInvoiceNumber(invoiceNumber);
             transaction.setMedicineName(medicine.getName());
             transaction.setQuantitySold(item.getQuantity());
@@ -110,6 +125,9 @@ public class SalesService {
             transaction.setBuyingPriceAtSale(itemBuyingRate);
             transaction.setSellingPriceAtSale(itemSellingRate);
             transaction.setTotalAmount(itemGross);
+            transaction.setBatchNumber((item.getBatchNumber() != null && !item.getBatchNumber().isBlank()) ? item.getBatchNumber().trim() : medicine.getBatchNumber());
+            transaction.setExpiryDate((item.getExpiryDate() != null && !item.getExpiryDate().isBlank()) ? item.getExpiryDate().trim() : medicine.getExpiryDate());
+            transaction.setDrugSchedule(medicine.getDrugSchedule());
             transaction.setSaleDate(now);
 
             transactionsToSave.add(transaction);
@@ -211,6 +229,9 @@ public class SalesService {
         transaction.setTotalAmount(gross);
         transaction.setDiscountAmount(disc);
         transaction.setNetAmount(net);
+        transaction.setBatchNumber(medicine.getBatchNumber());
+        transaction.setExpiryDate(medicine.getExpiryDate());
+        transaction.setDrugSchedule(medicine.getDrugSchedule());
         transaction.setSaleDate(LocalDateTime.now());
 
         salesTransactionRepository.save(transaction);

@@ -10,6 +10,7 @@ import com.pharmacy.pharmacyapp.repository.MedicineRepository;
 import com.pharmacy.pharmacyapp.repository.StockAdditionRepository;
 import com.pharmacy.pharmacyapp.repository.StockAdjustmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,18 @@ public class MedicineService {
     }
 
     public List<Medicine> searchMedicines(String keyword) {
-        return medicineRepository.findByNameContainingIgnoreCase(keyword);
+        if (keyword == null || keyword.isBlank()) {
+            return getAllMedicines();
+        }
+        return medicineRepository.searchMedicines(keyword.trim());
+    }
+
+    public List<Medicine> findSubstitutes(String composition, Long currentId) {
+        if (composition == null || composition.isBlank()) {
+            return Collections.emptyList();
+        }
+        Long id = (currentId != null) ? currentId : -1L;
+        return medicineRepository.findSubstitutes(composition.trim(), id);
     }
 
     public List<Medicine> getAllMedicines() {
@@ -114,6 +126,30 @@ public class MedicineService {
                 medicine.setBuyingPrice(buyPrice);
                 medicine.setSellingPrice(sellPrice);
             }
+
+            // Update pharmacy database attributes
+            if (item.getComposition() != null && !item.getComposition().isBlank()) {
+                medicine.setComposition(item.getComposition().trim());
+            }
+            if (item.getManufacturer() != null && !item.getManufacturer().isBlank()) {
+                medicine.setManufacturer(item.getManufacturer().trim());
+            }
+            if (item.getRackLocation() != null && !item.getRackLocation().isBlank()) {
+                medicine.setRackLocation(item.getRackLocation().trim());
+            }
+            if (item.getBatchNumber() != null && !item.getBatchNumber().isBlank()) {
+                medicine.setBatchNumber(item.getBatchNumber().trim());
+            }
+            if (item.getExpiryDate() != null && !item.getExpiryDate().isBlank()) {
+                medicine.setExpiryDate(item.getExpiryDate().trim());
+            }
+            if (item.getDrugSchedule() != null && !item.getDrugSchedule().isBlank()) {
+                medicine.setDrugSchedule(item.getDrugSchedule().trim());
+            }
+            if (item.getGstRate() != null) {
+                medicine.setGstRate(item.getGstRate());
+            }
+
             medicinesToSave.add(medicine);
 
             // Create permanent log in StockAddition
@@ -128,6 +164,8 @@ public class MedicineService {
             addition.setBuyingPrice(buyPrice);
             addition.setSellingPrice(sellPrice);
             addition.setTotalCost(buyPrice * qty);
+            addition.setBatchNumber(item.getBatchNumber());
+            addition.setExpiryDate(item.getExpiryDate());
             addition.setAddedAt(now);
 
             additionsToSave.add(addition);
@@ -231,9 +269,11 @@ public class MedicineService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No medicine found with that name: " + name));
 
-        Integer quantityBefore = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
+        int previousQty = (medicine.getQuantity() != null) ? medicine.getQuantity() : 0;
+        int newQty = (correctQuantity != null && correctQuantity >= 0) ? correctQuantity : previousQty;
+        int diff = newQty - previousQty;
 
-        medicine.setQuantity(correctQuantity);
+        medicine.setQuantity(newQty);
         if (sellingPrice != null && sellingPrice >= 0) {
             medicine.setSellingPrice(sellingPrice);
         }
@@ -247,9 +287,12 @@ public class MedicineService {
 
         StockAdjustment adjustment = new StockAdjustment();
         adjustment.setMedicineName(medicine.getName());
-        adjustment.setQuantityBefore(quantityBefore);
-        adjustment.setQuantityAfter(correctQuantity);
-        adjustment.setReason(reason);
+        adjustment.setCategory(medicine.getCategory());
+        adjustment.setPreviousQuantity(previousQty);
+        adjustment.setNewQuantity(newQty);
+        adjustment.setQuantityDifference(diff);
+        adjustment.setReason((reason != null && !reason.isBlank()) ? reason.trim() : "Details / Inventory Correction");
+        adjustment.setAdjustedBy("ADMIN");
         adjustment.setAdjustedAt(LocalDateTime.now());
 
         stockAdjustmentRepository.save(adjustment);
@@ -262,6 +305,14 @@ public class MedicineService {
 
     public List<StockAddition> getAllStockAdditions() {
         return stockAdditionRepository.findAllByOrderByAddedAtDesc();
+    }
+
+    public List<StockAddition> getRecentStockAdditions(int limit) {
+        return stockAdditionRepository.findRecentAdditions(PageRequest.of(0, limit));
+    }
+
+    public List<StockAddition> getStockAdditionsBetween(LocalDateTime start, LocalDateTime end) {
+        return stockAdditionRepository.findByAddedAtBetweenOrderByAddedAtDesc(start, end);
     }
 
     public DailyStockSummary getStockSummaryForDate(LocalDate date) {
@@ -291,5 +342,9 @@ public class MedicineService {
         summary.setTotalDistinctMedicines(distinctNames.size());
 
         return summary;
+    }
+
+    public DailyStockSummary getTodayStockSummary() {
+        return getStockSummaryForDate(LocalDate.now());
     }
 }

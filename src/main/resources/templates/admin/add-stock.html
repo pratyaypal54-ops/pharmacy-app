@@ -10,32 +10,49 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Inward Stock & Inventory Restock - PharmCare</title>
+    <title>Purchase &amp; Add Stock - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .meta-chip-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
 
-<!-- NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link active">Add Stock</a>
-        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
-        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link active">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link">Medicine List</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
         <div class="nav-status">
             <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+            <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
         </div>
         <form th:action="@{/logout}" method="post" style="margin: 0;">
             <button type="submit" class="btn btn-outline btn-sm">Logout</button>
@@ -46,189 +63,29 @@
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128230; Inward Stock &amp; Inventory Restock</h1>
-            <p class="page-subtitle">Add received stock to existing inventory or register brand new medicines with 1-click instant save</p>
+            <h1 class="page-title">&#128230; Purchase &amp; Add Stock</h1>
+            <p class="page-subtitle">Supplier details on left, medicine details on right, and bill review table below</p>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a th:href="@{/admin/history/stock}" class="btn btn-cyber-cyan btn-sm">&#128220; View Stock History</a>
-            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
+        <div>
+            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Go to Billing Desk &rarr;</a>
         </div>
     </div>
 
-    <!-- GLOBAL NOTIFICATION MESSAGES -->
-    <div th:if="${success}" class="alert alert-success" id="serverSuccessAlert">
-        <span>&#10003;</span> <span th:text="${success}">Stock updated successfully.</span>
-    </div>
-    <div id="dynamicAlert" style="display: none; scroll-margin-top: 80px;" class="alert">
-        <span id="dynamicAlertIcon">&#10003;</span>
-        <span id="dynamicAlertMsg"></span>
-    </div>
+    <!-- SIDE-BY-SIDE 2-COLUMN WORKSPACE: LEFT = SUPPLIER, RIGHT = MEDICINE -->
+    <div class="purchase-split-grid">
 
-    <!-- SPLIT WORKBENCH LAYOUT -->
-    <div class="split-layout">
-        <!-- LEFT COLUMN: INTAKE CONTROLS -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-
-            <!-- CARD 1: MEDICINE ENTRY (PRIMARY) -->
-            <div class="cyber-card" style="border-color: rgba(0, 229, 255, 0.4);">
+        <!-- 1 IN LEFT: SUPPLIER & BILL DETAILS -->
+        <div class="cyber-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
                 <div class="card-title-bar">
-                    <h3>&#128138; Medicine Stock Details</h3>
-                    <span class="helper-tag" id="existingIndicator">Auto-detects registered medicines</span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="medNameInput">
-                        <span>Medicine Name *</span>
-                        <span class="helper-tag">Select from list or type new</span>
-                    </label>
-                    <input type="text"
-                           id="medNameInput"
-                           list="inventoryDatalist"
-                           class="cyber-input"
-                           placeholder="e.g. Paracetamol 650mg"
-                           autocomplete="off"
-                           required>
-
-                    <datalist id="inventoryDatalist">
-                        <option th:each="med : ${medicines}"
-                                th:value="${med.name}"
-                                th:data-category="${med.category}"
-                                th:data-stock="${med.quantity}"
-                                th:data-packsize="${med.getPackSize()}"
-                                th:data-buying="${med.buyingPrice}"
-                                th:data-selling="${med.sellingPrice}">
-                        </option>
-                    </datalist>
-                </div>
-
-                <!-- DYNAMIC INVENTORY STATUS (IF EXISTING) -->
-                <div id="existingStockPanel" class="interactive-panel" style="display: none; border-color: var(--neon-cyan);">
-                    <div class="preview-row">
-                        <span class="preview-label">Catalog Status:</span>
-                        <span class="preview-val badge badge-category" id="statusBadge">REGISTERED PRODUCT</span>
-                    </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Current Stock on Shelf:</span>
-                        <span class="preview-val mono-cell" id="currentStockDisplay">0 units</span>
-                    </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Projected Stock After Adding:</span>
-                        <span class="preview-val highlight" id="projectedStockDisplay" style="color: var(--neon-green); font-weight: 700;">0 units</span>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="categoryInput">
-                        <span>Category / Group</span>
-                        <span class="helper-tag">e.g. Analgesic, Antibiotic</span>
-                    </label>
-                    <input type="text"
-                           id="categoryInput"
-                           class="cyber-input"
-                           placeholder="e.g. Analgesic, Antibiotic, Syrup">
-                </div>
-
-                <div class="grid-2col-responsive">
-                    <div class="form-group">
-                        <label class="form-label" for="qtyReceivedInput">
-                            <span>Packs / Strips Received *</span>
-                            <span class="helper-tag">Quantity</span>
-                        </label>
-                        <div class="qty-picker-group">
-                            <input type="number"
-                                   id="qtyReceivedInput"
-                                   min="1"
-                                   class="cyber-input"
-                                   placeholder="e.g. 10"
-                                   required>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(5)">+5</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(10)">+10</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(25)">+25</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="packSizeInput">
-                            <span>Pack Size (Tabs/Strip)</span>
-                            <span class="helper-tag">10 for strip, 1 for bottle</span>
-                        </label>
-                        <input type="number"
-                               id="packSizeInput"
-                               min="1"
-                               value="10"
-                               class="cyber-input"
-                               placeholder="10">
-                    </div>
-                </div>
-
-                <div class="grid-2col-responsive">
-                    <div class="form-group" th:style="${isOwner ? '' : 'display: none;'}">
-                        <label class="form-label" for="buyingPriceInput">
-                            <span>Buying Wholesale Cost (&#8377;)</span>
-                            <span class="helper-tag">Per pack/strip</span>
-                        </label>
-                        <input type="number"
-                               step="0.01"
-                               id="buyingPriceInput"
-                               min="0"
-                               class="cyber-input"
-                               placeholder="0.00">
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="sellingPriceInput">
-                            <span>Selling Retail MRP (&#8377;) *</span>
-                            <span class="helper-tag">Per pack/strip</span>
-                        </label>
-                        <input type="number"
-                               step="0.01"
-                               id="sellingPriceInput"
-                               min="0"
-                               class="cyber-input"
-                               placeholder="0.00">
-                    </div>
-                </div>
-
-                <!-- LIVE ITEM FINANCIAL PREVIEW -->
-                <div th:if="${isOwner}" class="interactive-panel" style="background: rgba(0, 229, 255, 0.03); border-color: rgba(0, 229, 255, 0.2);">
-                    <div class="preview-row">
-                        <span class="preview-label">Item Line Cost:</span>
-                        <span class="preview-val mono-cell" id="itemLineCost">&#8377;0.00</span>
-                    </div>
-                    <div class="preview-row">
-                        <span class="preview-label">Projected Margin:</span>
-                        <span class="preview-val highlight" id="unitMarginDisplay">&#8377;0.00 (0%)</span>
-                    </div>
-                </div>
-
-                <!-- INLINE NOTIFICATION AREA -->
-                <div id="inlineCardAlert" style="display: none; margin: 12px 0;" class="alert">
-                    <span id="inlineCardAlertIcon">&#10003;</span>
-                    <span id="inlineCardAlertMsg"></span>
-                </div>
-
-                <!-- DIRECT ACTION BUTTONS -->
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 14px;">
-                    <button type="button" id="btnDirectSave" class="btn btn-primary btn-block" onclick="saveSingleMedicineDirectly()" style="font-size: 1rem; font-weight: 700; padding: 13px; letter-spacing: 0.5px;">
-                        &#10003; Save Stock to Inventory Now
-                    </button>
-                    <button type="button" id="btnAddItem" class="btn btn-outline btn-block" onclick="addItemToStaging()" style="font-size: 0.88rem; padding: 9px; color: var(--text-muted);">
-                        + Add to Multi-Item Batch Review Table &rarr;
-                    </button>
-                </div>
-            </div>
-
-            <!-- CARD 2: SUPPLIER / DISTRIBUTOR (OPTIONAL) -->
-            <div class="cyber-card">
-                <div class="card-title-bar">
-                    <h3>&#128100; Supplier / Distributor Manifest</h3>
-                    <span class="badge badge-category">OPTIONAL</span>
+                    <h3>&#127970; Supplier &amp; Bill Details</h3>
+                    <span class="badge badge-category">Step 1</span>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="providerNameInput">
-                        <span>Supplier / Distributor Name</span>
-                        <span class="helper-tag">Optional (defaults to Direct Inward)</span>
+                        <span>Supplier / Company Name</span>
+                        <span class="helper-tag">Optional</span>
                     </label>
                     <input type="text"
                            id="providerNameInput"
@@ -236,125 +93,382 @@
                            placeholder="e.g. MedSupply Healthcare Ltd.">
                 </div>
 
-                <div class="grid-2col-responsive">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label" for="providerPhoneInput">
-                            <span>Phone Contact</span>
-                            <span class="helper-tag">Optional</span>
-                        </label>
-                        <input type="tel"
-                               id="providerPhoneInput"
-                               class="cyber-input"
-                               placeholder="e.g. +91 9876543210">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="providerPhoneInput">
+                        <span>Supplier Mobile / Phone</span>
+                        <span class="helper-tag">Optional</span>
+                    </label>
+                    <input type="tel"
+                           id="providerPhoneInput"
+                           class="cyber-input"
+                           placeholder="e.g. 9876543210">
+                </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label" for="batchInvoiceInput">
-                            <span>Challan / Invoice Ref</span>
-                            <span class="helper-tag">Optional</span>
-                        </label>
-                        <input type="text"
-                               id="batchInvoiceInput"
-                               class="cyber-input"
-                               placeholder="e.g. CH-8890">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="batchInvoiceInput">
+                        <span>Purchase Bill / Invoice #</span>
+                        <span class="helper-tag">Optional</span>
+                    </label>
+                    <input type="text"
+                           id="batchInvoiceInput"
+                           class="cyber-input"
+                           placeholder="e.g. INV-2026-992">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="paymentModeSelect">
+                        <span>Payment Type</span>
+                        <span class="helper-tag">Bill terms</span>
+                    </label>
+                    <select id="paymentModeSelect" class="cyber-select">
+                        <option value="CASH">Cash</option>
+                        <option value="CREDIT">Credit / Due (Udhaar)</option>
+                        <option value="BANK_UPI">Bank Transfer / UPI</option>
+                        <option value="CHEQUE">Cheque</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- LIVE SUPPLIER QUICK INFO -->
+            <div class="interactive-panel" style="margin-top: 14px; background: rgba(0, 229, 255, 0.04); border-color: rgba(0, 229, 255, 0.2);">
+                <div class="preview-row">
+                    <span class="preview-label">Active Supplier:</span>
+                    <span class="preview-val highlight" id="dispProviderName" style="color: var(--neon-cyan);">Direct Shop Stock</span>
+                </div>
+                <div class="preview-row">
+                    <span class="preview-label">Phone:</span>
+                    <span class="preview-val" id="dispProviderPhone">N/A</span>
+                </div>
+                <div class="preview-row">
+                    <span class="preview-label">Bill / Memo Ref:</span>
+                    <span class="preview-val" id="dispBatchRef">AUTO-GEN</span>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: LIVE REVIEW SIDE TABLE -->
-        <div class="live-review-container">
+        <!-- 1 IN RIGHT: MEDICINE STOCK SPECIFICATION -->
+        <div class="cyber-card">
             <div class="card-title-bar">
-                <h3>&#128221; Inward Multi-Item Delivery List</h3>
-                <span class="badge badge-in-stock" id="stagedCountBadge">0 ITEMS STAGED</span>
+                <h3>&#128138; Medicine Details</h3>
+                <span class="badge badge-in-stock">Step 2</span>
             </div>
 
-            <!-- PROVIDER MANIFEST BANNER -->
-            <div class="batch-meta-banner" id="reviewMetaBanner">
-                <div class="meta-item">
-                    <span class="meta-label">Distributor / Provider</span>
-                    <span class="meta-value" id="dispProviderName">Direct Inward / Shelf Stock</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">Phone Contact</span>
-                    <span class="meta-value" id="dispProviderPhone">N/A</span>
-                </div>
-                <div class="meta-item">
-                    <span class="meta-label">Delivery Ref</span>
-                    <span class="meta-value" id="dispBatchRef">AUTO-GEN</span>
-                </div>
+            <div class="form-group">
+                <label class="form-label" for="medNameInput">
+                    <span>Medicine Name *</span>
+                    <span class="helper-tag">Type name or choose from list</span>
+                </label>
+                <input type="text"
+                       id="medNameInput"
+                       list="inventoryDatalist"
+                       class="cyber-input"
+                       placeholder="e.g. Dolo 650, Azithral 500, Pan-D"
+                       autocomplete="off"
+                       required>
+
+                <datalist id="inventoryDatalist">
+                    <option th:each="med : ${medicines}"
+                            th:value="${med.name}"
+                            th:data-category="${med.category}"
+                            th:data-stock="${med.quantity}"
+                            th:data-packsize="${med.getPackSize()}"
+                            th:data-buying="${med.buyingPrice}"
+                            th:data-selling="${med.sellingPrice}"
+                            th:data-composition="${med.getComposition()}"
+                            th:data-manufacturer="${med.getManufacturer()}"
+                            th:data-rack="${med.getRackLocation()}"
+                            th:data-batch="${med.batchNumber}"
+                            th:data-expiry="${med.expiryDate}"
+                            th:data-schedule="${med.getDrugSchedule()}"
+                            th:data-gst="${med.getGstRate()}">
+                    </option>
+                </datalist>
             </div>
 
-            <!-- STAGING TABLE -->
-            <div class="table-container">
-                <table class="cyber-table" id="stagingTable">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px;">#</th>
-                            <th>Medicine</th>
-                            <th>Category</th>
-                            <th style="text-align: right;">Inward Qty</th>
-                            <th th:if="${isOwner}" style="text-align: right;">Cost (&#8377;)</th>
-                            <th style="text-align: right;">Retail (&#8377;)</th>
-                            <th th:if="${isOwner}" style="text-align: right;">Subtotal (&#8377;)</th>
-                            <th style="text-align: center; width: 60px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stagingTableBody">
-                    </tbody>
-                </table>
-
-                <div id="emptyStagingState" class="empty-staging-placeholder">
-                    <div class="placeholder-icon">&#128451;</div>
-                    <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Live Review Table is Empty</div>
-                    <div style="font-size: 0.82rem;">Use <strong>"Save Stock to Inventory Now"</strong> on the left for quick 1-click restock, or click <strong>"+ Add to Multi-Item Batch"</strong> to build a multi-medicine delivery manifest here.</div>
+            <!-- DYNAMIC INVENTORY STATUS (IF EXISTING MEDICINE) -->
+            <div id="existingStockPanel" class="interactive-panel" style="display: none; border-color: var(--neon-cyan); margin-bottom: 12px;">
+                <div class="preview-row">
+                    <span class="preview-label">Medicine Status:</span>
+                    <span class="preview-val badge badge-category" id="statusBadge">Found in List</span>
                 </div>
-            </div>
-
-            <!-- BATCH FINANCIAL SUMMARY -->
-            <div class="batch-summary-card" id="batchSummaryCard" style="display: none;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
-                        <span class="preview-label">Medicines:</span>
-                        <span class="preview-val" id="summaryDistinctMeds">0</span>
-                    </div>
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
-                        <span class="preview-label">Total Units:</span>
-                        <span class="preview-val highlight" id="summaryTotalUnits">0 units</span>
-                    </div>
-                    <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
-                        <span class="preview-label">Batch Purchase Cost:</span>
-                        <span class="preview-val" id="summaryTotalCost" style="color: var(--neon-cyan); font-size: 1.15rem;">&#8377;0.00</span>
-                    </div>
-                    <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
-                        <span class="preview-label">Projected Sales Value:</span>
-                        <span class="preview-val" id="summaryTotalRetail">&#8377;0.00</span>
-                    </div>
-                    <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
-                        <span class="preview-label">Projected Profit:</span>
-                        <span class="preview-val" id="summaryTotalProfit" style="color: var(--neon-green); font-size: 1.15rem;">&#8377;0.00</span>
-                    </div>
+                <div class="preview-row">
+                    <span class="preview-label">Current Stock on Shelf:</span>
+                    <span class="preview-val mono-cell" id="currentStockDisplay">0 units</span>
+                </div>
+                <div class="preview-row">
+                    <span class="preview-label">New Total Stock After Adding:</span>
+                    <span class="preview-val highlight" id="projectedStockDisplay" style="color: var(--neon-green); font-weight: 700;">0 units</span>
                 </div>
             </div>
 
-            <!-- SUBMIT & CLEAR ACTIONS -->
-            <div style="display: flex; gap: 12px; margin-top: 6px;">
-                <button type="button"
-                        id="btnConfirmBatch"
-                        class="btn btn-primary"
-                        style="flex: 1;"
-                        onclick="commitBatchStock()"
-                        disabled>
-                    &#10003; Confirm &amp; Save All Staged Stocks
+            <div class="grid-2col-responsive">
+                <div class="form-group">
+                    <label class="form-label" for="compositionInput">
+                        <span>Medicine Salt / Formula</span>
+                        <span class="helper-tag">Active Molecule</span>
+                    </label>
+                    <input type="text"
+                           id="compositionInput"
+                           class="cyber-input"
+                           placeholder="e.g. Paracetamol 650mg">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="manufacturerInput">
+                        <span>Company / Manufacturer</span>
+                        <span class="helper-tag">Brand name</span>
+                    </label>
+                    <input type="text"
+                           id="manufacturerInput"
+                           class="cyber-input"
+                           placeholder="e.g. Cipla, Micro Labs, Sun Pharma">
+                </div>
+            </div>
+
+            <div class="grid-3col">
+                <div class="form-group">
+                    <label class="form-label" for="rackLocationInput">
+                        <span>&#128205; Rack / Shelf</span>
+                        <span class="helper-tag">Storage box</span>
+                    </label>
+                    <input type="text"
+                           id="rackLocationInput"
+                           class="cyber-input"
+                           placeholder="e.g. Rack A-1, Fridge"
+                           value="Rack A-1">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="batchInput">
+                        <span>Batch Number</span>
+                        <span class="helper-tag">Printed on box</span>
+                    </label>
+                    <input type="text"
+                           id="batchInput"
+                           class="cyber-input"
+                           placeholder="e.g. B204">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="expiryInput">
+                        <span>Expiry Date</span>
+                        <span class="helper-tag">MM/YY</span>
+                    </label>
+                    <input type="text"
+                           id="expiryInput"
+                           class="cyber-input"
+                           placeholder="MM/YY">
+                </div>
+            </div>
+
+            <div class="grid-2col-responsive">
+                <div class="form-group">
+                    <label class="form-label" for="categoryInput">
+                        <span>Category / Group</span>
+                        <span class="helper-tag">Tablet, Syrup, etc.</span>
+                    </label>
+                    <input type="text"
+                           id="categoryInput"
+                           class="cyber-input"
+                           placeholder="e.g. Tablets, Syrup, Injection">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="drugScheduleSelect">
+                        <span>Medicine Schedule Type</span>
+                        <span class="helper-tag">Prescription check</span>
+                    </label>
+                    <select id="drugScheduleSelect" class="cyber-select">
+                        <option value="OTC" selected>OTC (General / Over The Counter)</option>
+                        <option value="Schedule H">Schedule H (Doctor Prescription)</option>
+                        <option value="Schedule H1">Schedule H1 (Controlled Rx)</option>
+                        <option value="Schedule X">Schedule X (Narcotic)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2col-responsive">
+                <div class="form-group">
+                    <label class="form-label" for="qtyReceivedInput">
+                        <span>Packs / Strips Received *</span>
+                        <span class="helper-tag">Quantity</span>
+                    </label>
+                    <div class="qty-picker-group">
+                        <input type="number"
+                               id="qtyReceivedInput"
+                               min="1"
+                               class="cyber-input"
+                               placeholder="e.g. 10"
+                               required>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(5)">+5</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(10)">+10</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="incrementQty(25)">+25</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="packSizeInput">
+                        <span>Tablets Per Pack</span>
+                        <span class="helper-tag">10 for strip, 1 for bottle</span>
+                    </label>
+                    <input type="number"
+                           id="packSizeInput"
+                           min="1"
+                           value="10"
+                           class="cyber-input"
+                           placeholder="10">
+                </div>
+            </div>
+
+            <div class="grid-3col">
+                <div class="form-group" th:style="${isOwner ? '' : 'display: none;'}">
+                    <label class="form-label" for="buyingPriceInput">
+                        <span>Purchase Price (&#8377;)</span>
+                        <span class="helper-tag">Cost per pack</span>
+                    </label>
+                    <input type="number"
+                           step="0.01"
+                           id="buyingPriceInput"
+                           min="0"
+                           class="cyber-input"
+                           placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sellingPriceInput">
+                        <span>Selling MRP (&#8377;) *</span>
+                        <span class="helper-tag">MRP per pack</span>
+                    </label>
+                    <input type="number"
+                           step="0.01"
+                           id="sellingPriceInput"
+                           min="0"
+                           class="cyber-input"
+                           placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="gstRateSelect">
+                        <span>GST Tax (%)</span>
+                        <span class="helper-tag">GST slab</span>
+                    </label>
+                    <select id="gstRateSelect" class="cyber-select">
+                        <option value="12" selected>12% (Medicines)</option>
+                        <option value="5">5% (Life Saving)</option>
+                        <option value="18">18% (Supplements/Cosmetics)</option>
+                        <option value="0">0% (Nil / Exempt)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- LIVE ITEM FINANCIAL PREVIEW -->
+            <div th:if="${isOwner}" class="interactive-panel" style="background: rgba(0, 229, 255, 0.03); border-color: rgba(0, 229, 255, 0.2);">
+                <div class="preview-row">
+                    <span class="preview-label">Item Total Cost:</span>
+                    <span class="preview-val mono-cell" id="itemLineCost">&#8377;0.00</span>
+                </div>
+                <div class="preview-row">
+                    <span class="preview-label">Profit Margin:</span>
+                    <span class="preview-val highlight" id="unitMarginDisplay">&#8377;0.00 (0%)</span>
+                </div>
+            </div>
+
+            <!-- INLINE NOTIFICATION AREA -->
+            <div id="inlineCardAlert" style="display: none; margin: 12px 0;" class="alert">
+                <span id="inlineCardAlertIcon">&#10003;</span>
+                <span id="inlineCardAlertMsg"></span>
+            </div>
+
+            <!-- ACTION BUTTONS: PRIMARY = ADD TO BILL, SECONDARY = QUICK SAVE -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;">
+                <button type="button" id="btnAddItem" class="btn btn-primary" onclick="addItemToStaging()" style="padding: 12px; font-weight: 700;">
+                    + Add to Purchase Bill
                 </button>
-                <button type="button"
-                        id="btnClearBatch"
-                        class="btn btn-outline"
-                        onclick="clearStagingBatch()"
-                        disabled>
-                    Clear List
+                <button type="button" id="btnDirectSave" class="btn btn-outline" onclick="saveSingleMedicineDirectly()" style="padding: 12px;">
+                    &#9889; Quick Save Single Stock
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- FULL WIDTH BELOW: MEDICINES IN THIS PURCHASE BILL -->
+    <div class="cyber-card" style="display: flex; flex-direction: column;">
+        <div class="card-title-bar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h3>&#128221; Medicines in this Purchase Bill</h3>
+                <span class="badge badge-primary" id="stagedCountBadge">0 MEDICINES</span>
+            </div>
+        </div>
+
+        <!-- STAGING TABLE -->
+        <div class="table-container">
+            <table class="cyber-table" id="stagingTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Medicine Name</th>
+                        <th>Rack / Batch / Expiry</th>
+                        <th style="text-align: right;">Quantity</th>
+                        <th th:if="${isOwner}" style="text-align: right;">Purchase Cost (&#8377;)</th>
+                        <th style="text-align: right;">Selling MRP (&#8377;)</th>
+                        <th th:if="${isOwner}" style="text-align: right;">Line Total (&#8377;)</th>
+                        <th style="text-align: center; width: 60px;">Remove</th>
+                    </tr>
+                </thead>
+                <tbody id="stagingTableBody">
+                </tbody>
+            </table>
+
+            <div id="emptyStagingState" class="empty-staging-placeholder" style="padding: 36px 16px; text-align: center; color: var(--text-dim);">
+                <div style="font-size: 2rem; margin-bottom: 6px;">&#128451;</div>
+                <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">Purchase Bill Table is Empty</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">Fill in the medicine details above and click <strong>"+ Add to Purchase Bill"</strong> to add medicines to this bill.</div>
+            </div>
+        </div>
+
+        <!-- BATCH FINANCIAL SUMMARY -->
+        <div class="batch-summary-card" id="batchSummaryCard" style="display: none; margin-top: 14px; background: rgba(0, 229, 255, 0.04); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 8px; padding: 14px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="preview-label">Medicines:</span>
+                    <span class="preview-val" id="summaryDistinctMeds">0</span>
+                </div>
+                <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="preview-label">Total Units:</span>
+                    <span class="preview-val highlight" id="summaryTotalUnits">0 units</span>
+                </div>
+                <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="preview-label">Total Bill Cost:</span>
+                    <span class="preview-val" id="summaryTotalCost" style="color: var(--neon-cyan); font-size: 1.15rem;">&#8377;0.00</span>
+                </div>
+                <div class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="preview-label">Total Selling Value:</span>
+                    <span class="preview-val" id="summaryTotalRetail">&#8377;0.00</span>
+                </div>
+                <div th:if="${isOwner}" class="preview-row" style="flex-direction: column; align-items: flex-start;">
+                    <span class="preview-label">Expected Profit:</span>
+                    <span class="preview-val" id="summaryTotalProfit" style="color: var(--neon-green); font-size: 1.15rem;">&#8377;0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUBMIT & CLEAR ACTIONS -->
+        <div style="display: flex; gap: 12px; margin-top: 14px;">
+            <button type="button"
+                    id="btnConfirmBatch"
+                    class="btn btn-primary"
+                    style="flex: 1; padding: 12px; font-weight: 700; font-size: 0.95rem;"
+                    onclick="commitBatchStock()"
+                    disabled>
+                &#10003; Save Purchase Bill
+            </button>
+            <button type="button"
+                    id="btnClearBatch"
+                    class="btn btn-outline"
+                    onclick="clearStagingBatch()"
+                    disabled>
+                Clear Table
+            </button>
         </div>
     </div>
 </div>
@@ -370,7 +484,6 @@
         }
     });
 
-    // Staging array for multi-item delivery batch
     let stagedItems = [];
 
     // DOM Elements
@@ -383,6 +496,14 @@
     const dispBatchRef = document.getElementById('dispBatchRef');
 
     const medNameInput = document.getElementById('medNameInput');
+    const compositionInput = document.getElementById('compositionInput');
+    const manufacturerInput = document.getElementById('manufacturerInput');
+    const rackLocationInput = document.getElementById('rackLocationInput');
+    const batchInput = document.getElementById('batchInput');
+    const expiryInput = document.getElementById('expiryInput');
+    const drugScheduleSelect = document.getElementById('drugScheduleSelect');
+    const gstRateSelect = document.getElementById('gstRateSelect');
+
     const packSizeInput = document.getElementById('packSizeInput');
     const categoryInput = document.getElementById('categoryInput');
     const qtyReceivedInput = document.getElementById('qtyReceivedInput');
@@ -417,7 +538,7 @@
         const pPhone = providerPhoneInput.value.trim();
         const bRef = batchInvoiceInput.value.trim();
 
-        dispProviderName.textContent = pName || 'Direct Inward / Shelf Stock';
+        dispProviderName.textContent = pName || 'Direct Shop Stock';
         dispProviderPhone.textContent = pPhone || 'N/A';
         dispBatchRef.textContent = bRef || 'AUTO-GEN';
     }
@@ -441,22 +562,18 @@
             const loose = currentStock % pack;
             currentStockDisplay.textContent = pack > 1 ? (fullStrips + ' strips + ' + loose + ' tabs (' + currentStock + ' total tabs)') : (currentStock + ' units');
 
-            if (packSizeInput && (!packSizeInput.value || packSizeInput.dataset.autofilled === "true")) {
-                packSizeInput.value = pack;
-                packSizeInput.dataset.autofilled = "true";
-            }
-            if (!categoryInput.value || categoryInput.dataset.autofilled === "true") {
-                categoryInput.value = found.category || '';
-                categoryInput.dataset.autofilled = "true";
-            }
-            if (buyingPriceInput && (!buyingPriceInput.value || buyingPriceInput.dataset.autofilled === "true")) {
-                buyingPriceInput.value = found.buyingPrice != null ? found.buyingPrice : '';
-                buyingPriceInput.dataset.autofilled = "true";
-            }
-            if (!sellingPriceInput.value || sellingPriceInput.dataset.autofilled === "true") {
-                sellingPriceInput.value = found.sellingPrice != null ? found.sellingPrice : '';
-                sellingPriceInput.dataset.autofilled = "true";
-            }
+            if (packSizeInput) packSizeInput.value = pack;
+            if (categoryInput) categoryInput.value = found.category || '';
+            if (compositionInput && found.composition) compositionInput.value = found.composition;
+            if (manufacturerInput && found.manufacturer) manufacturerInput.value = found.manufacturer;
+            if (rackLocationInput && found.rackLocation) rackLocationInput.value = found.rackLocation;
+            if (batchInput && found.batchNumber) batchInput.value = found.batchNumber;
+            if (expiryInput && found.expiryDate) expiryInput.value = found.expiryDate;
+            if (drugScheduleSelect && found.drugSchedule) drugScheduleSelect.value = found.drugSchedule;
+            if (gstRateSelect && found.gstRate !== undefined) gstRateSelect.value = String(Math.round(found.gstRate));
+
+            if (buyingPriceInput) buyingPriceInput.value = (found.buyingPrice != null) ? found.buyingPrice : '';
+            if (sellingPriceInput) sellingPriceInput.value = (found.sellingPrice != null) ? found.sellingPrice : '';
         } else {
             currentSelectedMed = null;
             existingPanel.style.display = 'none';
@@ -474,7 +591,7 @@
         if (currentSelectedMed) {
             const currentStock = currentSelectedMed.quantity || 0;
             const newStock = currentStock + totalBaseUnits;
-            projectedStockDisplay.textContent = currentStock + ' + ' + totalBaseUnits + ' = ' + newStock + ' total tablets (' + Math.floor(newStock / packSize) + ' strips)';
+            projectedStockDisplay.textContent = currentStock + ' + ' + totalBaseUnits + ' = ' + newStock + ' total tabs (' + Math.floor(newStock / packSize) + ' strips)';
         }
 
         if (itemLineCost) {
@@ -507,17 +624,8 @@
         recalculateItemPreview();
     });
     if (packSizeInput) packSizeInput.addEventListener('input', recalculateItemPreview);
-    if (buyingPriceInput) {
-        buyingPriceInput.addEventListener('input', () => {
-            delete buyingPriceInput.dataset.autofilled;
-            recalculateItemPreview();
-        });
-    }
-    sellingPriceInput.addEventListener('input', () => {
-        sellingPriceInput.style.borderColor = '';
-        delete sellingPriceInput.dataset.autofilled;
-        recalculateItemPreview();
-    });
+    if (buyingPriceInput) buyingPriceInput.addEventListener('input', recalculateItemPreview);
+    sellingPriceInput.addEventListener('input', recalculateItemPreview);
 
     // 1-CLICK INSTANT SAVE FOR A SINGLE MEDICINE
     async function saveSingleMedicineDirectly() {
@@ -525,6 +633,14 @@
         const category = categoryInput.value.trim() || 'General';
         const qty = parseInt(qtyReceivedInput.value) || 0;
         const packSize = parseInt(packSizeInput ? packSizeInput.value : 10) || 10;
+        const composition = compositionInput.value.trim();
+        const manufacturer = manufacturerInput.value.trim();
+        const rackLocation = rackLocationInput.value.trim() || 'Rack A-1';
+        const batchNumber = batchInput.value.trim();
+        const expiryDate = expiryInput.value.trim();
+        const drugSchedule = drugScheduleSelect.value;
+        const gstRate = parseFloat(gstRateSelect.value) || 12.0;
+
         let buyPrice = buyingPriceInput ? (parseFloat(buyingPriceInput.value) || 0) : 0;
         if (!isOwnerUser && currentSelectedMed && currentSelectedMed.buyingPrice != null) {
             buyPrice = currentSelectedMed.buyingPrice;
@@ -544,23 +660,23 @@
         if (qty <= 0) {
             qtyReceivedInput.style.borderColor = 'var(--neon-crimson)';
             qtyReceivedInput.focus();
-            showInlineAlert('Please enter a valid quantity of packs/strips received (> 0).', 'danger');
+            showInlineAlert('Please enter quantity of packs received (> 0).', 'danger');
             return;
         }
 
         if (sellPrice <= 0) {
             sellingPriceInput.style.borderColor = 'var(--neon-crimson)';
             sellingPriceInput.focus();
-            showInlineAlert('Please enter the retail selling price (MRP).', 'danger');
+            showInlineAlert('Please enter the selling price (MRP).', 'danger');
             return;
         }
 
-        const providerName = providerNameInput.value.trim() || 'Direct Inward / Shelf Stock';
+        const providerName = providerNameInput.value.trim() || 'Direct Shop Stock';
         const providerPhone = providerPhoneInput.value.trim() || 'N/A';
         const batchRef = batchInvoiceInput.value.trim() || ('RESTOCK-' + Date.now());
 
         btnDirectSave.disabled = true;
-        btnDirectSave.innerHTML = '&#9203; Saving stock to database...';
+        btnDirectSave.innerHTML = '&#9203; Saving stock...';
 
         const payload = {
             providerName: providerName,
@@ -573,7 +689,14 @@
                     quantity: qty,
                     packSize: packSize,
                     buyingPrice: buyPrice,
-                    sellingPrice: sellPrice
+                    sellingPrice: sellPrice,
+                    composition: composition,
+                    manufacturer: manufacturer,
+                    rackLocation: rackLocation,
+                    batchNumber: batchNumber,
+                    expiryDate: expiryDate,
+                    drugSchedule: drugSchedule,
+                    gstRate: gstRate
                 }
             ]
         };
@@ -589,9 +712,8 @@
 
             if (response.ok && result.success) {
                 const totalTabsAdded = qty * packSize;
-                const msg = '&#10003; Successfully added ' + qty + ' pack(s) (' + totalTabsAdded + ' total units) of \"' + name + '\" into inventory!';
+                const msg = '&#10003; Successfully added ' + qty + ' pack(s) (' + totalTabsAdded + ' total units) of "' + name + '" to ' + rackLocation + '!';
                 showInlineAlert(msg, 'success');
-                showAlert(msg, 'success', true);
 
                 // Update in-memory catalog
                 const qKey = name.toLowerCase();
@@ -599,6 +721,8 @@
                     catalogMap[qKey].quantity = (catalogMap[qKey].quantity || 0) + totalTabsAdded;
                     catalogMap[qKey].packSize = packSize;
                     catalogMap[qKey].sellingPrice = sellPrice;
+                    catalogMap[qKey].rackLocation = rackLocation;
+                    catalogMap[qKey].composition = composition;
                     if (buyPrice > 0) catalogMap[qKey].buyingPrice = buyPrice;
                 } else {
                     catalogMap[qKey] = {
@@ -607,16 +731,21 @@
                         quantity: totalTabsAdded,
                         packSize: packSize,
                         buyingPrice: buyPrice,
-                        sellingPrice: sellPrice
+                        sellingPrice: sellPrice,
+                        composition: composition,
+                        manufacturer: manufacturer,
+                        rackLocation: rackLocation,
+                        batchNumber: batchNumber,
+                        expiryDate: expiryDate
                     };
                 }
 
                 // Clear input fields for next entry
                 medNameInput.value = '';
-                categoryInput.value = '';
                 qtyReceivedInput.value = '';
                 sellingPriceInput.value = '';
                 if (buyingPriceInput) buyingPriceInput.value = '';
+                batchInput.value = '';
                 existingPanel.style.display = 'none';
                 currentSelectedMed = null;
                 recalculateItemPreview();
@@ -625,20 +754,27 @@
                 showInlineAlert(result.message || 'Error occurred while saving stock.', 'danger');
             }
         } catch (err) {
-            console.error(err);
             showInlineAlert('Network or server error: ' + err.message, 'danger');
         } finally {
             btnDirectSave.disabled = false;
-            btnDirectSave.innerHTML = '&#10003; Save Stock to Inventory Now';
+            btnDirectSave.innerHTML = '&#9889; Quick Save Single Stock';
         }
     }
 
-    // Add item to multi-medicine batch staging table
+    // ADD ITEM TO MULTI-ITEM STAGING REVIEW DESK
     function addItemToStaging() {
         const name = medNameInput.value.trim();
         const category = categoryInput.value.trim() || 'General';
         const qty = parseInt(qtyReceivedInput.value) || 0;
         const packSize = parseInt(packSizeInput ? packSizeInput.value : 10) || 10;
+        const composition = compositionInput.value.trim();
+        const manufacturer = manufacturerInput.value.trim();
+        const rackLocation = rackLocationInput.value.trim() || 'Rack A-1';
+        const batchNumber = batchInput.value.trim();
+        const expiryDate = expiryInput.value.trim();
+        const drugSchedule = drugScheduleSelect.value;
+        const gstRate = parseFloat(gstRateSelect.value) || 12.0;
+
         let buyPrice = buyingPriceInput ? (parseFloat(buyingPriceInput.value) || 0) : 0;
         if (!isOwnerUser && currentSelectedMed && currentSelectedMed.buyingPrice != null) {
             buyPrice = currentSelectedMed.buyingPrice;
@@ -658,64 +794,57 @@
         if (qty <= 0) {
             qtyReceivedInput.style.borderColor = 'var(--neon-crimson)';
             qtyReceivedInput.focus();
-            showInlineAlert('Please enter a quantity greater than zero.', 'danger');
+            showInlineAlert('Please enter valid quantity received (> 0).', 'danger');
             return;
         }
 
         if (sellPrice <= 0) {
             sellingPriceInput.style.borderColor = 'var(--neon-crimson)';
             sellingPriceInput.focus();
-            showInlineAlert('Please enter the retail selling price (MRP).', 'danger');
+            showInlineAlert('Please enter the selling price (MRP).', 'danger');
             return;
         }
 
-        const existingIdx = stagedItems.findIndex(i => i.name.toLowerCase() === name.toLowerCase());
-        if (existingIdx !== -1) {
-            stagedItems[existingIdx].quantity += qty;
-            stagedItems[existingIdx].packSize = packSize;
-            stagedItems[existingIdx].buyingPrice = buyPrice;
-            stagedItems[existingIdx].sellingPrice = sellPrice;
-            stagedItems[existingIdx].category = category;
-        } else {
-            stagedItems.push({
-                name: name,
-                category: category,
-                quantity: qty,
-                packSize: packSize,
-                buyingPrice: buyPrice,
-                sellingPrice: sellPrice
-            });
-        }
+        // Add to staged list
+        stagedItems.push({
+            name: name,
+            category: category,
+            quantity: qty,
+            packSize: packSize,
+            buyingPrice: buyPrice,
+            sellingPrice: sellPrice,
+            composition: composition,
+            manufacturer: manufacturer,
+            rackLocation: rackLocation,
+            batchNumber: batchNumber,
+            expiryDate: expiryDate,
+            drugSchedule: drugSchedule,
+            gstRate: gstRate
+        });
 
-        renderStagingTable();
-
-        // Reset inputs
+        // Reset medicine input fields
         medNameInput.value = '';
-        categoryInput.value = '';
         qtyReceivedInput.value = '';
-        if (buyingPriceInput) buyingPriceInput.value = '';
         sellingPriceInput.value = '';
+        if (buyingPriceInput) buyingPriceInput.value = '';
+        batchInput.value = '';
         existingPanel.style.display = 'none';
         currentSelectedMed = null;
         recalculateItemPreview();
 
-        showInlineAlert('Added \"' + name + '\" (' + qty + ' packs) to batch review table.', 'success');
+        renderStagingTable();
+        showInlineAlert('&#10003; Added "' + name + '" to purchase bill table.', 'success');
         medNameInput.focus();
     }
 
     function removeItemFromStaging(index) {
-        if (index >= 0 && index < stagedItems.length) {
-            const removed = stagedItems.splice(index, 1)[0];
-            renderStagingTable();
-            showInlineAlert('Removed \"' + removed.name + '\" from batch.', 'info');
-        }
+        stagedItems.splice(index, 1);
+        renderStagingTable();
     }
 
     function clearStagingBatch() {
-        if (confirm('Clear all staged medicines from this delivery batch?')) {
-            stagedItems = [];
-            renderStagingTable();
-        }
+        stagedItems = [];
+        renderStagingTable();
     }
 
     function renderStagingTable() {
@@ -724,8 +853,7 @@
         if (stagedItems.length === 0) {
             emptyStagingState.style.display = 'block';
             batchSummaryCard.style.display = 'none';
-            stagedCountBadge.textContent = '0 ITEMS STAGED';
-            stagedCountBadge.className = 'badge';
+            stagedCountBadge.textContent = '0 MEDICINES';
             btnConfirmBatch.disabled = true;
             btnClearBatch.disabled = true;
             return;
@@ -733,84 +861,69 @@
 
         emptyStagingState.style.display = 'none';
         batchSummaryCard.style.display = 'block';
-        stagedCountBadge.textContent = stagedItems.length + ' MEDICINE(S) STAGED';
-        stagedCountBadge.className = 'badge badge-in-stock';
+        stagedCountBadge.textContent = stagedItems.length + ' MEDICINE' + (stagedItems.length > 1 ? 'S' : '');
         btnConfirmBatch.disabled = false;
         btnClearBatch.disabled = false;
 
         let totalUnits = 0;
-        let totalCost = 0.0;
-        let totalRetail = 0.0;
+        let totalCost = 0;
+        let totalRetail = 0;
 
-        stagedItems.forEach((item, index) => {
-            const subtotalCost = item.quantity * item.buyingPrice;
-            const subtotalRetail = item.quantity * item.sellingPrice;
+        stagedItems.forEach((item, idx) => {
+            const lineCost = item.quantity * item.buyingPrice;
+            const lineRetail = item.quantity * item.sellingPrice;
+            const totalTabs = item.quantity * item.packSize;
 
-            totalUnits += item.quantity;
-            totalCost += subtotalCost;
-            totalRetail += subtotalRetail;
+            totalUnits += totalTabs;
+            totalCost += lineCost;
+            totalRetail += lineRetail;
 
             const tr = document.createElement('tr');
-            const totalTabs = item.quantity * (item.packSize || 10);
-            const qtyDisplay = (item.packSize && item.packSize > 1)
-                ? (item.quantity + ' strips (' + totalTabs + ' tabs)')
-                : (item.quantity + ' units');
-
-            let innerHtml = `
-                <td class="mono-cell" style="color: var(--text-muted);">${index + 1}</td>
-                <td><strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong></td>
-                <td><span class="badge-tag">${escapeHtml(item.category)}</span></td>
-                <td style="text-align: right;" class="mono-cell highlight">${qtyDisplay}</td>`;
-
-            if (isOwnerUser) {
-                innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.buyingPrice.toFixed(2)}</td>`;
-            }
-
-            innerHtml += `<td style="text-align: right;" class="mono-cell">&#8377;${item.sellingPrice.toFixed(2)}</td>`;
-
-            if (isOwnerUser) {
-                innerHtml += `<td style="text-align: right;" class="mono-cell" style="color: var(--neon-cyan);">&#8377;${subtotalCost.toFixed(2)}</td>`;
-            }
-
-            innerHtml += `
+            tr.innerHTML = `
+                <td style="color: var(--text-dim);">${idx + 1}</td>
+                <td>
+                    <strong style="color: var(--text-bright);">${escapeHtml(item.name)}</strong>
+                    <div style="font-size: 0.74rem; color: var(--text-muted);">${escapeHtml(item.composition || item.category || '')}</div>
+                </td>
+                <td>
+                    <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--neon-cyan);">${escapeHtml(item.rackLocation)}</span>
+                    <span style="font-size: 0.74rem; color: var(--text-muted); margin-left: 4px;">(${escapeHtml(item.batchNumber || 'N/A')})</span>
+                </td>
+                <td style="text-align: right; font-family: var(--font-mono); font-weight: 600;">
+                    ${item.quantity} pk <span style="font-size: 0.72rem; color: var(--text-muted);">(${totalTabs}u)</span>
+                </td>
+                ${isOwnerUser ? `<td style="text-align: right; font-family: var(--font-mono);">\u20b9${item.buyingPrice.toFixed(2)}</td>` : ''}
+                <td style="text-align: right; font-family: var(--font-mono); color: var(--neon-green); font-weight: 600;">
+                    \u20b9${item.sellingPrice.toFixed(2)}
+                </td>
+                ${isOwnerUser ? `<td style="text-align: right; font-family: var(--font-mono); font-weight: 700; color: var(--neon-cyan);">\u20b9${lineCost.toFixed(2)}</td>` : ''}
                 <td style="text-align: center;">
-                    <button type="button" class="btn-remove-item" onclick="removeItemFromStaging(${index})" title="Remove item">&#10005;</button>
+                    <button type="button" class="btn-remove-item" onclick="removeItemFromStaging(${idx})">&#10005;</button>
                 </td>
             `;
-            tr.innerHTML = innerHtml;
             stagingTableBody.appendChild(tr);
         });
 
-        const totalProfit = totalRetail - totalCost;
-
+        // Summary calculations
         summaryDistinctMeds.textContent = stagedItems.length;
-        summaryTotalUnits.textContent = totalUnits + ' packs';
+        summaryTotalUnits.textContent = totalUnits + ' units';
         if (summaryTotalCost) summaryTotalCost.textContent = '\u20b9' + totalCost.toFixed(2);
         summaryTotalRetail.textContent = '\u20b9' + totalRetail.toFixed(2);
-        if (summaryTotalProfit) summaryTotalProfit.textContent = '\u20b9' + totalProfit.toFixed(2);
+        if (summaryTotalProfit) {
+            const profit = totalRetail - totalCost;
+            summaryTotalProfit.textContent = '\u20b9' + profit.toFixed(2);
+        }
     }
 
-    // Submit multi-item batch
     async function commitBatchStock() {
-        // If batch table is empty but inputs have a medicine, auto-add it first!
-        if (stagedItems.length === 0) {
-            const curName = medNameInput.value.trim();
-            const curQty = parseInt(qtyReceivedInput.value) || 0;
-            if (curName && curQty > 0) {
-                addItemToStaging();
-            } else {
-                showInlineAlert('Please enter a medicine and quantity to add to stock.', 'danger');
-                medNameInput.focus();
-                return;
-            }
-        }
-
-        const providerName = providerNameInput.value.trim() || 'Direct Inward / Shelf Stock';
-        const providerPhone = providerPhoneInput.value.trim() || 'N/A';
-        const batchRef = batchInvoiceInput.value.trim() || ('BAT-' + Date.now());
+        if (stagedItems.length === 0) return;
 
         btnConfirmBatch.disabled = true;
-        btnConfirmBatch.innerHTML = '&#9203; Saving All Stocks...';
+        btnConfirmBatch.innerHTML = '&#9203; Saving Purchase Bill...';
+
+        const providerName = providerNameInput.value.trim() || 'Direct Shop Stock';
+        const providerPhone = providerPhoneInput.value.trim() || 'N/A';
+        const batchRef = batchInvoiceInput.value.trim() || ('PUR-' + Date.now());
 
         const payload = {
             providerName: providerName,
@@ -829,92 +942,44 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const count = stagedItems.length;
-                showAlert('&#10003; Successfully committed ' + count + ' medicine(s) into inventory!', 'success', true);
-                showInlineAlert('&#10003; Successfully saved all ' + count + ' items into inventory!', 'success');
-
-                stagedItems.forEach(item => {
-                    const qKey = item.name.toLowerCase();
-                    const addedTabs = item.quantity * (item.packSize || 10);
-                    if (catalogMap[qKey]) {
-                        catalogMap[qKey].quantity = (catalogMap[qKey].quantity || 0) + addedTabs;
-                    }
-                });
-
-                stagedItems = [];
-                renderStagingTable();
-                providerNameInput.value = '';
-                providerPhoneInput.value = '';
-                batchInvoiceInput.value = '';
-                updateProviderDisplay();
+                alert('Success! ' + result.message);
+                window.location.href = '/admin/dashboard';
             } else {
-                showAlert(result.message || 'Error occurred while saving stocks.', 'danger', true);
-                showInlineAlert(result.message || 'Error occurred while saving stocks.', 'danger');
+                alert('Error: ' + (result.message || 'Failed to commit purchase bill.'));
+                btnConfirmBatch.disabled = false;
+                btnConfirmBatch.innerHTML = '&#10003; Save Purchase Bill';
             }
         } catch (err) {
-            console.error(err);
-            showAlert('Network or server error: ' + err.message, 'danger', true);
-            showInlineAlert('Network or server error: ' + err.message, 'danger');
-        } finally {
-            btnConfirmBatch.disabled = stagedItems.length === 0;
-            btnConfirmBatch.innerHTML = '&#10003; Confirm &amp; Save All Staged Stocks';
+            alert('Network error: ' + err.message);
+            btnConfirmBatch.disabled = false;
+            btnConfirmBatch.innerHTML = '&#10003; Save Purchase Bill';
         }
     }
 
-    function showInlineAlert(message, type) {
-        const box = document.getElementById('inlineCardAlert');
+    function showInlineAlert(msg, type) {
+        const alertBox = document.getElementById('inlineCardAlert');
         const icon = document.getElementById('inlineCardAlertIcon');
-        const msg = document.getElementById('inlineCardAlertMsg');
+        const text = document.getElementById('inlineCardAlertMsg');
 
-        msg.innerHTML = message;
-        if (type === 'danger') {
-            box.className = 'alert alert-danger';
-            icon.innerHTML = '&#9888;';
-        } else if (type === 'info') {
-            box.className = 'alert';
-            box.style.background = 'rgba(0, 229, 255, 0.1)';
-            box.style.borderColor = 'rgba(0, 229, 255, 0.4)';
-            box.style.color = 'var(--neon-cyan)';
-            icon.innerHTML = '&#8505;';
-        } else {
-            box.className = 'alert alert-success';
-            icon.innerHTML = '&#10003;';
-        }
-        box.style.display = 'flex';
-    }
-
-    function showAlert(message, type, shouldScroll = false) {
-        const alertBox = document.getElementById('dynamicAlert');
-        const alertIcon = document.getElementById('dynamicAlertIcon');
-        const alertMsg = document.getElementById('dynamicAlertMsg');
-
-        alertMsg.innerHTML = message;
-        if (type === 'danger') {
-            alertBox.className = 'alert alert-danger';
-            alertIcon.innerHTML = '&#9888;';
-        } else if (type === 'info') {
-            alertBox.className = 'alert';
-            alertBox.style.background = 'rgba(0, 229, 255, 0.1)';
-            alertBox.style.borderColor = 'rgba(0, 229, 255, 0.4)';
-            alertBox.style.color = 'var(--neon-cyan)';
-            alertIcon.innerHTML = '&#8505;';
-        } else {
-            alertBox.className = 'alert alert-success';
-            alertIcon.innerHTML = '&#10003;';
-        }
-
+        alertBox.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-danger');
+        icon.innerHTML = (type === 'success' ? '&#10003;' : '&#9888;');
+        text.innerHTML = msg;
         alertBox.style.display = 'flex';
-        if (shouldScroll) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+
+        setTimeout(() => {
+            alertBox.style.display = 'none';
+        }, 5000);
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
     /*]]>*/
 </script>
-
 </body>
 </html>

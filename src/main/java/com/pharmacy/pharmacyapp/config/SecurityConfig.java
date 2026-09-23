@@ -22,7 +22,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public pages and static resources - open to everyone
                 .requestMatchers(
-                    "/", "/medicines", "/css/**", "/js/**", "/img/**",
+                    "/", "/medicines", "/api/medicines/**", "/css/**", "/js/**", "/img/**",
                     "/manifest.json", "/favicon.ico", "/login", "/error"
                 ).permitAll()
 

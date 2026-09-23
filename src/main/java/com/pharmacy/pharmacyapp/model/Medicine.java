@@ -14,7 +14,9 @@ import lombok.Setter;
 @Entity
 @Table(name = "medicine", indexes = {
     @Index(name = "idx_medicine_name", columnList = "name"),
-    @Index(name = "idx_medicine_category", columnList = "category")
+    @Index(name = "idx_medicine_category", columnList = "category"),
+    @Index(name = "idx_medicine_composition", columnList = "composition"),
+    @Index(name = "idx_medicine_rack", columnList = "rackLocation")
 })
 @Getter
 @Setter
@@ -28,6 +30,38 @@ public class Medicine {
     private String name;
 
     private String category;
+
+    // Active Generic Salt / Molecule Formulation (e.g., "Paracetamol 650mg", "Amoxicillin + Clavulanic Acid 625mg")
+    @Column(columnDefinition = "varchar(255) default ''")
+    private String composition = "";
+
+    // Manufacturer / Pharma Company (e.g., "Cipla", "Sun Pharma", "Abbott", "Mankind")
+    @Column(columnDefinition = "varchar(100) default ''")
+    private String manufacturer = "";
+
+    // Physical Store Location / Rack / Shelf (e.g., "Rack A-2", "Drawer 4", "Fridge / Cold-Chain")
+    @Column(columnDefinition = "varchar(50) default ''")
+    private String rackLocation = "Counter Shelf";
+
+    // Standard Indian Pharma GST HSN Code (Default "3004")
+    @Column(columnDefinition = "varchar(20) default '3004'")
+    private String hsnCode = "3004";
+
+    // Current active batch number
+    @Column(columnDefinition = "varchar(50) default ''")
+    private String batchNumber = "";
+
+    // Expiry Date (e.g., "12/27" or "2027-12")
+    @Column(columnDefinition = "varchar(20) default ''")
+    private String expiryDate = "";
+
+    // GST Tax percentage (0%, 5%, 12%, 18%)
+    @Column(columnDefinition = "double default 12.0")
+    private Double gstRate = 12.0;
+
+    // Regulatory Drug Schedule: "OTC", "Schedule H", "Schedule H1", "Narcotic / X"
+    @Column(columnDefinition = "varchar(30) default 'OTC'")
+    private String drugSchedule = "OTC";
 
     // What YOUR shop pays the supplier per pack/strip.
     private Double buyingPrice;
@@ -55,6 +89,26 @@ public class Medicine {
 
     public String getUnitType() {
         return (unitType != null && !unitType.isBlank()) ? unitType : "Strip";
+    }
+
+    public String getManufacturer() {
+        return (manufacturer != null && !manufacturer.isBlank()) ? manufacturer : "Standard Pharma";
+    }
+
+    public String getComposition() {
+        return (composition != null && !composition.isBlank()) ? composition : "";
+    }
+
+    public String getRackLocation() {
+        return (rackLocation != null && !rackLocation.isBlank()) ? rackLocation : "Counter Shelf";
+    }
+
+    public String getDrugSchedule() {
+        return (drugSchedule != null && !drugSchedule.isBlank()) ? drugSchedule : "OTC";
+    }
+
+    public Double getGstRate() {
+        return (gstRate != null && gstRate >= 0) ? gstRate : 12.0;
     }
 
     // Selling price per single loose unit (e.g., 1 loose tablet)

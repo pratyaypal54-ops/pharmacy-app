@@ -21,15 +21,15 @@
     <div style="text-align: center; margin-bottom: 24px;">
         <div class="brand-logo" style="width: 48px; height: 48px; font-size: 1.5rem; margin: 0 auto 12px auto;">&#10010;</div>
         <div class="brand-title" style="font-size: 1.4rem;">Pharm<span>Care</span></div>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">Retail Pharmacy Management & POS System</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">Shop Management & Billing Desk</p>
     </div>
 
     <!-- ALERTS -->
     <div th:if="${param.error}" class="alert alert-danger" style="margin-bottom: 16px;">
-        <span>&#9888;</span> <span>Authentication failed: Invalid credentials.</span>
+        <span>&#9888;</span> <span>Wrong username or password. Please try again.</span>
     </div>
     <div th:if="${param.logout}" class="alert alert-success" style="margin-bottom: 16px;">
-        <span>&#10003;</span> <span>Session terminated. You have been logged out.</span>
+        <span>&#10003;</span> <span>You have been logged out successfully.</span>
     </div>
 
     <!-- LOGIN CARD -->
@@ -70,12 +70,12 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" style="margin-top: 12px;">
-                Authenticate &rarr;
+                Log In &rarr;
             </button>
         </form>
 
         <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
-            <a th:href="@{/medicines}" class="btn btn-outline btn-sm">&larr; Public Catalog</a>
+            <a th:href="@{/medicines}" class="btn btn-outline btn-sm">&larr; Medicine List</a>
             <span class="badge badge-category" style="font-size: 0.7rem;">Default: admin / admin123</span>
         </div>
     </div>

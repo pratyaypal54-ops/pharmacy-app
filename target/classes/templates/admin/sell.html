@@ -10,118 +10,262 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Sale / Purchase Desk & Billing Counter - PharmCare</title>
+    <title>Retail Sale Entry (Cash Memo) - PharmCare POS</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        .pos-grid-table th {
-            padding: 10px 8px;
-            font-size: 0.74rem;
-            white-space: nowrap;
-        }
-        .pos-grid-table td {
-            padding: 6px 6px;
-            vertical-align: middle;
-        }
-        .pos-grid-table input, .pos-grid-table select {
-            font-size: 0.84rem;
-            padding: 6px 8px;
-        }
-        .pos-header-panel {
+        /* =========================================================
+           VALUESOFT DESK STYLING (MATCHING SHOP SOFTWARE SCREENSHOTS)
+           ========================================================= */
+
+        /* Operations Ribbon matching Image 1 */
+        .modules-ribbon {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
             background: var(--bg-surface);
             border: 1px solid var(--border-dim);
-            border-radius: var(--radius-md);
-            padding: 18px 20px;
-            margin-bottom: 16px;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 14px;
+            scrollbar-width: thin;
         }
-        .pos-toolbar-strip {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-dim);
+        .modules-ribbon::-webkit-scrollbar {
+            height: 4px;
         }
-        .pos-mode-btn {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-dim);
-            color: var(--text-muted);
-            padding: 7px 16px;
-            border-radius: 6px;
+        .modules-ribbon::-webkit-scrollbar-thumb {
+            background: var(--border-bright);
+            border-radius: 2px;
+        }
+        .module-tab-btn {
+            white-space: nowrap;
+            padding: 7px 14px;
             font-size: 0.82rem;
-            font-weight: 600;
+            font-weight: 700;
+            border-radius: 6px;
+            border: 1px solid var(--border-dim);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
+            transition: all 0.15s ease-in-out;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            text-decoration: none;
         }
-        .pos-mode-btn:hover {
+        .module-tab-btn:hover {
             color: var(--text-bright);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--border-bright);
         }
-        .pos-mode-btn.active {
-            background: var(--neon-green);
-            color: #041009;
-            border-color: var(--neon-green);
-            box-shadow: 0 0 12px var(--neon-green-glow);
+        .module-tab-btn.active {
+            background: rgba(0, 255, 136, 0.12);
+            color: var(--neon-green);
+            border-color: rgba(0, 255, 136, 0.4);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
         }
-        .pos-mode-btn.mode-purchase.active {
-            background: var(--neon-cyan);
-            color: #041009;
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 12px var(--neon-cyan-glow);
+        .module-tab-btn.cyan-tab:hover, .module-tab-btn.cyan-tab.active {
+            color: var(--neon-cyan);
+            border-color: rgba(0, 229, 255, 0.4);
+            background: rgba(0, 229, 255, 0.12);
         }
-        .pos-mode-btn.mode-return.active {
-            background: var(--neon-amber);
-            color: #041009;
-            border-color: var(--neon-amber);
-            box-shadow: 0 0 12px var(--neon-amber-glow);
+        .module-tab-btn.amber-tab:hover, .module-tab-btn.amber-tab.active {
+            color: var(--neon-amber);
+            border-color: rgba(255, 184, 0, 0.4);
+            background: rgba(255, 184, 0, 0.12);
         }
-        .pos-footer-kpis {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 10px;
+
+        /* ValueSoft Cash Memo Card */
+        .bill-entry-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-dim);
-            border-radius: var(--radius-md);
-            padding: 16px 20px;
-            margin-top: 14px;
-        }
-        .pos-kpi-block {
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            gap: 3px;
         }
-        .pos-kpi-label {
-            font-size: 0.7rem;
+
+        /* Invoice Header Bar matching Image 2 */
+        .bill-header-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            background: var(--bg-surface-elevated);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-dim);
+            align-items: flex-end;
+        }
+        .bill-header-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .bill-header-label {
+            font-size: 0.72rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        .pos-kpi-val {
+        .bill-header-input {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-dim);
+            color: var(--text-bright);
+            padding: 7px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.15s;
+        }
+        .bill-header-input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 6px rgba(0, 229, 255, 0.25);
+        }
+        .bill-header-input.readonly {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Table Spreadsheet Entry Grid matching Image 2 */
+        .table-entry-wrapper {
+            overflow-x: auto;
+            max-height: 440px;
+            scrollbar-width: thin;
+        }
+        .retail-grid-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .retail-grid-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #0d121c;
+            color: var(--neon-cyan);
+            font-weight: 700;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-dim);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            letter-spacing: 0.02em;
+        }
+        .retail-grid-table tbody td {
+            padding: 4px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            vertical-align: middle;
+        }
+        .retail-grid-table tbody tr:hover {
+            background: rgba(0, 229, 255, 0.03);
+        }
+        .retail-grid-table tbody tr.row-focused {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        /* Table inputs mimicking desktop POS cells */
+        .grid-input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            color: var(--text-bright);
+            padding: 5px 8px;
+            font-size: 0.82rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.12s;
+        }
+        .grid-input:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.25);
+        }
+        .grid-input:focus {
+            background: var(--bg-base);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 6px rgba(0, 255, 136, 0.25);
+        }
+        .grid-input.readonly {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        /* Active item info preview bar */
+        .active-item-dock {
+            background: var(--bg-surface-elevated);
+            border-top: 1px solid var(--border-dim);
+            padding: 10px 18px;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            color: var(--text-muted);
+        }
+        .active-item-dock .item-prop {
+            color: var(--text-bright);
+            font-weight: 600;
+        }
+
+        /* Financial Footer Summary matching Image 2 */
+        .bill-footer-stats {
+            background: var(--bg-surface-elevated);
+            border-top: 2px solid var(--border-dim);
+            padding: 16px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 14px;
+            align-items: center;
+        }
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .stat-box-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+        }
+        .stat-box-val {
             font-family: var(--font-mono);
             font-size: 1.15rem;
             font-weight: 700;
             color: var(--text-bright);
         }
-        .keyboard-hint {
-            font-size: 0.72rem;
-            color: var(--neon-cyan);
-            font-family: var(--font-mono);
-            padding: 2px 6px;
-            background: rgba(0, 229, 255, 0.1);
+
+        /* Action Buttons */
+        .bottom-action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .shortcut-badge {
+            font-size: 0.7rem;
+            padding: 2px 5px;
             border-radius: 3px;
-            border: 1px solid rgba(0, 229, 255, 0.25);
+            background: rgba(0, 0, 0, 0.35);
+            font-family: var(--font-mono);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            margin-left: 6px;
         }
     </style>
 </head>
 <body>
 
-<!-- CYBER NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
     <div class="brand-section">
         <div class="brand-logo">&#10010;</div>
@@ -130,8 +274,8 @@
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
         <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link active">Sell / Billing Desk</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
+        <a th:href="@{/admin/sell}" class="nav-link active">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase / Stock</a>
         <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
         <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
         <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
@@ -150,732 +294,923 @@
 </nav>
 
 <div class="main-container">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">&#128179; Sale / Purchase Order &amp; Billing Desk</h1>
-            <p class="page-subtitle">Unified spreadsheet-style table entry for fast pharmacy billing, purchase, and returns</p>
+    <!-- MODULES RIBBON (IMAGE 1: EXACT SHOP OPERATIONS HUB) -->
+    <div class="modules-ribbon">
+        <button type="button" class="module-tab-btn active" id="tabSale" onclick="switchOperationMode('SALE')">
+            &#128179; Sale - Retail
+        </button>
+        <a th:href="@{/admin/add-stock}" class="module-tab-btn cyan-tab" id="tabPurchase">
+            &#128230; Purchase
+        </a>
+        <button type="button" class="module-tab-btn amber-tab" id="tabSaleReturn" onclick="switchOperationMode('SALE_RETURN')">
+            &#8635; Sale Return
+        </button>
+        <button type="button" class="module-tab-btn amber-tab" id="tabPurchaseReturn" onclick="switchOperationMode('PURCHASE_RETURN')">
+            &#8634; Purchase Return
+        </button>
+        <button type="button" class="module-tab-btn" id="tabBrkCust" onclick="switchOperationMode('BRK_CUST')">
+            &#9888; Brk./Exp. From Customer
+        </button>
+        <button type="button" class="module-tab-btn" id="tabBrkComp" onclick="switchOperationMode('BRK_COMP')">
+            &#128680; Brk. To Company
+        </button>
+        <button type="button" class="module-tab-btn" id="tabPaySupplier" onclick="switchOperationMode('PAY_SUPPLIER')">
+            &#128179; DD/CHQ/TRN To supplier
+        </button>
+        <button type="button" class="module-tab-btn" id="tabPayParty" onclick="switchOperationMode('PAY_PARTY')">
+            &#128181; DD/CHQ/TRN From Party
+        </button>
+        <button type="button" class="module-tab-btn" id="tabVoucher" onclick="switchOperationMode('VOUCHER')">
+            &#128221; Voucher Entry
+        </button>
+    </div>
+
+    <!-- DYNAMIC STATUS NOTIFICATION -->
+    <div id="statusAlert" style="display: none; margin-bottom: 12px;" class="alert">
+        <span id="statusAlertIcon">&#10003;</span>
+        <span id="statusAlertMsg"></span>
+    </div>
+
+    <!-- RETAIL SALE ENTRY CARD (MATCHING IMAGE 2) -->
+    <div class="bill-entry-card">
+        <!-- TOP TITLE BAR -->
+        <div style="background: rgba(0, 0, 0, 0.35); padding: 10px 16px; border-bottom: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: var(--neon-green); font-size: 1.1rem; font-weight: 700;">&#128203;</span>
+                <span id="entrySheetTitle" style="font-weight: 700; color: var(--text-bright); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Retail Sale Entry (Cash Memo)</span>
+            </div>
+            <div style="display: flex; gap: 8px; font-size: 0.78rem; color: var(--text-muted);">
+                <span><kbd class="shortcut-badge">F2</kbd> Product Search</span>
+                <span><kbd class="shortcut-badge">Ins</kbd> Add Row</span>
+                <span><kbd class="shortcut-badge">Ctrl+S</kbd> Save Bill</span>
+            </div>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <button type="button" class="btn btn-outline btn-sm" onclick="startNewOrder()">
-                &#10010; New Order <span class="keyboard-hint">F4</span>
-            </button>
-            <a th:href="@{/admin/reports}" class="btn btn-cyber-cyan btn-sm">&#128220; View Sales History</a>
-            <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
-        </div>
-    </div>
 
-    <!-- NOTIFICATION MESSAGES -->
-    <div th:if="${success}" class="alert alert-success">
-        <span>&#10003;</span> <span th:text="${success}">Sale completed successfully.</span>
-    </div>
-    <div th:if="${error}" class="alert alert-danger">
-        <span>&#9888;</span> <span th:text="${error}">Error processing sale.</span>
-    </div>
-
-    <div id="dynamicAlert" style="display: none;" class="alert">
-        <span id="dynamicAlertIcon">&#10003;</span>
-        <span id="dynamicAlertMsg"></span>
-    </div>
-
-    <!-- MAIN BILLING DESK PANEL -->
-    <div class="pos-header-panel">
-        <!-- TOP TOOLBAR: OPERATION MODE & PAYMENT CHANNELS -->
-        <div class="pos-toolbar-strip">
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">MODE:</span>
-                <button type="button" class="pos-mode-btn active" id="btnModeSale" onclick="setPosMode('SALE')">&#128179; Sale</button>
-                <a th:href="@{/admin/add-stock}" class="pos-mode-btn mode-purchase" id="btnModePurchase">&#128230; Purchase</a>
-                <button type="button" class="pos-mode-btn mode-return" id="btnModeSaleReturn" onclick="setPosMode('SALE_RETURN')">&#8635; Sale Return</button>
-                <button type="button" class="pos-mode-btn mode-return" id="btnModePurReturn" onclick="setPosMode('PUR_RETURN')">&#8634; Purchase Return</button>
-                <button type="button" class="pos-mode-btn" id="btnModeBreakage" onclick="setPosMode('BREAKAGE')">&#9888; Breakage/Expiry</button>
+        <!-- HEADER SECTION (IMAGE 2: Bill No, Date, Customer Name, Add.#1, Add.#2, Mode) -->
+        <div class="bill-header-grid">
+            <div class="bill-header-field" style="max-width: 120px;">
+                <label class="bill-header-label" for="billNoInput">Bill No.</label>
+                <input type="text" id="billNoInput" class="bill-header-input mono-cell" value="GT/134" style="color: var(--neon-cyan); font-weight: 700;">
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">PAY VIA:</span>
-                <button type="button" class="pos-mode-btn active" id="payModeCash" onclick="setPaymentMode('Cash')">&#128181; Cash</button>
-                <button type="button" class="pos-mode-btn" id="payModeBank" onclick="setPaymentMode('Bank/UPI')">&#127974; Bank / UPI</button>
-                <button type="button" class="pos-mode-btn" id="payModeCredit" onclick="setPaymentMode('Credit')">&#128221; Credit</button>
-            </div>
-        </div>
-
-        <!-- HEADER FIELDS: INVOICE, DATE, CUSTOMER, PHONE, DOCTOR, STATUS -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="posInvNo">
-                    <span>Inv. No.</span>
-                    <span class="helper-tag">Auto</span>
-                </label>
-                <input type="text" id="posInvNo" class="cyber-input" readonly style="background: rgba(255,255,255,0.03); color: var(--neon-cyan); font-family: var(--font-mono); font-weight: 600;">
+            <div class="bill-header-field" style="max-width: 170px;">
+                <label class="bill-header-label" for="billDateInput">Date</label>
+                <input type="text" id="billDateInput" class="bill-header-input" readonly>
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="posDate">
-                    <span>Date</span>
-                    <span class="helper-tag">Today</span>
-                </label>
-                <input type="date" id="posDate" class="cyber-input" style="font-family: var(--font-mono);">
+            <div class="bill-header-field" style="flex: 2; min-width: 180px;">
+                <label class="bill-header-label" id="labelCustName" for="custNameInput">Name (Customer / Patient) *</label>
+                <input type="text" id="custNameInput" class="bill-header-input" placeholder="e.g. Walk-in Customer" value="Walk-in Customer" autocomplete="off">
             </div>
 
-            <div class="form-group" style="margin-bottom: 0; grid-column: span 2;">
-                <label class="form-label" for="posCustomerName">
-                    <span id="lblCustomerName">Customer / Supplier Name *</span>
-                    <span class="helper-tag">Patient/Party</span>
-                </label>
-                <input type="text" id="posCustomerName" class="cyber-input" placeholder="e.g. Ramesh Kumar" required autocomplete="off">
+            <div class="bill-header-field" style="flex: 1.5; min-width: 140px;">
+                <label class="bill-header-label" for="custAdd1Input">Add. #1 (Phone / Address)</label>
+                <input type="text" id="custAdd1Input" class="bill-header-input" placeholder="Phone / Location" autocomplete="off">
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="posCustomerPhone">
-                    <span>Phone No.</span>
-                    <span class="helper-tag">Contact</span>
-                </label>
-                <input type="tel" id="posCustomerPhone" class="cyber-input" placeholder="e.g. 9845012345" autocomplete="off">
+            <div class="bill-header-field" style="flex: 1.5; min-width: 140px;">
+                <label class="bill-header-label" for="custAdd2Input">Add. #2 (Doctor / Prescriber)</label>
+                <input type="text" id="custAdd2Input" class="bill-header-input" placeholder="Dr. Name / Reg No." autocomplete="off">
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="posDoctorName">
-                    <span>Doctor Name</span>
-                    <span class="helper-tag">Prescriber</span>
-                </label>
-                <input type="text" id="posDoctorName" class="cyber-input" placeholder="e.g. Dr. S. K. Gupta" autocomplete="off">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 0;">
-                <label class="form-label" for="posPaymentStatus">
-                    <span>Payment Status</span>
-                    <span class="helper-tag">Status</span>
-                </label>
-                <select id="posPaymentStatus" class="cyber-select">
-                    <option value="PAID">PAID</option>
-                    <option value="DUE">DUE / PENDING</option>
-                    <option value="PARTIAL">PARTIAL</option>
+            <div class="bill-header-field" style="max-width: 130px;">
+                <label class="bill-header-label" for="payModeSelect">Payment Mode</label>
+                <select id="payModeSelect" class="bill-header-input" style="padding: 6px 8px;">
+                    <option value="Cash" selected>Cash</option>
+                    <option value="Bank/UPI">Bank / UPI</option>
+                    <option value="Credit">Credit (Khata)</option>
+                    <option value="Card">Debit / Credit Card</option>
                 </select>
             </div>
-        </div>
-    </div>
 
-    <!-- SPREADSHEET TABLE FORM CONTAINER -->
-    <div class="table-container" style="margin-bottom: 16px;">
-        <div class="table-toolbar" style="padding: 10px 16px; background: var(--bg-surface-elevated);">
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <span style="font-weight: 700; color: var(--text-bright); font-size: 0.88rem;">&#128138; Prescribed Medicine Items (Table Form)</span>
-                <span class="keyboard-hint">F2 / Type in row to search item</span>
-                <span class="badge badge-in-stock" id="rowCounterBadge">1 Row</span>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="addNewTableRow()">+ Add Row (Ins)</button>
-                <button type="button" class="btn btn-outline btn-sm" onclick="clearAllRows()">Clear Rows</button>
+            <div style="display: flex; gap: 6px; align-items: center; justify-content: flex-end;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="addBillingRow()" style="height: 34px;">
+                    + Add Row <span class="shortcut-badge">Ins</span>
+                </button>
             </div>
         </div>
 
-        <table class="cyber-table pos-grid-table" id="posItemsTable">
-            <thead>
-                <tr>
-                    <th style="width: 30px; text-align: center;">#</th>
-                    <th style="min-width: 220px;">Product Name (Medicine) *</th>
-                    <th style="width: 90px;">Batch</th>
-                    <th style="width: 85px;">Exp.</th>
-                    <th style="width: 75px; text-align: right;">Qty *</th>
-                    <th style="width: 60px; text-align: right;">Free</th>
-                    <th style="width: 90px; text-align: right;">MRP (&#8377;)</th>
-                    <th style="width: 95px; text-align: right;">Rate (&#8377;)</th>
-                    <th style="width: 70px; text-align: right;">Dis%</th>
-                    <th style="width: 85px; text-align: right;">Dis.Amt</th>
-                    <th style="width: 75px; text-align: right;">GST%</th>
-                    <th style="width: 85px; text-align: right;">GST Amt</th>
-                    <th style="width: 105px; text-align: right;">Amount (&#8377;)</th>
-                    <th style="width: 45px; text-align: center;">Action</th>
-                </tr>
-            </thead>
-            <tbody id="posItemsBody">
-                <!-- Dynamically populated rows -->
-            </tbody>
-        </table>
+        <!-- TABLE GRID FOR PRODUCT MEDICINES (EXACT COLUMNS FROM IMAGE 2) -->
+        <div class="table-entry-wrapper">
+            <table class="retail-grid-table" id="retailTable">
+                <thead>
+                    <tr>
+                        <th style="width: 32px; text-align: center;">#</th>
+                        <th style="min-width: 240px;">Particular / Name Of Product (F2) *</th>
+                        <th style="width: 75px; text-align: center;">Packsize</th>
+                        <th style="width: 90px;">Batch</th>
+                        <th style="width: 75px; text-align: center;">Expiry</th>
+                        <th style="width: 70px; text-align: right;">Qnt.</th>
+                        <th style="width: 65px; text-align: right;">Loose</th>
+                        <th style="width: 85px; text-align: right;">Rate (&#8377;)</th>
+                        <th style="width: 85px; text-align: right;">M.R.P.</th>
+                        <th style="width: 65px; text-align: right;">Disc. %</th>
+                        <th style="width: 65px; text-align: right;">CGST %</th>
+                        <th style="width: 65px; text-align: right;">SGST %</th>
+                        <th style="width: 110px; text-align: right;">Amount (&#8377;)</th>
+                        <th style="width: 40px; text-align: center;">Del</th>
+                    </tr>
+                </thead>
+                <tbody id="retailTableBody">
+                    <!-- Populated dynamically via JavaScript -->
+                </tbody>
+            </table>
+        </div>
 
-        <!-- DATALIST FOR PRODUCT LOOKUP -->
-        <datalist id="medDatalist">
-            <option th:each="m : ${medicines}"
-                    th:value="${m.name}"
-                    th:data-price="${m.sellingPrice}"
-                    th:data-stock="${m.quantity}"
-                    th:data-category="${m.category}"
-                    th:data-packsize="${m.getPackSize()}"
-                    th:data-perunitprice="${m.getPerUnitPrice()}"
-                    th:data-buying="${m.buyingPrice}">
-            </option>
-        </datalist>
+        <!-- ACTIVE ITEM DETAILS DOCK (SHOWS COMPOSITION, STOCK, RACK LOCATION & CONVERSION) -->
+        <div class="active-item-dock" id="activeItemDock">
+            <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <span>Molecule / Salt: </span>
+                    <span class="item-prop" id="dockComposition">Select or type medicine above...</span>
+                </div>
+                <div>
+                    <span>&#128205; Rack / Shelf: </span>
+                    <span class="item-prop" id="dockRackLocation" style="color: var(--neon-cyan); font-weight: 700;">--</span>
+                </div>
+                <div>
+                    <span>Shelf Stock: </span>
+                    <span class="item-prop" id="dockStock" style="color: var(--neon-green);">--</span>
+                </div>
+                <div>
+                    <span>Packaging: </span>
+                    <span class="item-prop" id="dockPack">--</span>
+                </div>
+                <div>
+                    <span>Loose Tab Rate: </span>
+                    <span class="item-prop" id="dockLooseRate" style="color: var(--neon-cyan);">&#8377;0.00</span>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="btnDockFindSubstitute" class="btn btn-cyber-cyan btn-sm" style="display: none; padding: 4px 10px; font-size: 0.78rem;" onclick="openSubstituteModalFromDock()">
+                    &#128269; Find Substitutes (Same Molecule)
+                </button>
+            </div>
+        </div>
+
+        <!-- FINANCIAL FOOTER SUMMARY (IMAGE 2 BOTTOM STATS) -->
+        <div class="bill-footer-stats">
+            <div class="stat-box">
+                <span class="stat-box-label">No. of Items</span>
+                <span class="stat-box-val" id="statNoOfItems">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">Quantity</span>
+                <span class="stat-box-val" id="statTotalQuantity">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">Product Amt</span>
+                <span class="stat-box-val" id="statPrdAmt">&#8377;0.00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">Disc.</span>
+                <span class="stat-box-val" id="statDiscount" style="color: var(--neon-amber);">&#8377;0.00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">CGST Amt</span>
+                <span class="stat-box-val" id="statCGST">&#8377;0.00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">SGST Amt</span>
+                <span class="stat-box-val" id="statSGST">&#8377;0.00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-box-label">R/O</span>
+                <span class="stat-box-val" id="statRoundOff">&#8377;0.00</span>
+            </div>
+            <div class="stat-box" style="grid-column: span 2; border-left: 2px solid var(--neon-green); padding-left: 12px;">
+                <span class="stat-box-label" style="color: var(--neon-green);">Net Amount</span>
+                <span class="stat-box-val" id="statNetAmount" style="color: var(--neon-green); font-size: 1.55rem;">&#8377;0.00</span>
+            </div>
+        </div>
     </div>
 
-    <!-- BOTTOM FINANCIAL SUMMARY KPIS & CALCULATION STRIP -->
-    <div class="pos-footer-kpis">
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label">TOTAL ITEMS</span>
-            <span class="pos-kpi-val" id="kpiTotalItems">0</span>
+    <!-- ACTION BUTTONS: PRINT, RESET, SAVE (CTRL+S) -->
+    <div class="bottom-action-bar">
+        <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-outline" onclick="window.print()">
+                &#128424; Print Bill Preview
+            </button>
+            <button type="button" class="btn btn-outline" onclick="clearMemoRows()">
+                &#10005; Clear Rows
+            </button>
         </div>
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label">TOTAL QTY</span>
-            <span class="pos-kpi-val" id="kpiTotalQty">0</span>
-        </div>
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label">SUBTOTAL</span>
-            <span class="pos-kpi-val" id="kpiSubtotal">&#8377;0.00</span>
-        </div>
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label" style="color: var(--neon-amber);">DISCOUNT</span>
-            <span class="pos-kpi-val" id="kpiDiscount" style="color: var(--neon-amber);">&#8377;0.00</span>
-        </div>
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label">GST TOTAL</span>
-            <span class="pos-kpi-val" id="kpiGst">&#8377;0.00</span>
-        </div>
-        <div class="pos-kpi-block">
-            <span class="pos-kpi-label">ROUND OFF</span>
-            <span class="pos-kpi-val" id="kpiRoundOff">&#8377;0.00</span>
-        </div>
-        <div class="pos-kpi-block" style="grid-column: span 2; border-left: 2px solid var(--neon-green); padding-left: 12px;">
-            <span class="pos-kpi-label" style="color: var(--neon-green);">NET AMOUNT PAYABLE</span>
-            <span class="pos-kpi-val" id="kpiNetAmount" style="font-size: 1.6rem; color: var(--neon-green);">&#8377;0.00</span>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" id="btnSaveMemo" class="btn btn-primary" style="padding: 12px 32px; font-size: 1.05rem;" onclick="commitRetailSale()">
+                &#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>
+            </button>
         </div>
     </div>
 
-    <!-- DESK ACTION BUTTONS (PRINT, SAVE CTRL+S, RESET) -->
-    <div style="display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; justify-content: flex-end;">
-        <button type="button" class="btn btn-outline" onclick="printInvoicePreview()">
-            &#128424; Print Invoice
-        </button>
-        <button type="button" class="btn btn-outline" onclick="resetBillingDesk()">
-            &#10005; Clear / Reset
-        </button>
-        <button type="button" id="btnSaveOrder" class="btn btn-primary" style="padding: 12px 28px; font-size: 1rem;" onclick="saveCurrentOrder()">
-            &#10003; Save &amp; Dispense Bill <span class="keyboard-hint" style="background: rgba(0,0,0,0.25); color: #000; border-color: rgba(0,0,0,0.3); margin-left: 4px;">Ctrl+S</span>
-        </button>
+    <!-- DATALIST FOR PRODUCT LOOKUP WITH ENHANCED SHOP DATABASE ATTRIBUTES -->
+    <datalist id="medicineDatalist">
+        <option th:each="m : ${medicines}"
+                th:value="${m.name}"
+                th:data-price="${m.sellingPrice}"
+                th:data-stock="${m.quantity}"
+                th:data-category="${m.category}"
+                th:data-packsize="${m.getPackSize()}"
+                th:data-perunitprice="${m.getPerUnitPrice()}"
+                th:data-buying="${m.buyingPrice}"
+                th:data-composition="${m.getComposition()}"
+                th:data-manufacturer="${m.getManufacturer()}"
+                th:data-rack="${m.getRackLocation()}"
+                th:data-batch="${m.batchNumber}"
+                th:data-expiry="${m.expiryDate}"
+                th:data-schedule="${m.getDrugSchedule()}"
+                th:data-gst="${m.getGstRate()}">
+        </option>
+    </datalist>
+
+    <!-- SUBSTITUTE FINDER MODAL -->
+    <div id="substituteModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="cyber-card" style="width: 90%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; border-color: var(--neon-cyan);">
+            <div class="card-title-bar" style="border-bottom: 1px solid var(--border-dim); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="color: var(--neon-cyan); margin: 0;">&#128138; Available Molecule Substitutes</h3>
+                    <span id="subModalCompositionTitle" style="font-size: 0.8rem; color: var(--text-muted);">Active Composition</span>
+                </div>
+                <button type="button" class="btn-remove-item" onclick="closeSubstituteModal()" style="font-size: 1.2rem; cursor: pointer;">&#10005;</button>
+            </div>
+            <div id="subModalContent" style="overflow-y: auto; padding: 14px 0; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Populated dynamically via fetch -->
+            </div>
+            <div style="border-top: 1px solid var(--border-dim); padding-top: 10px; text-align: right;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeSubstituteModal()">Close</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script th:inline="javascript">
     /*<![CDATA[*/
     const rawMedicines = /*[[${medicines}]]*/ [];
-    const medMap = {};
+    const medicineIndex = {};
     rawMedicines.forEach(m => {
         if (m && m.name) {
-            medMap[m.name.trim().toLowerCase()] = m;
+            medicineIndex[m.name.trim().toLowerCase()] = m;
         }
     });
 
-    let currentPosMode = 'SALE'; // SALE, SALE_RETURN, PUR_RETURN, BREAKAGE
-    let currentPaymentMode = 'Cash';
+    let currentOperation = 'SALE'; // SALE, SALE_RETURN, PURCHASE_RETURN, etc.
 
-    // Initialize invoice number & date
-    function generateInvoiceNumber() {
-        const d = new Date();
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const h = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        const sec = String(d.getSeconds()).padStart(2, '0');
-        return 'INV-' + y + m + day + '-' + h + min + sec;
+    // Format formatted date matching Image 2: "22/09/26 Tuesday"
+    function formatShopDate(d = new Date()) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = String(d.getFullYear()).slice(-2);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return `${dd}/${mm}/${yy} ${days[d.getDay()]}`;
     }
 
-    function initHeader() {
-        document.getElementById('posInvNo').value = generateInvoiceNumber();
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('posDate').value = today;
+    // Bill Number generation (matching Image 2: GT/134)
+    function generateBillNo() {
+        const rand = Math.floor(Math.random() * 899) + 100;
+        return `GT/${rand}`;
     }
 
-    // Set POS Operation Mode
-    function setPosMode(mode) {
-        currentPosMode = mode;
-        const btns = ['btnModeSale', 'btnModeSaleReturn', 'btnModePurReturn', 'btnModeBreakage'];
-        btns.forEach(id => {
+    function initCashMemo() {
+        document.getElementById('billNoInput').value = generateBillNo();
+        document.getElementById('billDateInput').value = formatShopDate();
+    }
+
+    // Switch Operations matching Image 1
+    function switchOperationMode(mode) {
+        currentOperation = mode;
+        const tabs = ['tabSale', 'tabSaleReturn', 'tabPurchaseReturn', 'tabBrkCust', 'tabBrkComp', 'tabPaySupplier', 'tabPayParty', 'tabVoucher'];
+        tabs.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('active');
         });
 
+        const titleEl = document.getElementById('entrySheetTitle');
+        const labelCust = document.getElementById('labelCustName');
+
         if (mode === 'SALE') {
-            document.getElementById('btnModeSale').classList.add('active');
-            document.getElementById('lblCustomerName').textContent = 'Customer / Patient Name *';
+            document.getElementById('tabSale').classList.add('active');
+            titleEl.textContent = 'Retail Sale Entry (Cash Memo)';
+            labelCust.textContent = 'Name (Customer) *';
         } else if (mode === 'SALE_RETURN') {
-            document.getElementById('btnModeSaleReturn').classList.add('active');
-            document.getElementById('lblCustomerName').textContent = 'Return Customer Name *';
-        } else if (mode === 'PUR_RETURN') {
-            document.getElementById('btnModePurReturn').classList.add('active');
-            document.getElementById('lblCustomerName').textContent = 'Supplier / Distributor Name *';
-        } else if (mode === 'BREAKAGE') {
-            document.getElementById('btnModeBreakage').classList.add('active');
-            document.getElementById('lblCustomerName').textContent = 'Disposal / Reason Note *';
+            document.getElementById('tabSaleReturn').classList.add('active');
+            titleEl.textContent = 'Sale Return Entry';
+            labelCust.textContent = 'Name (Return Customer) *';
+        } else if (mode === 'PURCHASE_RETURN') {
+            document.getElementById('tabPurchaseReturn').classList.add('active');
+            titleEl.textContent = 'Purchase Return (Supplier Return)';
+            labelCust.textContent = 'Name (Distributor / Supplier) *';
+        } else if (mode === 'BRK_CUST') {
+            document.getElementById('tabBrkCust').classList.add('active');
+            titleEl.textContent = 'Breakage / Expiry Received From Customer';
+            labelCust.textContent = 'Customer / Party Name *';
+        } else if (mode === 'BRK_COMP') {
+            document.getElementById('tabBrkComp').classList.add('active');
+            titleEl.textContent = 'Breakage / Expiry Return To Company';
+            labelCust.textContent = 'Company / Distributor Name *';
+        } else if (mode === 'PAY_SUPPLIER') {
+            document.getElementById('tabPaySupplier').classList.add('active');
+            titleEl.textContent = 'Supplier Payment Voucher (DD/CHQ/TRN)';
+            labelCust.textContent = 'Supplier Account Name *';
+        } else if (mode === 'PAY_PARTY') {
+            document.getElementById('tabPayParty').classList.add('active');
+            titleEl.textContent = 'Party Receipt Voucher (DD/CHQ/TRN)';
+            labelCust.textContent = 'Party / Customer Name *';
+        } else if (mode === 'VOUCHER') {
+            document.getElementById('tabVoucher').classList.add('active');
+            titleEl.textContent = 'General Journal & Expense Voucher Entry';
+            labelCust.textContent = 'Ledger Account / Payee *';
         }
     }
 
-    function setPaymentMode(mode) {
-        currentPaymentMode = mode;
-        document.getElementById('payModeCash').classList.remove('active');
-        document.getElementById('payModeBank').classList.remove('active');
-        document.getElementById('payModeCredit').classList.remove('active');
+    // Dynamic Row Generation
+    const tableBody = document.getElementById('retailTableBody');
 
-        if (mode === 'Cash') document.getElementById('payModeCash').classList.add('active');
-        else if (mode === 'Bank/UPI') document.getElementById('payModeBank').classList.add('active');
-        else if (mode === 'Credit') document.getElementById('payModeCredit').classList.add('active');
-    }
-
-    // Dynamic Table Row Generation
-    const posItemsBody = document.getElementById('posItemsBody');
-
-    function addNewTableRow(itemData = {}) {
+    function addBillingRow(rowItem = {}) {
         const tr = document.createElement('tr');
-        const rowIndex = posItemsBody.children.length + 1;
+        const rowIndex = tableBody.children.length + 1;
 
         tr.innerHTML = `
             <td class="mono-cell" style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">${rowIndex}</td>
             <td>
                 <input type="text"
-                       class="pos-table-input item-name-input"
-                       list="medDatalist"
-                       placeholder="Select or start typing..."
-                       value="${escapeAttr(itemData.name || '')}"
+                       class="grid-input row-product-name"
+                       list="medicineDatalist"
+                       placeholder="Medicine Name (F2)"
+                       value="${escapeAttr(rowItem.name || '')}"
                        autocomplete="off"
-                       onchange="onRowMedicineSelect(this)"
-                       oninput="onRowMedicineInput(this)">
-                <div class="row-stock-hint" style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;"></div>
+                       onfocus="onRowFocus(this)"
+                       onchange="onSelectProduct(this)"
+                       oninput="onInputProduct(this)">
             </td>
             <td>
-                <input type="text" class="pos-table-input item-batch-input" placeholder="B1" value="${escapeAttr(itemData.batch || '')}">
+                <input type="text" class="grid-input readonly row-packsize" value="${rowItem.packsize || '10s'}" readonly style="text-align: center; color: var(--neon-cyan);">
             </td>
             <td>
-                <input type="text" class="pos-table-input item-exp-input" placeholder="MM/YY" value="${escapeAttr(itemData.exp || '')}">
+                <input type="text" class="grid-input row-batch" placeholder="Batch" value="${escapeAttr(rowItem.batch || '')}" onfocus="onRowFocus(this)">
             </td>
             <td>
-                <input type="number"
-                       class="pos-table-input item-qty-input"
-                       min="1"
-                       step="1"
-                       placeholder="1"
-                       value="${itemData.qty || ''}"
-                       style="text-align: right;"
-                       oninput="calculateRow(this)">
+                <input type="text" class="grid-input row-expiry" placeholder="MM/YY" value="${escapeAttr(rowItem.expiry || '')}" style="text-align: center;" onfocus="onRowFocus(this)">
             </td>
             <td>
                 <input type="number"
-                       class="pos-table-input item-free-input"
+                       class="grid-input row-qnt"
                        min="0"
                        step="1"
                        placeholder="0"
-                       value="${itemData.free || 0}"
+                       value="${rowItem.qnt !== undefined ? rowItem.qnt : ''}"
                        style="text-align: right;"
+                       onfocus="onRowFocus(this)"
                        oninput="calculateRow(this)">
             </td>
             <td>
                 <input type="number"
-                       class="pos-table-input item-mrp-input"
+                       class="grid-input row-loose"
+                       min="0"
+                       step="1"
+                       placeholder="0"
+                       value="${rowItem.loose !== undefined ? rowItem.loose : ''}"
+                       style="text-align: right; color: var(--neon-cyan);"
+                       onfocus="onRowFocus(this)"
+                       oninput="calculateRow(this)">
+            </td>
+            <td>
+                <input type="number"
+                       class="grid-input row-rate"
+                       min="0"
                        step="0.01"
                        placeholder="0.00"
-                       value="${itemData.mrp || ''}"
+                       value="${rowItem.rate !== undefined ? rowItem.rate : ''}"
                        style="text-align: right;"
+                       onfocus="onRowFocus(this)"
                        oninput="calculateRow(this)">
             </td>
             <td>
                 <input type="number"
-                       class="pos-table-input item-rate-input"
+                       class="grid-input row-mrp"
+                       min="0"
                        step="0.01"
                        placeholder="0.00"
-                       value="${itemData.rate || ''}"
+                       value="${rowItem.mrp !== undefined ? rowItem.mrp : ''}"
                        style="text-align: right;"
-                       oninput="calculateRow(this)">
+                       onfocus="onRowFocus(this)">
             </td>
             <td>
                 <input type="number"
-                       class="pos-table-input item-discpct-input"
+                       class="grid-input row-disc"
                        min="0"
                        max="100"
                        step="0.5"
                        placeholder="0"
-                       value="${itemData.disPct !== undefined ? itemData.disPct : 0}"
+                       value="${rowItem.disc !== undefined ? rowItem.disc : 0}"
                        style="text-align: right;"
-                       oninput="onRowDisPctInput(this)">
+                       onfocus="onRowFocus(this)"
+                       oninput="calculateRow(this)">
             </td>
             <td>
                 <input type="number"
-                       class="pos-table-input item-discamt-input"
+                       class="grid-input row-cgst"
                        min="0"
-                       step="0.01"
-                       placeholder="0.00"
-                       value="${itemData.disAmt || 0.00}"
-                       style="text-align: right;"
-                       oninput="onRowDisAmtInput(this)">
-            </td>
-            <td>
-                <input type="number"
-                       class="pos-table-input item-gstpct-input"
-                       min="0"
-                       max="100"
-                       step="1"
+                       max="50"
+                       step="0.5"
                        placeholder="0"
-                       value="${itemData.gstPct !== undefined ? itemData.gstPct : 0}"
+                       value="${rowItem.cgst !== undefined ? rowItem.cgst : 2.5}"
                        style="text-align: right;"
+                       onfocus="onRowFocus(this)"
+                       oninput="calculateRow(this)">
+            </td>
+            <td>
+                <input type="number"
+                       class="grid-input row-sgst"
+                       min="0"
+                       max="50"
+                       step="0.5"
+                       placeholder="0"
+                       value="${rowItem.sgst !== undefined ? rowItem.sgst : 2.5}"
+                       style="text-align: right;"
+                       onfocus="onRowFocus(this)"
                        oninput="calculateRow(this)">
             </td>
             <td>
                 <input type="text"
-                       class="pos-table-input readonly item-gstamt-input"
-                       value="0.00"
-                       readonly
-                       style="text-align: right; color: var(--text-muted);">
-            </td>
-            <td>
-                <input type="text"
-                       class="pos-table-input readonly item-amount-input mono-cell"
+                       class="grid-input readonly mono-cell row-amount"
                        value="0.00"
                        readonly
                        style="text-align: right; color: var(--neon-green); font-weight: 700;">
             </td>
             <td style="text-align: center;">
-                <button type="button" class="btn-remove-item" onclick="removeTableRow(this)" title="Remove row">&#10005;</button>
+                <button type="button" class="btn-remove-item" onclick="deleteRow(this)" title="Delete line">&#10005;</button>
             </td>
         `;
 
-        posItemsBody.appendChild(tr);
-        updateRowNumbers();
-        if (itemData.name) {
-            const nameInput = tr.querySelector('.item-name-input');
-            onRowMedicineSelect(nameInput);
+        tableBody.appendChild(tr);
+        renumberRows();
+        if (rowItem.name) {
+            const pInput = tr.querySelector('.row-product-name');
+            onSelectProduct(pInput);
         }
         return tr;
     }
 
-    function updateRowNumbers() {
-        const rows = posItemsBody.querySelectorAll('tr');
-        rows.forEach((tr, index) => {
-            const cell = tr.children[0];
-            if (cell) cell.textContent = index + 1;
+    function renumberRows() {
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach((tr, idx) => {
+            tr.children[0].textContent = idx + 1;
         });
-        const badge = document.getElementById('rowCounterBadge');
-        if (badge) badge.textContent = rows.length + (rows.length === 1 ? ' Row' : ' Rows');
     }
 
-    function removeTableRow(btn) {
+    function deleteRow(btn) {
         const tr = btn.closest('tr');
-        if (posItemsBody.children.length > 1) {
+        if (tableBody.children.length > 1) {
             tr.remove();
-            updateRowNumbers();
-            recalculatePOSGrandTotals();
+            renumberRows();
+            recalculateGrandTotals();
         } else {
-            // Reset the single row
-            tr.querySelector('.item-name-input').value = '';
-            tr.querySelector('.item-batch-input').value = '';
-            tr.querySelector('.item-exp-input').value = '';
-            tr.querySelector('.item-qty-input').value = '';
-            tr.querySelector('.item-free-input').value = '0';
-            tr.querySelector('.item-mrp-input').value = '';
-            tr.querySelector('.item-rate-input').value = '';
-            tr.querySelector('.item-discpct-input').value = '0';
-            tr.querySelector('.item-discamt-input').value = '0.00';
-            tr.querySelector('.item-gstpct-input').value = '0';
-            tr.querySelector('.item-gstamt-input').value = '0.00';
-            tr.querySelector('.item-amount-input').value = '0.00';
-            const hint = tr.querySelector('.row-stock-hint');
-            if (hint) hint.innerHTML = '';
-            recalculatePOSGrandTotals();
+            clearSingleRow(tr);
+            recalculateGrandTotals();
         }
     }
 
-    function clearAllRows() {
-        if (confirm('Clear all entered medicines in this table?')) {
-            posItemsBody.innerHTML = '';
-            addNewTableRow();
-            recalculatePOSGrandTotals();
+    function clearSingleRow(tr) {
+        tr.querySelector('.row-product-name').value = '';
+        tr.querySelector('.row-packsize').value = '10s';
+        tr.querySelector('.row-batch').value = '';
+        tr.querySelector('.row-expiry').value = '';
+        tr.querySelector('.row-qnt').value = '';
+        tr.querySelector('.row-loose').value = '';
+        tr.querySelector('.row-rate').value = '';
+        tr.querySelector('.row-mrp').value = '';
+        tr.querySelector('.row-disc').value = '0';
+        tr.querySelector('.row-cgst').value = '2.5';
+        tr.querySelector('.row-sgst').value = '2.5';
+        tr.querySelector('.row-amount').value = '0.00';
+    }
+
+    function clearMemoRows() {
+        if (confirm('Clear all entered items in this cash memo?')) {
+            tableBody.innerHTML = '';
+            addBillingRow();
+            recalculateGrandTotals();
+            updateDockPreview(null);
         }
     }
 
-    // Medicine Selection in Row
-    function onRowMedicineSelect(input) {
+    // Active Row Focus & Dock Update
+    let activeRowElement = null;
+
+    function onRowFocus(input) {
+        document.querySelectorAll('#retailTableBody tr').forEach(r => r.classList.remove('row-focused'));
         const tr = input.closest('tr');
+        tr.classList.add('row-focused');
+        activeRowElement = tr;
+
+        const name = tr.querySelector('.row-product-name').value.trim().toLowerCase();
+        const med = medicineIndex[name];
+        updateDockPreview(med);
+    }
+
+    function onInputProduct(input) {
         const val = input.value.trim().toLowerCase();
-        const med = medMap[val];
-        const hint = tr.querySelector('.row-stock-hint');
+        const med = medicineIndex[val];
+        if (med) {
+            onSelectProduct(input);
+        }
+    }
+
+    function onSelectProduct(input) {
+        const val = input.value.trim().toLowerCase();
+        const tr = input.closest('tr');
+        const med = medicineIndex[val];
 
         if (med) {
-            const mrp = Number(med.sellingPrice || 0);
-            const qtyInput = tr.querySelector('.item-qty-input');
-            const mrpInput = tr.querySelector('.item-mrp-input');
-            const rateInput = tr.querySelector('.item-rate-input');
-            const batchInput = tr.querySelector('.item-batch-input');
-            const expInput = tr.querySelector('.item-exp-input');
+            const ps = med.packSize || 10;
+            tr.querySelector('.row-packsize').value = ps + 's';
+            tr.querySelector('.row-rate').value = (med.sellingPrice || 0).toFixed(2);
+            tr.querySelector('.row-mrp').value = (med.sellingPrice || 0).toFixed(2);
+            if (med.batchNumber) tr.querySelector('.row-batch').value = med.batchNumber;
+            if (med.expiryDate) tr.querySelector('.row-expiry').value = med.expiryDate;
 
-            mrpInput.value = mrp.toFixed(2);
-            rateInput.value = mrp.toFixed(2);
-            if (!qtyInput.value) qtyInput.value = 1;
-            if (!batchInput.value) batchInput.value = 'B-' + (Math.floor(Math.random() * 900) + 100);
-            if (!expInput.value) expInput.value = '12/27';
+            const gstRate = (med.gstRate !== undefined && med.gstRate !== null) ? med.gstRate : 12.0;
+            const halfTax = (gstRate / 2).toFixed(1);
+            tr.querySelector('.row-cgst').value = halfTax;
+            tr.querySelector('.row-sgst').value = halfTax;
 
-            const pack = (med.packSize && med.packSize > 0) ? med.packSize : 10;
-            const stock = med.quantity || 0;
-            hint.innerHTML = `<span style="color: var(--neon-cyan);">&#128230; Stock: ${stock} tabs (${Math.floor(stock/pack)} strips) | Category: ${med.category || 'General'}</span>`;
-
-            calculateRow(input);
-        } else {
-            if (hint) hint.innerHTML = '';
-            calculateRow(input);
-        }
-    }
-
-    function onRowMedicineInput(input) {
-        const val = input.value.trim().toLowerCase();
-        if (medMap[val]) {
-            onRowMedicineSelect(input);
-        }
-    }
-
-    // Row-level Discount calculation
-    function onRowDisPctInput(input) {
-        const tr = input.closest('tr');
-        const qty = parseFloat(tr.querySelector('.item-qty-input').value) || 0;
-        const rate = parseFloat(tr.querySelector('.item-rate-input').value) || 0;
-        const pct = Math.min(100, Math.max(0, parseFloat(input.value) || 0));
-        const lineGross = qty * rate;
-        const discAmt = Math.round(lineGross * (pct / 100) * 100) / 100;
-        tr.querySelector('.item-discamt-input').value = discAmt.toFixed(2);
-        calculateRow(input, false);
-    }
-
-    function onRowDisAmtInput(input) {
-        const tr = input.closest('tr');
-        const qty = parseFloat(tr.querySelector('.item-qty-input').value) || 0;
-        const rate = parseFloat(tr.querySelector('.item-rate-input').value) || 0;
-        const lineGross = qty * rate;
-        const amt = Math.max(0, parseFloat(input.value) || 0);
-        const pct = lineGross > 0 ? Math.round((amt / lineGross) * 1000) / 10 : 0;
-        tr.querySelector('.item-discpct-input').value = pct;
-        calculateRow(input, false);
-    }
-
-    // Calculate Row Math
-    function calculateRow(triggerEl, syncDiscount = true) {
-        const tr = triggerEl.closest('tr');
-        const qty = parseFloat(tr.querySelector('.item-qty-input').value) || 0;
-        const rate = parseFloat(tr.querySelector('.item-rate-input').value) || 0;
-        let discAmt = parseFloat(tr.querySelector('.item-discamt-input').value) || 0;
-        const gstPct = parseFloat(tr.querySelector('.item-gstpct-input').value) || 0;
-
-        const lineGross = qty * rate;
-
-        if (syncDiscount) {
-            const discPct = parseFloat(tr.querySelector('.item-discpct-input').value) || 0;
-            if (discPct > 0) {
-                discAmt = Math.round(lineGross * (discPct / 100) * 100) / 100;
-                tr.querySelector('.item-discamt-input').value = discAmt.toFixed(2);
+            // Auto default Qnt to 1 full pack if empty
+            const qntInput = tr.querySelector('.row-qnt');
+            if (!qntInput.value || qntInput.value === '0') {
+                qntInput.value = '1';
             }
+            calculateRow(qntInput);
+            updateDockPreview(med);
+        } else {
+            updateDockPreview(null);
         }
-
-        const taxable = Math.max(0, lineGross - discAmt);
-        const gstAmt = Math.round(taxable * (gstPct / 100) * 100) / 100;
-        const lineTotal = Math.round((taxable + gstAmt) * 100) / 100;
-
-        tr.querySelector('.item-gstamt-input').value = gstAmt.toFixed(2);
-        tr.querySelector('.item-amount-input').value = lineTotal.toFixed(2);
-
-        recalculatePOSGrandTotals();
     }
 
-    // Grand Totals Calculation
-    function recalculatePOSGrandTotals() {
+    // Active Dock Bar Update
+    let currentFocusedMed = null;
+
+    function updateDockPreview(med) {
+        currentFocusedMed = med;
+        const compEl = document.getElementById('dockComposition');
+        const stockEl = document.getElementById('dockStock');
+        const packEl = document.getElementById('dockPack');
+        const rateEl = document.getElementById('dockLooseRate');
+        const rackEl = document.getElementById('dockRackLocation');
+        const btnSub = document.getElementById('btnDockFindSubstitute');
+
+        if (med) {
+            compEl.textContent = med.composition || (med.category ? (med.category + ' formulation') : 'Standard Formulation');
+            stockEl.textContent = (med.quantity || 0) + ' units on shelf';
+            packEl.textContent = (med.packSize || 10) + ' tabs/strip (' + (med.unitType || 'Strip') + ')';
+            const perTab = (med.packSize > 0) ? ((med.sellingPrice || 0) / med.packSize) : (med.sellingPrice || 0);
+            rateEl.textContent = '₹' + perTab.toFixed(2) + '/tab';
+            rackEl.textContent = med.rackLocation || 'Counter Shelf';
+
+            if (med.composition && med.composition.trim().length > 0) {
+                btnSub.style.display = 'inline-flex';
+            } else {
+                btnSub.style.display = 'none';
+            }
+        } else {
+            compEl.textContent = 'Select or type medicine above...';
+            stockEl.textContent = '--';
+            packEl.textContent = '--';
+            rateEl.textContent = '₹0.00';
+            rackEl.textContent = '--';
+            btnSub.style.display = 'none';
+        }
+    }
+
+    // Molecule Substitute Finder
+    function openSubstituteModalFromDock() {
+        if (!currentFocusedMed || !currentFocusedMed.composition) return;
+        const comp = currentFocusedMed.composition.trim();
+        const currentId = currentFocusedMed.id || -1;
+
+        document.getElementById('subModalCompositionTitle').textContent = 'Generic Salt: ' + comp;
+        const content = document.getElementById('subModalContent');
+        content.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">Searching substitutes in catalog...</div>';
+        document.getElementById('substituteModal').style.display = 'flex';
+
+        fetch(`/api/medicines/substitutes?composition=${encodeURIComponent(comp)}&currentId=${currentId}`)
+            .then(res => res.json())
+            .then(subs => {
+                if (!subs || subs.length === 0) {
+                    content.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                        No other brands found with composition: <strong style="color: var(--text-bright);">${comp}</strong>.
+                    </div>`;
+                    return;
+                }
+                let html = '';
+                subs.forEach(s => {
+                    const inStock = (s.quantity && s.quantity > 0);
+                    html += `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-dim); border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--text-bright); font-size: 0.95rem;">${escapeHtml(s.name)}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 8px;">(${escapeHtml(s.manufacturer || 'Pharma')})</span>
+                                <div style="font-size: 0.8rem; color: var(--neon-cyan); margin-top: 3px;">
+                                    <span>&#128205; ${escapeHtml(s.rackLocation || 'Shelf')}</span> &bull;
+                                    <span>${s.quantity || 0} in stock</span> &bull;
+                                    <span style="color: var(--neon-green); font-weight: 700;">₹${(s.sellingPrice || 0).toFixed(2)} / strip</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="selectSubstituteIntoRow('${escapeJs(s.name)}')">
+                                Select Substitute
+                            </button>
+                        </div>
+                    `;
+                });
+                content.innerHTML = html;
+            })
+            .catch(err => {
+                content.innerHTML = '<div style="color: var(--neon-crimson); text-align: center;">Error loading substitutes.</div>';
+            });
+    }
+
+    function selectSubstituteIntoRow(subMedName) {
+        closeSubstituteModal();
+        if (activeRowElement) {
+            const input = activeRowElement.querySelector('.row-product-name');
+            input.value = subMedName;
+            onSelectProduct(input);
+        }
+    }
+
+    function closeSubstituteModal() {
+        document.getElementById('substituteModal').style.display = 'none';
+    }
+
+    // Line Calculation (Image 2 columns: Qnt * Rate + Loose * PerTabRate - Disc)
+    function calculateRow(input) {
+        const tr = input.closest('tr');
+        const name = tr.querySelector('.row-product-name').value.trim().toLowerCase();
+        const qnt = parseFloat(tr.querySelector('.row-qnt').value) || 0;
+        const loose = parseFloat(tr.querySelector('.row-loose').value) || 0;
+        const rate = parseFloat(tr.querySelector('.row-rate').value) || 0;
+        const discPct = parseFloat(tr.querySelector('.row-disc').value) || 0;
+
+        const med = medicineIndex[name];
+        const packSize = (med && med.packSize > 0) ? med.packSize : 10;
+        const perTabRate = packSize > 0 ? (rate / packSize) : rate;
+
+        const gross = (qnt * rate) + (loose * perTabRate);
+        const discAmt = gross * (discPct / 100);
+        const lineNet = Math.max(0, gross - discAmt);
+
+        tr.querySelector('.row-amount').value = lineNet.toFixed(2);
+        recalculateGrandTotals();
+    }
+
+    // Grand Totals Computation (Matching Image 2 footer summary)
+    function recalculateGrandTotals() {
         let totalItems = 0;
-        let totalQty = 0;
-        let subtotal = 0.0;
-        let discount = 0.0;
-        let gst = 0.0;
+        let totalQuantity = 0;
+        let prdAmt = 0.0;
+        let totalDisc = 0.0;
+        let totalCGST = 0.0;
+        let totalSGST = 0.0;
 
-        const rows = posItemsBody.querySelectorAll('tr');
+        const rows = tableBody.querySelectorAll('tr');
         rows.forEach(tr => {
-            const name = tr.querySelector('.item-name-input').value.trim();
-            const qty = parseFloat(tr.querySelector('.item-qty-input').value) || 0;
-            const rate = parseFloat(tr.querySelector('.item-rate-input').value) || 0;
-            const discAmt = parseFloat(tr.querySelector('.item-discamt-input').value) || 0;
-            const gstAmt = parseFloat(tr.querySelector('.item-gstamt-input').value) || 0;
+            const name = tr.querySelector('.row-product-name').value.trim().toLowerCase();
+            const qnt = parseFloat(tr.querySelector('.row-qnt').value) || 0;
+            const loose = parseFloat(tr.querySelector('.row-loose').value) || 0;
+            const rate = parseFloat(tr.querySelector('.row-rate').value) || 0;
+            const discPct = parseFloat(tr.querySelector('.row-disc').value) || 0;
+            const cgstPct = parseFloat(tr.querySelector('.row-cgst').value) || 0;
+            const sgstPct = parseFloat(tr.querySelector('.row-sgst').value) || 0;
 
-            if (name && qty > 0) {
+            if (name && (qnt > 0 || loose > 0)) {
                 totalItems++;
-                totalQty += qty;
-                subtotal += (qty * rate);
-                discount += discAmt;
-                gst += gstAmt;
+                totalQuantity += qnt + loose;
+
+                const med = medicineIndex[name];
+                const packSize = (med && med.packSize > 0) ? med.packSize : 10;
+                const perTabRate = packSize > 0 ? (rate / packSize) : rate;
+                const lineGross = (qnt * rate) + (loose * perTabRate);
+                const lineDisc = lineGross * (discPct / 100);
+                const taxable = Math.max(0, lineGross - lineDisc);
+
+                prdAmt += lineGross;
+                totalDisc += lineDisc;
+                totalCGST += (taxable * (cgstPct / 100));
+                totalSGST += (taxable * (sgstPct / 100));
             }
         });
 
-        const rawNet = Math.max(0, subtotal - discount + gst);
+        const rawNet = Math.max(0, prdAmt - totalDisc + totalCGST + totalSGST);
         const roundedNet = Math.round(rawNet);
         const roundOff = Math.round((roundedNet - rawNet) * 100) / 100;
 
-        document.getElementById('kpiTotalItems').textContent = totalItems;
-        document.getElementById('kpiTotalQty').textContent = totalQty;
-        document.getElementById('kpiSubtotal').textContent = '\u20b9' + subtotal.toFixed(2);
-        document.getElementById('kpiDiscount').textContent = '-\u20b9' + discount.toFixed(2);
-        document.getElementById('kpiGst').textContent = '\u20b9' + gst.toFixed(2);
-        document.getElementById('kpiRoundOff').textContent = (roundOff >= 0 ? '+\u20b9' : '-\u20b9') + Math.abs(roundOff).toFixed(2);
-        document.getElementById('kpiNetAmount').textContent = '\u20b9' + roundedNet.toFixed(2);
+        document.getElementById('statNoOfItems').textContent = totalItems;
+        document.getElementById('statTotalQuantity').textContent = totalQuantity;
+        document.getElementById('statPrdAmt').textContent = '₹' + prdAmt.toFixed(2);
+        document.getElementById('statDiscount').textContent = '-₹' + totalDisc.toFixed(2);
+        document.getElementById('statCGST').textContent = '₹' + totalCGST.toFixed(2);
+        document.getElementById('statSGST').textContent = '₹' + totalSGST.toFixed(2);
+        document.getElementById('statRoundOff').textContent = (roundOff >= 0 ? '+₹' : '-₹') + Math.abs(roundOff).toFixed(2);
+        document.getElementById('statNetAmount').textContent = '₹' + roundedNet.toFixed(2);
     }
 
-    // Save current order via Batch Sell Endpoint
-    async function saveCurrentOrder() {
-        const customerName = document.getElementById('posCustomerName').value.trim();
-        const customerPhone = document.getElementById('posCustomerPhone').value.trim();
-        const btnSave = document.getElementById('btnSaveOrder');
+    // Save / Dispense Order
+    async function commitRetailSale() {
+        const customerName = document.getElementById('custNameInput').value.trim();
+        const customerPhone = document.getElementById('custAdd1Input').value.trim();
+        const doctorName = document.getElementById('custAdd2Input').value.trim();
+        const paymentMode = document.getElementById('payModeSelect').value;
+        const billNumber = document.getElementById('billNoInput').value.trim();
+        const btnSave = document.getElementById('btnSaveMemo');
 
         if (!customerName) {
-            showAlert('Please enter Customer / Patient Name.', 'danger');
-            document.getElementById('posCustomerName').focus();
+            showAlert('Please enter Name before saving.', 'danger');
+            document.getElementById('custNameInput').focus();
             return;
         }
 
         const validItems = [];
-        let totalDiscount = 0.0;
         let grossSubtotal = 0.0;
+        let totalDiscount = 0.0;
 
-        const rows = posItemsBody.querySelectorAll('tr');
+        const rows = tableBody.querySelectorAll('tr');
         for (let tr of rows) {
-            const name = tr.querySelector('.item-name-input').value.trim();
-            const qty = parseInt(tr.querySelector('.item-qty-input').value) || 0;
-            const rate = parseFloat(tr.querySelector('.item-rate-input').value) || 0;
-            const discAmt = parseFloat(tr.querySelector('.item-discamt-input').value) || 0;
+            const name = tr.querySelector('.row-product-name').value.trim();
+            const qnt = parseInt(tr.querySelector('.row-qnt').value) || 0;
+            const loose = parseInt(tr.querySelector('.row-loose').value) || 0;
+            const rate = parseFloat(tr.querySelector('.row-rate').value) || 0;
+            const mrp = parseFloat(tr.querySelector('.row-mrp').value) || rate;
+            const discPct = parseFloat(tr.querySelector('.row-disc').value) || 0;
+            const batchNum = tr.querySelector('.row-batch').value.trim();
+            const expDate = tr.querySelector('.row-expiry').value.trim();
 
-            if (!name && qty === 0) continue;
+            if (!name && qnt === 0 && loose === 0) continue;
 
             if (!name) {
-                showAlert('Please select or specify a medicine name in row.', 'danger');
-                tr.querySelector('.item-name-input').focus();
+                showAlert('Please select medicine name in row.', 'danger');
+                tr.querySelector('.row-product-name').focus();
                 return;
             }
 
-            if (qty <= 0) {
-                showAlert('Quantity must be at least 1 for "' + name + '".', 'danger');
-                tr.querySelector('.item-qty-input').focus();
+            if (qnt <= 0 && loose <= 0) {
+                showAlert('Please enter Quantity (Qnt or Loose) for "' + name + '".', 'danger');
+                tr.querySelector('.row-qnt').focus();
                 return;
             }
 
-            grossSubtotal += (qty * rate);
-            totalDiscount += discAmt;
+            const med = medicineIndex[name.toLowerCase()];
+            const packSize = (med && med.packSize > 0) ? med.packSize : 10;
+            const perTabRate = packSize > 0 ? (rate / packSize) : rate;
+            const lineGross = (qnt * rate) + (loose * perTabRate);
+            const lineDisc = lineGross * (discPct / 100);
 
-            validItems.push({
-                name: name,
-                quantity: qty,
-                unitType: 'STRIP'
-            });
+            grossSubtotal += lineGross;
+            totalDiscount += lineDisc;
+
+            // Submit full strip portion
+            if (qnt > 0) {
+                validItems.push({
+                    name: name,
+                    quantity: qnt,
+                    unitType: 'STRIP',
+                    batchNumber: batchNum,
+                    expiryDate: expDate,
+                    rate: rate,
+                    mrp: mrp,
+                    discountPercent: discPct
+                });
+            }
+
+            // Submit loose tablet portion
+            if (loose > 0) {
+                validItems.push({
+                    name: name,
+                    quantity: loose,
+                    unitType: 'LOOSE',
+                    batchNumber: batchNum,
+                    expiryDate: expDate,
+                    rate: perTabRate,
+                    mrp: (mrp / packSize),
+                    discountPercent: discPct
+                });
+            }
         }
 
         if (validItems.length === 0) {
-            showAlert('Please add at least one medicine item with quantity > 0.', 'danger');
+            showAlert('Please enter at least one medicine item to save bill.', 'warning');
             return;
         }
-
-        btnSave.disabled = true;
-        btnSave.innerHTML = '&#9203; Saving Bill...';
 
         const payload = {
             customerName: customerName,
             customerPhone: customerPhone || 'N/A',
-            discountPercent: grossSubtotal > 0 ? (totalDiscount / grossSubtotal) * 100 : 0.0,
+            doctorName: doctorName || 'N/A',
+            paymentMode: paymentMode,
+            billNumber: billNumber,
             discountAmount: totalDiscount,
             items: validItems
         };
 
+        btnSave.disabled = true;
+        btnSave.innerHTML = '&#9203; Saving Bill...';
+
         try {
-            const response = await fetch('/admin/sell/batch', {
+            const resp = await fetch('/admin/sell/batch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            const result = await resp.json();
 
-            const result = await response.json();
+            if (resp.ok && result.success) {
+                showAlert(`&#10003; Bill Saved Successfully! Invoice: <strong>${result.invoiceNumber}</strong>`, 'success');
 
-            if (response.ok && result.success) {
-                showAlert('&#10003; ' + (result.message || 'Invoice generated and sale recorded successfully!'), 'success');
-                setTimeout(() => {
-                    if (confirm('Sale completed successfully! Do you want to view the Sales Report?')) {
-                        window.location.href = '/admin/reports';
-                    } else {
-                        resetBillingDesk();
+                // Update local stock cache
+                validItems.forEach(vi => {
+                    const m = medicineIndex[vi.name.toLowerCase()];
+                    if (m) {
+                        const tabsToDeduct = (vi.unitType === 'LOOSE') ? vi.quantity : (vi.quantity * (m.packSize || 10));
+                        m.quantity = Math.max(0, (m.quantity || 0) - tabsToDeduct);
                     }
-                }, 800);
+                });
+
+                // Clear and regenerate next bill
+                setTimeout(() => {
+                    tableBody.innerHTML = '';
+                    addBillingRow();
+                    initCashMemo();
+                    recalculateGrandTotals();
+                    updateDockPreview(null);
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
+                }, 1200);
             } else {
-                showAlert(result.message || 'Failed to complete sale.', 'danger');
+                showAlert(result.message || 'Error processing sale.', 'danger');
                 btnSave.disabled = false;
-                btnSave.innerHTML = '&#10003; Save &amp; Dispense Bill <span class="keyboard-hint" style="background: rgba(0,0,0,0.25); color: #000; border-color: rgba(0,0,0,0.3); margin-left: 4px;">Ctrl+S</span>';
+                btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
             }
         } catch (err) {
-            console.error(err);
-            showAlert('Network error: ' + err.message, 'danger');
+            showAlert('Network error while processing billing.', 'danger');
             btnSave.disabled = false;
-            btnSave.innerHTML = '&#10003; Save &amp; Dispense Bill';
+            btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
         }
     }
 
-    function resetBillingDesk() {
-        initHeader();
-        document.getElementById('posCustomerName').value = '';
-        document.getElementById('posCustomerPhone').value = '';
-        document.getElementById('posDoctorName').value = '';
-        posItemsBody.innerHTML = '';
-        addNewTableRow();
-        recalculatePOSGrandTotals();
-        document.getElementById('btnSaveOrder').disabled = false;
-        document.getElementById('btnSaveOrder').innerHTML = '&#10003; Save &amp; Dispense Bill <span class="keyboard-hint" style="background: rgba(0,0,0,0.25); color: #000; border-color: rgba(0,0,0,0.3); margin-left: 4px;">Ctrl+S</span>';
+    function showAlert(msg, type = 'success') {
+        const alertBox = document.getElementById('statusAlert');
+        const icon = document.getElementById('statusAlertIcon');
+        const msgEl = document.getElementById('statusAlertMsg');
+
+        alertBox.className = 'alert alert-' + type;
+        icon.innerHTML = (type === 'success') ? '&#10003;' : '&#9888;';
+        msgEl.innerHTML = msg;
+        alertBox.style.display = 'flex';
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    function startNewOrder() {
-        if (confirm('Start a fresh new invoice? Current unsaved entries will be cleared.')) {
-            resetBillingDesk();
-        }
-    }
-
-    function printInvoicePreview() {
-        window.print();
-    }
-
-    // Keyboard Shortcuts (Ctrl+S, F2, F4, Insert)
-    document.addEventListener('keydown', function(e) {
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl + S -> Save Bill
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
             e.preventDefault();
-            saveCurrentOrder();
-        } else if (e.key === 'F4') {
+            commitRetailSale();
+        }
+        // Insert -> Add Row
+        if (e.key === 'Insert') {
             e.preventDefault();
-            startNewOrder();
-        } else if (e.key === 'Insert') {
+            const newRow = addBillingRow();
+            newRow.querySelector('.row-product-name').focus();
+        }
+        // F2 -> Jump to product name of active row
+        if (e.key === 'F2') {
             e.preventDefault();
-            addNewTableRow();
-        } else if (e.key === 'F2') {
-            e.preventDefault();
-            const firstInput = posItemsBody.querySelector('.item-name-input');
-            if (firstInput) firstInput.focus();
+            const focused = document.querySelector('#retailTableBody tr.row-focused .row-product-name') ||
+                            document.querySelector('#retailTableBody tr:last-child .row-product-name');
+            if (focused) focused.focus();
+        }
+        // Escape -> Close modal
+        if (e.key === 'Escape') {
+            closeSubstituteModal();
         }
     });
 
-    function showAlert(message, type) {
-        const alertBox = document.getElementById('dynamicAlert');
-        const alertIcon = document.getElementById('dynamicAlertIcon');
-        const alertMsg = document.getElementById('dynamicAlertMsg');
-
-        alertMsg.innerHTML = message;
-        if (type === 'danger') {
-            alertBox.className = 'alert alert-danger';
-            alertIcon.innerHTML = '&#9888;';
-        } else {
-            alertBox.className = 'alert alert-success';
-            alertIcon.innerHTML = '&#10003;';
-        }
-
-        alertBox.style.display = 'flex';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    function escapeAttr(str) {
+        if (!str) return '';
+        return String(str).replace(/"/g, '&quot;');
+    }
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function escapeJs(str) {
+        if (!str) return '';
+        return String(str).replace(/'/g, "\\'");
     }
 
-    function escapeAttr(text) {
-        if (!text) return '';
-        return String(text).replace(/"/g, '&quot;');
-    }
-
-    // Initial load: 1 empty row and header initialized
-    initHeader();
-    addNewTableRow();
+    // Initialize initial row and date
+    window.addEventListener('DOMContentLoaded', () => {
+        initCashMemo();
+        addBillingRow();
+    });
     /*]]>*/
 </script>
-
 </body>
 </html>

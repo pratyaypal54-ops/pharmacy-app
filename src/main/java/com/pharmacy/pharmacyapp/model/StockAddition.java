@@ -34,6 +34,13 @@ public class StockAddition {
     // Optional batch or delivery reference number
     private String batchInvoiceNumber;
 
+    // Batch and Expiry
+    @Column(columnDefinition = "varchar(50) default ''")
+    private String batchNumber = "";
+
+    @Column(columnDefinition = "varchar(20) default ''")
+    private String expiryDate = "";
+
     // Medicine details at the time of addition
     private String medicineName;
     private String category;

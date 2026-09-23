@@ -26,10 +26,26 @@ public class StockAdjustment {
     private Long id;
 
     private String medicineName;
-    private Integer quantityBefore;
-    private Integer quantityAfter;
+    private String category;
+    private Integer previousQuantity;
+    private Integer newQuantity;
+    private Integer quantityDifference;
 
     private String reason;
+    private String adjustedBy;
 
     private LocalDateTime adjustedAt;
+
+    public Integer getQuantityBefore() {
+        return previousQuantity;
+    }
+    public void setQuantityBefore(Integer q) {
+        this.previousQuantity = q;
+    }
+    public Integer getQuantityAfter() {
+        return newQuantity;
+    }
+    public void setQuantityAfter(Integer q) {
+        this.newQuantity = q;
+    }
 }
