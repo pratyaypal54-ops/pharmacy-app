@@ -10,11 +10,90 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Medicine Catalog - PharmCare</title>
+    <title>Medicine List - PharmCare</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
+        /* Modern Interactive Components & Animations */
+        @keyframes rowEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(3px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes modalZoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Search input styling */
+        .search-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 260px;
+            max-width: 480px;
+        }
+
+        .search-icon-left {
+            position: absolute;
+            left: 14px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .cyber-input.search-field {
+            padding-left: 38px;
+            padding-right: 36px;
+            border-radius: 24px;
+            background: rgba(11, 15, 25, 0.9);
+            border: 1px solid var(--border-dim);
+            font-size: 0.88rem;
+            width: 100%;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .cyber-input.search-field:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.4);
+            background: #0f1525;
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 4px;
+            display: none;
+            transition: color 0.15s ease, transform 0.15s ease;
+            line-height: 1;
+        }
+
+        .search-clear-btn:hover {
+            color: var(--neon-crimson);
+            transform: scale(1.15);
+        }
+
+        /* Filter Chips */
         .filter-chip {
-            padding: 5px 12px;
+            padding: 6px 14px;
             font-size: 0.78rem;
             font-weight: 600;
             border-radius: 20px;
@@ -22,13 +101,131 @@
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
         }
-        .filter-chip:hover, .filter-chip.active {
-            background: rgba(0, 229, 255, 0.15);
+
+        .filter-chip:hover {
+            background: rgba(0, 229, 255, 0.1);
             color: var(--neon-cyan);
-            border-color: rgba(0, 229, 255, 0.4);
+            border-color: rgba(0, 229, 255, 0.35);
+            transform: translateY(-1px);
         }
+
+        .filter-chip.active {
+            background: rgba(0, 229, 255, 0.18);
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+        }
+
+        /* Optimized Table Layout */
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+
+        .med-table th {
+            background: var(--bg-surface-elevated);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-dim);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .med-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-dim);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .med-table tbody tr {
+            animation: rowEntrance 0.25s ease-out backwards;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .med-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.035);
+            box-shadow: inset 3px 0 0 var(--neon-cyan);
+        }
+
+        /* Dedicated Column Classes */
+        .col-med {
+            min-width: 260px;
+        }
+
+        .col-cat {
+            width: 130px;
+            white-space: nowrap;
+        }
+
+        .col-rack {
+            width: 140px;
+            white-space: nowrap;
+        }
+
+        .col-price {
+            width: 160px;
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        .col-status {
+            width: 140px;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* Internal Location Badge */
+        .rack-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--neon-cyan);
+            background: rgba(0, 229, 255, 0.08);
+            border: 1px solid rgba(0, 229, 255, 0.25);
+            padding: 5px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .rack-badge:hover {
+            background: rgba(0, 229, 255, 0.15);
+            border-color: var(--neon-cyan);
+            transform: translateY(-1px);
+        }
+
+        .rack-icon {
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .rack-text {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        /* Salt Formula Pill */
         .salt-pill {
             font-size: 0.76rem;
             color: var(--text-muted);
@@ -37,23 +234,62 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* Interactive Substitute Button */
         .btn-sub-badge {
             font-size: 0.72rem;
-            padding: 3px 8px;
+            font-weight: 600;
+            padding: 3px 9px;
             border-radius: 4px;
-            background: rgba(0, 229, 255, 0.1);
+            background: rgba(0, 229, 255, 0.08);
             color: var(--neon-cyan);
-            border: 1px solid rgba(0, 229, 255, 0.3);
+            border: 1px solid rgba(0, 229, 255, 0.25);
             cursor: pointer;
-            margin-top: 4px;
+            margin-top: 5px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            transition: all 0.15s;
+            transition: all 0.2s ease;
         }
+
         .btn-sub-badge:hover {
-            background: rgba(0, 229, 255, 0.25);
+            background: rgba(0, 229, 255, 0.22);
             border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Price Stack */
+        .price-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .price-main {
+            font-family: var(--font-mono);
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: var(--neon-green);
+        }
+
+        .price-sub {
+            font-size: 0.74rem;
+            color: var(--neon-cyan);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pack-pill {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        /* Interactive Modal */
+        .modal-card-animated {
+            animation: modalZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
     </style>
 </head>
@@ -61,25 +297,42 @@
 
 <!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
-        <a th:href="@{/medicines}" class="nav-link active">Catalog</a>
+        <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
         <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
-        <a th:href="@{/admin/dashboard}" class="nav-link">Admin Dashboard</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link active">Medicine List</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
-        <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        <div th:if="${isOwner or isStaff}" style="display: flex; align-items: center; gap: 10px;">
+            <div class="nav-status">
+                <span class="pulse-dot"></span>
+                <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
+        </div>
+        <div th:unless="${isOwner or isStaff}">
+            <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        </div>
     </div>
 </nav>
 
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128138; Available Medicines Catalog</h1>
-            <p class="page-subtitle">Instant search by Brand Name, Active Generic Salt / Molecule, or Shop Rack Location</p>
+            <h1 class="page-title">&#128138; Medicine List &amp; Stock Search</h1>
+            <p class="page-subtitle" th:if="${isOwner or isStaff}">Search medicines, salt formulas, live stock levels, and shop shelf rack locations</p>
+            <p class="page-subtitle" th:unless="${isOwner or isStaff}">Find medicines, generic salt formulas, retail prices, and live availability</p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <button type="button" class="btn btn-cyber-cyan btn-sm" onclick="openQrModal()">
@@ -97,14 +350,15 @@
     <!-- TABLE CONTAINER & REAL-TIME SEARCH TOOLBAR -->
     <div class="table-container">
         <div class="table-toolbar" style="flex-wrap: wrap; gap: 12px;">
-            <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 280px; max-width: 480px;">
+            <div class="search-wrapper">
+                <span class="search-icon-left">&#128269;</span>
                 <input type="text"
                        id="liveSearchInput"
                        th:value="${search}"
-                       class="cyber-input"
-                       placeholder="Search by brand name, salt/molecule, company, rack..."
-                       style="padding: 8px 14px; font-size: 0.88rem; width: 100%;"
+                       class="cyber-input search-field"
+                       th:placeholder="${isOwner or isStaff} ? 'Search medicine, salt formula, company, shelf rack...' : 'Search medicine brand, salt formula, or company...'"
                        autocomplete="off">
+                <button type="button" class="search-clear-btn" id="searchClearBtn" onclick="clearLiveSearch()" title="Clear search">&#10005;</button>
             </div>
 
             <!-- QUICK FILTER CHIPS -->
@@ -112,26 +366,27 @@
                 <button type="button" class="filter-chip active" id="chipAll" onclick="setChipFilter('ALL')">All</button>
                 <button type="button" class="filter-chip" id="chipInStock" onclick="setChipFilter('IN_STOCK')">&#10003; In Stock</button>
                 <button type="button" class="filter-chip" id="chipLowStock" onclick="setChipFilter('LOW_STOCK')">&#9888; Low Stock</button>
-                <select id="categoryFilter" class="cyber-select" style="padding: 6px 12px; font-size: 0.82rem; width: auto;">
+                <select id="categoryFilter" class="cyber-select" style="padding: 6px 12px; font-size: 0.82rem; width: auto; border-radius: 20px;">
                     <option value="ALL">All Categories</option>
                 </select>
             </div>
         </div>
 
-        <table class="cyber-table" id="medicineTable">
+        <table class="med-table" id="medicineTable">
             <thead>
                 <tr>
-                    <th style="min-width: 220px;">Medicine &amp; Generic Salt</th>
-                    <th style="width: 120px;">Category &amp; Schedule</th>
-                    <th style="width: 130px;">&#128205; Shop Location</th>
-                    <th style="width: 150px;">Retail Price</th>
-                    <th style="width: 150px;">Availability Status</th>
+                    <th class="col-med">Medicine &amp; Salt Formula</th>
+                    <th class="col-cat">Category</th>
+                    <!--/* Staff Only: Shelf/Rack */-->
+                    <th th:if="${isOwner or isStaff}" class="col-rack">&#128205; Shelf / Rack</th>
+                    <th class="col-price">Price</th>
+                    <th class="col-status">Stock Status</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="med : ${medicines}" th:data-stock="${med.quantity}" th:data-composition="${med.composition}">
-                    <td>
-                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                    <td class="col-med">
+                        <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
                             <strong style="color: var(--text-bright); font-size: 0.96rem;" th:text="${med.name}">Medicine Name</strong>
                             <span th:if="${med.manufacturer != null and !med.manufacturer.isEmpty()}"
                                   style="font-size: 0.74rem; color: var(--text-muted);"
@@ -146,42 +401,44 @@
                         <div th:if="${med.composition != null and !med.composition.isEmpty() and med.quantity <= 5}">
                             <button type="button" class="btn-sub-badge"
                                     th:onclick="'quickSearchSalt(\'' + ${#strings.escapeJavaScript(med.composition)} + '\')'">
-                                &#128269; Find Same Salt Alternatives
+                                &#128269; Find Same Medicine (Substitutes)
                             </button>
                         </div>
                     </td>
-                    <td>
+                    <td class="col-cat">
                         <span class="badge badge-category" th:text="${med.category != null and !med.category.isEmpty() ? med.category : 'General'}">Category</span>
                         <div th:if="${med.drugSchedule != null and !med.drugSchedule.isEmpty() and med.drugSchedule != 'OTC'}" style="margin-top: 4px;">
                             <span class="badge badge-low-stock" style="font-size: 0.68rem; padding: 2px 6px;" th:text="${med.drugSchedule}">Schedule H</span>
                         </div>
                     </td>
-                    <td>
-                        <span style="font-family: var(--font-mono); font-size: 0.84rem; color: var(--neon-cyan); background: rgba(0, 229, 255, 0.08); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(0, 229, 255, 0.2);"
-                              th:text="${med.getRackLocation()}">&#128205; Rack A-1</span>
+                    <!--/* Staff Only: Shelf/Rack */-->
+                    <td th:if="${isOwner or isStaff}" class="col-rack">
+                        <span class="rack-badge">
+                            <span class="rack-icon">&#128205;</span>
+                            <span class="rack-text" th:text="${med.getRackLocation()}">Rack A-1</span>
+                        </span>
                     </td>
-                    <td class="mono-cell" style="font-size: 1rem; color: var(--neon-green);">
-                        <div>
-                            <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">&#8377;0.00</span>
-                            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;" th:text="' / ' + ${med.unitType}"> / Strip</span>
-                        </div>
-                        <div th:if="${med.packSize > 1}" style="font-size: 0.76rem; color: var(--neon-cyan); margin-top: 2px;">
-                            <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.getPerUnitPrice(), 1, 2)} + ' / loose tab'">&#8377;0.00 / tab</span>
-                            <span style="color: var(--text-muted);" th:text="' (' + ${med.packSize} + ' tabs/strip)'"> (10 tabs)</span>
+                    <td class="col-price">
+                        <div class="price-stack">
+                            <div class="price-main">
+                                <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.sellingPrice, 1, 2)}">&#8377;0.00</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;" th:text="' / ' + ${med.unitType}"> / Strip</span>
+                            </div>
+                            <div th:if="${med.packSize > 1}" class="price-sub">
+                                <span th:text="'&#8377;' + ${#numbers.formatDecimal(med.getPerUnitPrice(), 1, 2)} + ' / tab'">&#8377;0.00 / tab</span>
+                                <span class="pack-pill" th:text="'(' + ${med.packSize} + ' tabs)'"> (10 tabs)</span>
+                            </div>
                         </div>
                     </td>
-                    <td>
-                        <!-- Dynamic Stock Availability Status -->
-                        <!-- 0 Units: Vivid Red Out of Stock -->
+                    <td class="col-status">
+                        <!-- Dynamic Stock Status -->
                         <span th:if="${med.quantity <= 0}" class="badge badge-out-of-stock" style="color: var(--neon-crimson); font-weight: 700; border-color: rgba(255, 42, 109, 0.6); box-shadow: 0 0 8px var(--neon-crimson-glow);">
                             &#9888; Out of Stock
                         </span>
-                        <!-- 1 to 5 Units: Amber Urgency Badge -->
                         <span th:if="${med.quantity > 0 and med.quantity <= 5}" class="badge badge-low-stock"
                               th:text="'&#9888; Only ' + ${med.quantity} + ' left'">
                             &#9888; Only 5 left
                         </span>
-                        <!-- More than 5 Units: Clean Green Available Badge -->
                         <span th:if="${med.quantity > 5}" class="badge badge-in-stock">
                             &#10003; Available
                         </span>
@@ -203,15 +460,15 @@
 
 <!-- QR COUNTER ACCESS MODAL -->
 <div id="qrModal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div class="cyber-card" style="width: 90%; max-width: 440px; text-align: center;">
+    <div class="cyber-card modal-card-animated" style="width: 90%; max-width: 440px; text-align: center;">
         <div class="card-title-bar" style="border-bottom: 1px solid var(--border-dim); padding-bottom: 10px;">
-            <h3 style="color: var(--neon-cyan); margin: 0;">&#128241; Counter Mobile Access</h3>
+            <h3 style="color: var(--neon-cyan); margin: 0;">&#128241; Counter QR Access</h3>
             <button type="button" class="btn-remove-item" onclick="document.getElementById('qrModal').style.display='none'" style="font-size: 1.2rem; cursor: pointer;">&#10005;</button>
         </div>
         <div style="padding: 18px 0;">
-            <img id="qrImage" src="" alt="Catalog QR Code" style="width: 200px; height: 200px; border-radius: 8px; border: 2px solid var(--neon-cyan); background: #fff; padding: 6px;">
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">Scan with mobile to browse catalog live from counter</p>
-            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--neon-green);" id="qrTargetUrl"></div>
+            <img id="qrImage" src="" alt="Catalog QR Code" style="width: 200px; height: 200px; border-radius: 8px; border: 2px solid var(--neon-cyan); background: #fff; padding: 6px; box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);">
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 12px;">Scan with phone to search medicines and check stock live from counter</p>
+            <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--neon-green); word-break: break-all;" id="qrTargetUrl"></div>
         </div>
         <button type="button" class="btn btn-outline btn-sm btn-block" onclick="document.getElementById('qrModal').style.display='none'">Close</button>
     </div>
@@ -241,6 +498,7 @@
 
     // High-performance search cache & debounced filtering
     const searchInput = document.getElementById('liveSearchInput');
+    const searchClearBtn = document.getElementById('searchClearBtn');
     const noLiveMatches = document.getElementById('noLiveMatches');
     const catalogCounter = document.getElementById('catalogCounter');
 
@@ -257,6 +515,19 @@
         };
     });
 
+    function updateSearchClearBtn() {
+        if (searchClearBtn) {
+            searchClearBtn.style.display = searchInput.value.trim() ? 'block' : 'none';
+        }
+    }
+
+    function clearLiveSearch() {
+        searchInput.value = '';
+        updateSearchClearBtn();
+        filterTable();
+        searchInput.focus();
+    }
+
     function setChipFilter(chip) {
         currentChip = chip;
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -268,6 +539,7 @@
 
     function quickSearchSalt(salt) {
         searchInput.value = salt;
+        updateSearchClearBtn();
         setChipFilter('ALL');
         filterTable();
         searchInput.focus();
@@ -306,6 +578,7 @@
 
     let debounceTimer = null;
     function debouncedFilter() {
+        updateSearchClearBtn();
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             requestAnimationFrame(filterTable);
@@ -314,6 +587,7 @@
 
     searchInput.addEventListener('input', debouncedFilter);
     categoryFilter.addEventListener('change', filterTable);
+    updateSearchClearBtn();
 
     // QR Counter Access Modal
     let serverMobileUrl = /*[[${mobileCatalogUrl}]]*/ 'http://192.168.0.48:8080/medicines';

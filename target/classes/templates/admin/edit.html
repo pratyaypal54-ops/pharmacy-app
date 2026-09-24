@@ -16,41 +16,46 @@
 <body>
 
 <!-- CYBER NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
-        <a th:href="@{/admin/edit}" class="nav-link active">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
-        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link">Medicine List</a>
+        <a th:href="@{/admin/edit}" class="nav-link active">Edit Stock</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
-        <div class="nav-status">
-            <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+        <div th:if="${isOwner or isStaff}" style="display: flex; align-items: center; gap: 10px;">
+            <div class="nav-status">
+                <span class="pulse-dot"></span>
+                <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
         </div>
-        <form th:action="@{/logout}" method="post" style="margin: 0;">
-            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
-        </form>
+        <div th:unless="${isOwner or isStaff}">
+            <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        </div>
     </div>
 </nav>
 
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#9881; Stock Audit &amp; Entry Mistake Corrections</h1>
-            <p class="page-subtitle">Reconcile inventory counts, correct clerical typos, or adjust selling prices for any registered medicine</p>
+            <h1 class="page-title">&#9881; Edit Medicine Stock &amp; Price</h1>
+            <p class="page-subtitle">Update medicine quantity, change prices, or fix shelf rack location</p>
         </div>
         <div style="display: flex; gap: 10px;">
-            <a th:href="@{/admin/reports?tab=adjustments}" class="btn btn-cyber-cyan btn-sm">&#128220; Full Audit History</a>
+            <a th:href="@{/admin/reports?tab=adjustments}" class="btn btn-cyber-cyan btn-sm">&#128220; Stock History</a>
             <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-sm">&larr; Dashboard</a>
         </div>
     </div>

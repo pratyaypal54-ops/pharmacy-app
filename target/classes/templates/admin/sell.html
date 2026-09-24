@@ -10,7 +10,7 @@
     <link rel="manifest" th:href="@{/manifest.json}">
     <link rel="icon" type="image/png" sizes="192x192" th:href="@{/img/icon-192.png}">
     <link rel="apple-touch-icon" th:href="@{/img/icon-192.png}">
-    <title>Retail Sale Entry (Cash Memo) - PharmCare POS</title>
+    <title>Billing Desk (Cash Memo) - PharmCare POS</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         /* =========================================================
@@ -267,29 +267,33 @@
 
 <!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
         <a th:href="@{/admin/sell}" class="nav-link active">Billing Desk</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase / Stock</a>
-        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
-        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link">Medicine List</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
-        <div class="nav-status">
-            <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">ACCESS</span>
+        <div th:if="${isOwner or isStaff}" style="display: flex; align-items: center; gap: 10px;">
+            <div class="nav-status">
+                <span class="pulse-dot"></span>
+                <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
         </div>
-        <form th:action="@{/logout}" method="post" style="margin: 0;">
-            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
-        </form>
+        <div th:unless="${isOwner or isStaff}">
+            <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        </div>
     </div>
 </nav>
 
@@ -297,10 +301,10 @@
     <!-- MODULES RIBBON (IMAGE 1: EXACT SHOP OPERATIONS HUB) -->
     <div class="modules-ribbon">
         <button type="button" class="module-tab-btn active" id="tabSale" onclick="switchOperationMode('SALE')">
-            &#128179; Sale - Retail
+            &#128179; Retail Sale (F1)
         </button>
         <a th:href="@{/admin/add-stock}" class="module-tab-btn cyan-tab" id="tabPurchase">
-            &#128230; Purchase
+            &#128230; Purchase Stock (F2)
         </a>
         <button type="button" class="module-tab-btn amber-tab" id="tabSaleReturn" onclick="switchOperationMode('SALE_RETURN')">
             &#8635; Sale Return
@@ -309,19 +313,19 @@
             &#8634; Purchase Return
         </button>
         <button type="button" class="module-tab-btn" id="tabBrkCust" onclick="switchOperationMode('BRK_CUST')">
-            &#9888; Brk./Exp. From Customer
+            &#9888; Customer Return
         </button>
         <button type="button" class="module-tab-btn" id="tabBrkComp" onclick="switchOperationMode('BRK_COMP')">
-            &#128680; Brk. To Company
+            &#128680; Return to Supplier
         </button>
         <button type="button" class="module-tab-btn" id="tabPaySupplier" onclick="switchOperationMode('PAY_SUPPLIER')">
-            &#128179; DD/CHQ/TRN To supplier
+            &#128179; Pay Supplier
         </button>
         <button type="button" class="module-tab-btn" id="tabPayParty" onclick="switchOperationMode('PAY_PARTY')">
-            &#128181; DD/CHQ/TRN From Party
+            &#128181; Receive Payment
         </button>
         <button type="button" class="module-tab-btn" id="tabVoucher" onclick="switchOperationMode('VOUCHER')">
-            &#128221; Voucher Entry
+            &#128221; Expense Voucher
         </button>
     </div>
 
@@ -337,7 +341,7 @@
         <div style="background: rgba(0, 0, 0, 0.35); padding: 10px 16px; border-bottom: 1px solid var(--border-dim); display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="color: var(--neon-green); font-size: 1.1rem; font-weight: 700;">&#128203;</span>
-                <span id="entrySheetTitle" style="font-weight: 700; color: var(--text-bright); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Retail Sale Entry (Cash Memo)</span>
+                <span id="entrySheetTitle" style="font-weight: 700; color: var(--text-bright); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Billing Desk (Cash Memo)</span>
             </div>
             <div style="display: flex; gap: 8px; font-size: 0.78rem; color: var(--text-muted);">
                 <span><kbd class="shortcut-badge">F2</kbd> Product Search</span>
@@ -359,22 +363,22 @@
             </div>
 
             <div class="bill-header-field" style="flex: 2; min-width: 180px;">
-                <label class="bill-header-label" id="labelCustName" for="custNameInput">Name (Customer / Patient) *</label>
+                <label class="bill-header-label" id="labelCustName" for="custNameInput">Customer Name *</label>
                 <input type="text" id="custNameInput" class="bill-header-input" placeholder="e.g. Walk-in Customer" value="Walk-in Customer" autocomplete="off">
             </div>
 
             <div class="bill-header-field" style="flex: 1.5; min-width: 140px;">
-                <label class="bill-header-label" for="custAdd1Input">Add. #1 (Phone / Address)</label>
+                <label class="bill-header-label" for="custAdd1Input">Mobile No. / Address</label>
                 <input type="text" id="custAdd1Input" class="bill-header-input" placeholder="Phone / Location" autocomplete="off">
             </div>
 
             <div class="bill-header-field" style="flex: 1.5; min-width: 140px;">
-                <label class="bill-header-label" for="custAdd2Input">Add. #2 (Doctor / Prescriber)</label>
+                <label class="bill-header-label" for="custAdd2Input">Doctor Name</label>
                 <input type="text" id="custAdd2Input" class="bill-header-input" placeholder="Dr. Name / Reg No." autocomplete="off">
             </div>
 
             <div class="bill-header-field" style="max-width: 130px;">
-                <label class="bill-header-label" for="payModeSelect">Payment Mode</label>
+                <label class="bill-header-label" for="payModeSelect">Payment Type</label>
                 <select id="payModeSelect" class="bill-header-input" style="padding: 6px 8px;">
                     <option value="Cash" selected>Cash</option>
                     <option value="Bank/UPI">Bank / UPI</option>
@@ -396,18 +400,18 @@
                 <thead>
                     <tr>
                         <th style="width: 32px; text-align: center;">#</th>
-                        <th style="min-width: 240px;">Particular / Name Of Product (F2) *</th>
-                        <th style="width: 75px; text-align: center;">Packsize</th>
+                        <th style="min-width: 240px;">Medicine Name (F2) *</th>
+                        <th style="width: 75px; text-align: center;">Pack</th>
                         <th style="width: 90px;">Batch</th>
                         <th style="width: 75px; text-align: center;">Expiry</th>
-                        <th style="width: 70px; text-align: right;">Qnt.</th>
+                        <th style="width: 70px; text-align: right;">Packs</th>
                         <th style="width: 65px; text-align: right;">Loose</th>
                         <th style="width: 85px; text-align: right;">Rate (&#8377;)</th>
                         <th style="width: 85px; text-align: right;">M.R.P.</th>
-                        <th style="width: 65px; text-align: right;">Disc. %</th>
+                        <th style="width: 65px; text-align: right;">Discount %</th>
                         <th style="width: 65px; text-align: right;">CGST %</th>
                         <th style="width: 65px; text-align: right;">SGST %</th>
-                        <th style="width: 110px; text-align: right;">Amount (&#8377;)</th>
+                        <th style="width: 110px; text-align: right;">Total (&#8377;)</th>
                         <th style="width: 40px; text-align: center;">Del</th>
                     </tr>
                 </thead>
@@ -421,7 +425,7 @@
         <div class="active-item-dock" id="activeItemDock">
             <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap;">
                 <div>
-                    <span>Molecule / Salt: </span>
+                    <span>Medicine Salt / Formula: </span>
                     <span class="item-prop" id="dockComposition">Select or type medicine above...</span>
                 </div>
                 <div>
@@ -429,21 +433,21 @@
                     <span class="item-prop" id="dockRackLocation" style="color: var(--neon-cyan); font-weight: 700;">--</span>
                 </div>
                 <div>
-                    <span>Shelf Stock: </span>
+                    <span>Current Stock: </span>
                     <span class="item-prop" id="dockStock" style="color: var(--neon-green);">--</span>
                 </div>
                 <div>
-                    <span>Packaging: </span>
+                    <span>Pack Size: </span>
                     <span class="item-prop" id="dockPack">--</span>
                 </div>
                 <div>
-                    <span>Loose Tab Rate: </span>
+                    <span>Single Tablet Price: </span>
                     <span class="item-prop" id="dockLooseRate" style="color: var(--neon-cyan);">&#8377;0.00</span>
                 </div>
             </div>
             <div>
                 <button type="button" id="btnDockFindSubstitute" class="btn btn-cyber-cyan btn-sm" style="display: none; padding: 4px 10px; font-size: 0.78rem;" onclick="openSubstituteModalFromDock()">
-                    &#128269; Find Substitutes (Same Molecule)
+                    &#128269; Find Same Medicine (Substitutes)
                 </button>
             </div>
         </div>
@@ -451,7 +455,7 @@
         <!-- FINANCIAL FOOTER SUMMARY (IMAGE 2 BOTTOM STATS) -->
         <div class="bill-footer-stats">
             <div class="stat-box">
-                <span class="stat-box-label">No. of Items</span>
+                <span class="stat-box-label">Total Items</span>
                 <span class="stat-box-val" id="statNoOfItems">0</span>
             </div>
             <div class="stat-box">
@@ -459,19 +463,19 @@
                 <span class="stat-box-val" id="statTotalQuantity">0</span>
             </div>
             <div class="stat-box">
-                <span class="stat-box-label">Product Amt</span>
+                <span class="stat-box-label">Subtotal</span>
                 <span class="stat-box-val" id="statPrdAmt">&#8377;0.00</span>
             </div>
             <div class="stat-box">
-                <span class="stat-box-label">Disc.</span>
+                <span class="stat-box-label">Discount</span>
                 <span class="stat-box-val" id="statDiscount" style="color: var(--neon-amber);">&#8377;0.00</span>
             </div>
             <div class="stat-box">
-                <span class="stat-box-label">CGST Amt</span>
+                <span class="stat-box-label">CGST Tax</span>
                 <span class="stat-box-val" id="statCGST">&#8377;0.00</span>
             </div>
             <div class="stat-box">
-                <span class="stat-box-label">SGST Amt</span>
+                <span class="stat-box-label">SGST Tax</span>
                 <span class="stat-box-val" id="statSGST">&#8377;0.00</span>
             </div>
             <div class="stat-box">
@@ -479,7 +483,7 @@
                 <span class="stat-box-val" id="statRoundOff">&#8377;0.00</span>
             </div>
             <div class="stat-box" style="grid-column: span 2; border-left: 2px solid var(--neon-green); padding-left: 12px;">
-                <span class="stat-box-label" style="color: var(--neon-green);">Net Amount</span>
+                <span class="stat-box-label" style="color: var(--neon-green);">Total Amount</span>
                 <span class="stat-box-val" id="statNetAmount" style="color: var(--neon-green); font-size: 1.55rem;">&#8377;0.00</span>
             </div>
         </div>
@@ -492,12 +496,12 @@
                 &#128424; Print Bill Preview
             </button>
             <button type="button" class="btn btn-outline" onclick="clearMemoRows()">
-                &#10005; Clear Rows
+                &#10005; Clear Table
             </button>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
             <button type="button" id="btnSaveMemo" class="btn btn-primary" style="padding: 12px 32px; font-size: 1.05rem;" onclick="commitRetailSale()">
-                &#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>
+                &#10003; Save Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>
             </button>
         </div>
     </div>
@@ -588,7 +592,7 @@
 
         if (mode === 'SALE') {
             document.getElementById('tabSale').classList.add('active');
-            titleEl.textContent = 'Retail Sale Entry (Cash Memo)';
+            titleEl.textContent = 'Billing Desk (Cash Memo)';
             labelCust.textContent = 'Name (Customer) *';
         } else if (mode === 'SALE_RETURN') {
             document.getElementById('tabSaleReturn').classList.add('active');
@@ -1005,7 +1009,7 @@
         document.getElementById('statNoOfItems').textContent = totalItems;
         document.getElementById('statTotalQuantity').textContent = totalQuantity;
         document.getElementById('statPrdAmt').textContent = '₹' + prdAmt.toFixed(2);
-        document.getElementById('statDiscount').textContent = '-₹' + totalDisc.toFixed(2);
+        document.getElementById('statDiscount').textContent = '-₹' + totalDiscounttoFixed(2);
         document.getElementById('statCGST').textContent = '₹' + totalCGST.toFixed(2);
         document.getElementById('statSGST').textContent = '₹' + totalSGST.toFixed(2);
         document.getElementById('statRoundOff').textContent = (roundOff >= 0 ? '+₹' : '-₹') + Math.abs(roundOff).toFixed(2);
@@ -1140,17 +1144,17 @@
                     recalculateGrandTotals();
                     updateDockPreview(null);
                     btnSave.disabled = false;
-                    btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
+                    btnSave.innerHTML = '&#10003; Save Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
                 }, 1200);
             } else {
                 showAlert(result.message || 'Error processing sale.', 'danger');
                 btnSave.disabled = false;
-                btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
+                btnSave.innerHTML = '&#10003; Save Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
             }
         } catch (err) {
             showAlert('Network error while processing billing.', 'danger');
             btnSave.disabled = false;
-            btnSave.innerHTML = '&#10003; Save Retail Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
+            btnSave.innerHTML = '&#10003; Save Bill <span class="shortcut-badge" style="background: rgba(0,0,0,0.3); color: #000;">Ctrl+S</span>';
         }
     }
 

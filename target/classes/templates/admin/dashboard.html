@@ -16,77 +16,82 @@
 <body>
 
 <!-- CYBER NAVIGATION BAR -->
+<!-- TOP NAVIGATION BAR -->
 <nav class="cyber-nav">
-    <div class="brand-section">
+    <a th:href="@{/admin/dashboard}" class="brand-section">
         <div class="brand-logo">&#10010;</div>
         <div class="brand-title">Pharm<span>Care</span></div>
-    </div>
+    </a>
     <div class="nav-links">
         <a th:href="@{/admin/dashboard}" class="nav-link active">Dashboard</a>
-        <a th:href="@{/medicines}" class="nav-link">Public Catalog</a>
-        <a th:href="@{/admin/sell}" class="nav-link">Sell</a>
-        <a th:href="@{/admin/add-stock}" class="nav-link">Add Stock</a>
-        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock / Corrections</a>
-        <a th:href="@{/admin/history/stock}" class="nav-link">Stock History</a>
-        <a th:href="@{/admin/reports}" class="nav-link">Sales Reports</a>
-        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff Access</a>
-        <a th:href="@{/admin/backup}" class="nav-link">Data Backup</a>
+        <a th:href="@{/admin/sell}" class="nav-link">Billing Desk</a>
+        <a th:href="@{/admin/add-stock}" class="nav-link">Purchase Stock</a>
+        <a th:href="@{/medicines}" class="nav-link">Medicine List</a>
+        <a th:href="@{/admin/edit}" class="nav-link">Edit Stock</a>
+        <a th:href="@{/admin/reports}" class="nav-link">Reports</a>
+        <a th:href="@{/admin/backup}" class="nav-link">Backup</a>
+        <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
-        <div class="nav-status">
-            <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? 'OWNER (MASTER)' : 'STAFF (CASHIER)'}">OWNER</span>
+        <div th:if="${isOwner or isStaff}" style="display: flex; align-items: center; gap: 10px;">
+            <div class="nav-status">
+                <span class="pulse-dot"></span>
+                <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
         </div>
-        <form th:action="@{/logout}" method="post" style="margin: 0;">
-            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
-        </form>
+        <div th:unless="${isOwner or isStaff}">
+            <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        </div>
     </div>
 </nav>
 
 <div class="main-container">
     <div class="page-header">
         <div>
-            <h1 class="page-title">&#128421; Mission Control Dashboard</h1>
-            <p class="page-subtitle" th:text="${isOwner ? 'Master management control, financial performance metrics, and security archives' : 'Operational terminal: patient dispensing, batch restocking, and mistake corrections'}">Dashboard overview</p>
+            <h1 class="page-title">&#128421; Shop Dashboard</h1>
+            <p class="page-subtitle" th:text="${isOwner ? 'Sales summary, medicine stock alerts, and quick shop actions' : 'Sales summary, medicine stock alerts, and quick shop actions'}">Dashboard overview</p>
         </div>
         <div style="display: flex; gap: 8px;">
-            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Dispense Sale</a>
-            <a th:href="@{/admin/add-stock}" class="btn btn-cyber-cyan btn-sm">&#128230; Restock Inventory</a>
+            <a th:href="@{/admin/sell}" class="btn btn-primary btn-sm">&#128179; Billing Desk</a>
+            <a th:href="@{/admin/add-stock}" class="btn btn-cyber-cyan btn-sm">&#128230; Purchase Stock</a>
         </div>
     </div>
 
     <!-- KPI STATS CARDS -->
     <div class="stats-grid">
         <div class="stat-card neon-green">
-            <div class="stat-label">Total Catalog Items</div>
+            <div class="stat-label">Total Medicines</div>
             <div class="stat-value" th:text="${totalMedicines}">0</div>
-            <div class="stat-sub">Active registered medicines</div>
+            <div class="stat-sub">Registered medicines in database</div>
         </div>
 
         <div class="stat-card" th:classappend="${lowStockCount > 0 ? 'neon-amber' : 'neon-green'}">
             <div class="stat-label">
-                <span>Low Stock Warnings</span>
+                <span>Low Stock Alerts</span>
                 <span th:if="${lowStockCount > 0}" class="badge badge-low-stock">&#9888; Action Req</span>
             </div>
             <div class="stat-value" th:text="${lowStockCount}" th:style="${lowStockCount > 0 ? 'color: var(--neon-amber);' : 'color: var(--neon-green);'}">0</div>
-            <div class="stat-sub">Below replenishment threshold</div>
+            <div class="stat-sub">Medicines running low on stock</div>
         </div>
 
         <div class="stat-card neon-green">
-            <div class="stat-label">Today's Units Sold</div>
+            <div class="stat-label">Medicines Sold Today</div>
             <div class="stat-value" th:text="${todaySummary != null ? todaySummary.totalItemsSold : 0}">0</div>
-            <div class="stat-sub">Units dispensed today</div>
+            <div class="stat-sub">Total strips and tablets sold today</div>
         </div>
 
         <!-- OWNER ONLY CONFIDENTIAL FINANCIAL STATS -->
         <div th:if="${isOwner}" class="stat-card neon-green">
-            <div class="stat-label">Today's Sales Revenue</div>
+            <div class="stat-label">Today's Total Sales</div>
             <div class="stat-value" th:text="'&#8377;' + ${todaySummary != null ? todaySummary.totalRevenue : '0.00'}">&#8377;0.00</div>
             <div class="stat-sub" th:text="'Net Profit: &#8377;' + ${todaySummary != null ? todaySummary.totalProfit : '0.00'}">Net Profit: &#8377;0.00</div>
         </div>
 
         <div th:if="${isOwner}" class="stat-card neon-cyan">
-            <div class="stat-label">Today's Restock Inward</div>
+            <div class="stat-label">New Stock Added Today</div>
             <div class="stat-value" style="color: var(--neon-cyan);" th:text="${todayStockSummary != null ? todayStockSummary.totalItemsAdded : 0}">0</div>
             <div class="stat-sub" th:text="'Purchase Cost: &#8377;' + ${todayStockSummary != null ? todayStockSummary.totalCost : '0.00'}">Purchase Cost: &#8377;0.00</div>
         </div>
@@ -127,7 +132,7 @@
         <!-- OWNER ONLY ACCESS CENTER -->
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="action-tile">
             <span class="action-icon">&#128101;</span>
-            <span class="action-title">Staff Accounts &amp; Access</span>
+            <span class="action-title">Staff Management &amp; Access</span>
             <span class="action-desc">Create employee accounts, reset staff passwords, and manage permissions.</span>
         </a>
 

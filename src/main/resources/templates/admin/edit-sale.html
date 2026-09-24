@@ -33,13 +33,18 @@
         <a th:if="${isOwner}" th:href="@{/admin/users}" class="nav-link">Staff</a>
     </div>
     <div class="nav-actions">
-        <div class="nav-status">
-            <span class="pulse-dot"></span>
-            <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+        <div th:if="${isOwner or isStaff}" style="display: flex; align-items: center; gap: 10px;">
+            <div class="nav-status">
+                <span class="pulse-dot"></span>
+                <span th:text="${isOwner ? '● Owner' : '● Staff'}">● Staff</span>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                <button type="submit" class="btn btn-outline btn-sm">Logout</button>
+            </form>
         </div>
-        <form th:action="@{/logout}" method="post" style="margin: 0;">
-            <button type="submit" class="btn btn-outline btn-sm">Logout</button>
-        </form>
+        <div th:unless="${isOwner or isStaff}">
+            <a th:href="@{/login}" class="btn btn-outline btn-sm">&#128274; Staff Login</a>
+        </div>
     </div>
 </nav>
 
